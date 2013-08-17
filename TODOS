@@ -1,4 +1,4 @@
-1.) Get RS Vandermonde working in the python lib
+1.) Get RS Cauchy working in the python lib (Vandermonde is already working)
 2.) Finish the XOR decoder
 3.) Hook XOR_codes into the python lib
 4.) Fix-up Jerasure to be built and installed from here (LD_LIBRARY_PATH)
