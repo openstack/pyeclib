@@ -3,7 +3,8 @@
 3.) Hook XOR_codes into the python lib
 4.) Fix-up Jerasure to be built and installed from here (LD_LIBRARY_PATH)
 5.) Connect RS Vandermonde/Cauchy and XOR_codes with Swift python interface
-6.) Valgrind everything to fix memory errors and leaks
-7.) Create unit test suite
-8.) Setup README to explain the installation instructions (build Jerasure, set LD_LIBRARY_PATH and build the python libs)
-9.) SSE-ify Jerasure
+6.) Implement algebraic signatures
+7.) Valgrind everything to fix memory errors and leaks
+8.) Create unit test suite
+9.) Setup README to explain the installation instructions (build Jerasure, set LD_LIBRARY_PATH and build the python libs)
+10.) SSE-ify Jerasure

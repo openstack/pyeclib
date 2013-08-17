@@ -23,7 +23,7 @@ typedef enum { FAIL_PATTERN_GE_HD, // Num failures greater than or equal to HD
                FAIL_PATTERN_0D_2P, 
                FAIL_PATTERN_0D_3P } failure_pattern_t;
 
-const int g_data_bit_lookup[] = {0x1, 0x2, 0x4, 0x8,
+const int g_bit_lookup[] = {0x1, 0x2, 0x4, 0x8,
                                  0x10, 0x20, 0x40, 0x80,
                                  0x100, 0x200, 0x400, 0x800,
                                  0x1000, 0x2000, 0x4000, 0x8000,
@@ -33,8 +33,10 @@ const int g_data_bit_lookup[] = {0x1, 0x2, 0x4, 0x8,
                                  0x10000000, 0x20000000, 0x40000000, 0x80000000};
 
 int g_12_6_code_parity_bms[] = { 1649, 3235, 2375, 718, 1436, 2872 }; 
+int g_12_6_code_data_bms[] = { 7, 14, 28, 56, 49, 35, 13, 26, 52, 41, 19, 38 };
 
-#define is_data_in_parity(data_idx, parity_bm) ((g_data_bit_lookup[data_idx] & parity_bm) == g_data_bit_lookup[data_idx])
+#define is_data_in_parity(data_idx, parity_bm) ((g_bit_lookup[data_idx] & parity_bm) == g_bit_lookup[data_idx])
+#define does_parity_have_data(parity_idx, data_bm) ((g_bit_lookup[parity_idx] & data_bm) == g_bit_lookup[parity_idx])
 #define is_aligned(x) (((unsigned long)x & (MEM_ALIGN_SIZE-1)) == 0)
 #define num_unaligned_end(size) (size % MEM_ALIGN_SIZE)
 
@@ -43,17 +45,18 @@ typedef struct xor_code_s
   int k;
   int m;
   int *parity_bms;
+  int *data_bms;
 } xor_code_t;
 
 
 int parity_bit_lookup(xor_code_t *code_desc, int index)
 {
-  return g_data_bit_lookup[code_desc->k - index];
+  return g_bit_lookup[code_desc->k - index];
 }
 
 int data_bit_lookup(xor_code_t *code_desc, int index)
 {
-  return g_data_bit_lookup[index];
+  return g_bit_lookup[index];
 }
 
 int missing_elements_bm(xor_code_t *code_desc, int *missing_elements, int (*bit_lookup_func)(xor_code_t *code_desc, int index))
@@ -237,12 +240,34 @@ int * get_missing_data(xor_code_t *code_desc, int *missing_idxs)
   return missing_data;
 }
 
-int index_of_connected_parity(xor_code_t *code_desc, int data_index, int *missing_parity)
+int num_missing_data_in_parity(xor_code_t *code_desc, int parity_idx, int *missing_data)
+{
+  int i = 0;
+  int num_missing_data = 0;
+  int relative_parity_index = parity_idx - code_desc->k;
+  if (missing_data == NULL) {
+    return 0;
+  }
+
+  while (missing_data[i] > -1) {
+    if (does_parity_have_data(relative_parity_index, code_desc->data_bms[missing_data[i]]) > 0) {
+      num_missing_data++;
+    }
+    i++;
+  }
+  
+  return num_missing_data;
+}
+
+int index_of_connected_parity(xor_code_t *code_desc, int data_index, int *missing_parity, int *missing_data)
 {
   int parity_index = -1;
   int i;
   
   for (i=0; i < code_desc->m; i++) {
+    if (num_missing_data_in_parity(code_desc, i + code_desc->k, missing_data) > 1) {
+      continue;
+    }
     if (is_data_in_parity(data_index, code_desc->parity_bms[i])) {
       int j=0;
       int is_missing = 0;
@@ -276,7 +301,7 @@ void decode_one_data(xor_code_t *code_desc, char **data, char **parity, int *mis
 {
   // Verify that missing_data[1] == -1? 
   int data_index = missing_data[0];
-  int parity_index = index_of_connected_parity(code_desc, data_index, missing_parity);
+  int parity_index = index_of_connected_parity(code_desc, data_index, missing_parity, missing_data);
   int i;
 
   // Copy the appropriate parity into the data buffer
@@ -293,12 +318,12 @@ void decode_two_data(xor_code_t *code_desc, char **data, char **parity, int *mis
 {
   // Verify that missing_data[2] == -1?
   int data_index = missing_data[0];
-  int parity_index = index_of_connected_parity(code_desc, data_index, missing_parity);
+  int parity_index = index_of_connected_parity(code_desc, data_index, missing_parity, missing_data);
   int i;
 
   if (parity_index < 0) {
     data_index = missing_data[1];
-    parity_index = index_of_connected_parity(code_desc, data_index, missing_parity);
+    parity_index = index_of_connected_parity(code_desc, data_index, missing_parity, missing_data);
     if (parity_index < 0) {
       fprintf(stderr, "Shit is broken, cannot find a proper parity!!!\n");
       exit(2);
@@ -316,6 +341,7 @@ void decode_two_data(xor_code_t *code_desc, char **data, char **parity, int *mis
       xor_bufs_and_store(data[i], data[data_index], blocksize);
     }
   }
+  decode_one_data(code_desc, data, parity, missing_data, missing_parity, blocksize);
 }
 
 void decode_three_data(xor_code_t *code_desc, char **data, char **parity, int *missing_data, int *missing_parity, int blocksize)
@@ -460,6 +486,7 @@ int main()
   code_desc->k = 12;
   code_desc->m = 6;
   code_desc->parity_bms = g_12_6_code_parity_bms;
+  code_desc->data_bms = g_12_6_code_data_bms;
 
   data = (char**)malloc(code_desc->k * sizeof(char*));
   parity = (char**)malloc(code_desc->m * sizeof(char*));
@@ -499,11 +526,17 @@ int main()
   start_time = clock();
   for (i=0; i < num_iter; i++) {
     missing_idxs[0] = rand() % code_desc->k;
-    missing_idxs[1] = -1;
+    missing_idxs[1] = (missing_idxs[0] + 2) % code_desc->k;
+    missing_idxs[2] = -1;
     memset(data[missing_idxs[0]], 0, blocksize);
+    memset(data[missing_idxs[1]], 0, blocksize);
     decode(code_desc, data, parity, missing_idxs, blocksize, 0);
   
     if (check_buffer(data[missing_idxs[0]], blocksize, missing_idxs[0]) < 0) {
+      fprintf(stderr, "Decode did not work!\n");
+      exit(2);
+    }
+    if (check_buffer(data[missing_idxs[1]], blocksize, missing_idxs[1]) < 0) {
       fprintf(stderr, "Decode did not work!\n");
       exit(2);
     }
