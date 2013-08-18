@@ -6,6 +6,9 @@
 int g_12_6_hd_code_parity_bms[] = { 1649, 3235, 2375, 718, 1436, 2872 };
 int g_12_6_hd_code_data_bms[] = { 7, 14, 28, 56, 49, 35, 13, 26, 52, 41, 19, 38 };
 
+int g_10_5_hd_code_parity_bms[] = { 1425, 1571, 3270, 2348, 2648 };
+int g_10_5_hd_code_data_bms[] = { 3, 6, 12, 24, 17, 10, 20, 5, 9, 18, 7, 28 };
+
 /*
  * There is one unavailable data element, so any available parity connected to
  * the data element is sufficient to decode.
@@ -33,6 +36,11 @@ static void decode_two_data(xor_code_t *code_desc, char **data, char **parity, i
   int data_index = missing_data[0];
   int parity_index = index_of_connected_parity(code_desc, data_index, missing_parity, missing_data);
   int i;
+  
+  if (missing_data[0] == 0 && missing_data[1] == 1) {
+    printf("Here\n");
+  }
+
 
   if (parity_index < 0) {
     data_index = missing_data[1];
@@ -94,7 +102,7 @@ static void decode_three_data(xor_code_t *code_desc, char **data, char **parity,
     int contains_3d = -1; 
 
     for (i=0;i < code_desc->m;i++) {
-      int num_missing = num_missing_data_in_parity(code_desc, i, missing_data);
+      int num_missing = num_missing_data_in_parity(code_desc, code_desc->k+i, missing_data);
       if (num_missing == 2 && contains_2d < 0) {
         contains_2d = i;
       } else if (num_missing == 3 && contains_3d < 0) {
@@ -110,13 +118,18 @@ static void decode_three_data(xor_code_t *code_desc, char **data, char **parity,
     parity_buffer = aligned_malloc(blocksize, 16);
 
     // P XOR Q
-    parity_bm = code_desc->parity_bms[parity_index-contains_2d] ^ code_desc->parity_bms[parity_index-contains_3d];
+    parity_bm = code_desc->parity_bms[contains_2d] ^ code_desc->parity_bms[contains_3d];
+
+    // Create buffer with P XOR Q -> parity_buffer
+    fast_memcpy(parity_buffer, parity[contains_2d], blocksize);
+    xor_bufs_and_store(parity[contains_3d], parity_buffer, blocksize);
 
     i=0;
     data_index = -1;
     while (missing_data[i] > -1) {
       if (is_data_in_parity(missing_data[i], parity_bm)) {
         data_index = missing_data[i];
+        break;
       }
       i++;
     }
@@ -247,7 +260,16 @@ xor_code_t* init_xor_hd_code(int k, int m, int hd)
     code_desc->hd = hd;
     code_desc->decode = xor_hd_decode;
     code_desc->encode = xor_code_encode;
-  } 
+  } else if (k == 10 && m == 5 && hd == 3) {
+    code_desc = (xor_code_t*)malloc(sizeof(xor_code_t));
+    code_desc->parity_bms = g_10_5_hd_code_parity_bms;
+    code_desc->data_bms = g_10_5_hd_code_data_bms;
+    code_desc->k = k;
+    code_desc->m = m;
+    code_desc->hd = hd;
+    code_desc->decode = xor_hd_decode;
+    code_desc->encode = xor_code_encode;
+  }
   return code_desc;
 }
 

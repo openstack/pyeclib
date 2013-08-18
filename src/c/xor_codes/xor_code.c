@@ -259,6 +259,7 @@ int index_of_connected_parity(xor_code_t *code_desc, int data_index, int *missin
           is_missing = 1; 
           break; 
         }
+        j++;
       }
       if (!is_missing) {
         parity_index = i;
