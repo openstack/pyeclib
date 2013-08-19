@@ -168,19 +168,15 @@ void xor_code_encode(xor_code_t *code_desc, char **data, char **parity, int bloc
 
 void selective_encode(xor_code_t *code_desc, char **data, char **parity, int *missing_parity, int blocksize)
 {
-  int i = 0, j;
-  int missing_parity_bm = 0;
-
-  while (missing_parity[i] > -1) {
-    missing_parity_bm |= ((1 << code_desc->k-missing_parity[i]));
-    i++;
-  }
-  
+  int i;
   for (i=0; i < code_desc->k; i++) {
-    for (j=0; j < code_desc->m; j++) {
-      if (is_data_in_parity(i, code_desc->parity_bms[j]) && (missing_parity_bm & (1 << j) == (1 << j))) {
-        xor_bufs_and_store(data[i], parity[j], blocksize);
+    int j=0;
+    while (missing_parity[j] > -1) {
+      int parity_index = missing_parity[j] - code_desc->k;
+      if (is_data_in_parity(i, code_desc->parity_bms[parity_index])) {
+        xor_bufs_and_store(data[i], parity[parity_index], blocksize);
       }
+      j++;
     }
   }
 }

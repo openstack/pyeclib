@@ -204,17 +204,29 @@ int test_12_6_4()
     missing_idxs[2] = missing_idx_2;
     missing_idxs[3] = -1;
 
-    if (missing_idxs[0] > -1 && missing_idxs[0] < code_desc->k) {
-      memset(data[missing_idxs[0]], 0, blocksize);
+    if (missing_idxs[0] > -1) {
+      if (missing_idxs[0] < code_desc->k) {
+        memset(data[missing_idxs[0]], 0, blocksize);
+      } else {
+        memset(parity[missing_idxs[0] - code_desc->k], 0, blocksize);
+      }
     }
-    if (missing_idxs[1] > -1 && missing_idxs[1] < code_desc->k) {
-      memset(data[missing_idxs[1]], 0, blocksize);
+    if (missing_idxs[1] > -1) {
+      if (missing_idxs[1] < code_desc->k) {
+        memset(data[missing_idxs[1]], 0, blocksize);
+      } else {
+        memset(parity[missing_idxs[1] - code_desc->k], 0, blocksize);
+      }
     }
-    if (missing_idxs[2] > -1 && missing_idxs[2] < code_desc->k) {
-      memset(data[missing_idxs[2]], 0, blocksize);
+    if (missing_idxs[2] > -1) {
+      if (missing_idxs[2] < code_desc->k) {
+        memset(data[missing_idxs[2]], 0, blocksize);
+      } else {
+        memset(parity[missing_idxs[2] - code_desc->k], 0, blocksize);
+      }
     }
 
-    code_desc->decode(code_desc, data, parity, missing_idxs, blocksize, 0);
+    code_desc->decode(code_desc, data, parity, missing_idxs, blocksize, 1);
   
     if (missing_idxs[0] > -1 && missing_idxs[0] < code_desc->k && check_buffer(data[missing_idx_0], blocksize, missing_idx_0) < 0) {
       fprintf(stderr, "Decode did not work: %d (%d %d %d)!\n", missing_idxs[0], missing_idxs[0], missing_idxs[1], missing_idxs[2]);
@@ -251,7 +263,7 @@ int test_12_6_4()
       memset(data[missing_idxs[2]], 0, blocksize);
     }
 
-    code_desc->decode(code_desc, data, parity, missing_idxs, blocksize, 0);
+    code_desc->decode(code_desc, data, parity, missing_idxs, blocksize, 1);
   }
   end_time = clock();
   

@@ -37,11 +37,6 @@ static void decode_two_data(xor_code_t *code_desc, char **data, char **parity, i
   int parity_index = index_of_connected_parity(code_desc, data_index, missing_parity, missing_data);
   int i;
   
-  if (missing_data[0] == 0 && missing_data[1] == 1) {
-    printf("Here\n");
-  }
-
-
   if (parity_index < 0) {
     data_index = missing_data[1];
     parity_index = index_of_connected_parity(code_desc, data_index, missing_parity, missing_data);
@@ -49,6 +44,7 @@ static void decode_two_data(xor_code_t *code_desc, char **data, char **parity, i
       fprintf(stderr, "Shit is broken, cannot find a proper parity!!!\n");
       exit(2);
     }
+    missing_data[1] = -1;
   } else {
     missing_data[0] = missing_data[1];
     missing_data[1] = -1;
