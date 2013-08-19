@@ -256,22 +256,21 @@ int test_hd_code(xor_code_t *code_desc, int num_failure_combs, int failure_combs
 
   start_time = clock();
   for (i=0; i < num_iter; i++) {
-    int missing_idx_0 = rand() % (code_desc->k + code_desc->m);
-    int missing_idx_1 = (missing_idx_0 + 2) % (code_desc->k + code_desc->m);
-    int missing_idx_2 = (missing_idx_1 + 3) % (code_desc->k + code_desc->m);
+    int j;
 
-    missing_idxs[0] = missing_idx_0;
-    missing_idxs[1] = missing_idx_1;
-    missing_idxs[2] = missing_idx_2;
-    missing_idxs[3] = -1;
+    missing_idxs[0] = rand() % (code_desc->k + code_desc->m);
+    for (j=1; j < code_desc->hd-1;j++) {
+      missing_idxs[j] = (missing_idxs[j-1] + 1) % (code_desc->k + code_desc->m);
+    }
+    missing_idxs[code_desc->hd-1] = -1;
 
-    if (missing_idxs[0] < code_desc->k) {
+    if (missing_idxs[0] > -1 && missing_idxs[0] < code_desc->k) {
       memset(data[missing_idxs[0]], 0, blocksize);
     }
-    if (missing_idxs[1] < code_desc->k) {
+    if (missing_idxs[1] > -1 && missing_idxs[1] < code_desc->k) {
       memset(data[missing_idxs[1]], 0, blocksize);
     }
-    if (missing_idxs[2] < code_desc->k) {
+    if (missing_idxs[2] > -1 && missing_idxs[2] < code_desc->k) {
       memset(data[missing_idxs[2]], 0, blocksize);
     }
 
