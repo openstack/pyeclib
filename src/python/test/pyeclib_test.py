@@ -117,28 +117,28 @@ def get_throughput(avg_time, size_str):
   elif (size_desc[1] == 'K'):
     return (size / 1000.0) / avg_time
   
-num_datas = [10, 10, 10] 
+num_datas = [12, 12, 12] 
 num_parities = [2, 3, 4]
 iterations=100
-#type="rs_cauchy_orig"
-type="rs_vand"
+type="rs_cauchy_orig"
+#type="rs_vand"
 
-sizes = ["10-K", "100-K", "1-M", "10-M"]
+types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
+
+sizes = ["100-K", "1-M", "10-M"]
 
 setup(sizes)
 
-for i in range(len(num_datas)):
-  y=[]
-  for size_str in sizes:
-    avg_time = time_encode(num_datas[i], num_parities[i], 16, type, size_str, iterations)
-    #y.append(get_throughput(avg_time, size_str))
-    print avg_time
+for (type, w) in types:
+  print "Running tests for %s w=%d\n" % (type, w)
+  for i in range(len(num_datas)):
+    for size_str in sizes:
+      avg_time = time_encode(num_datas[i], num_parities[i], w, type, size_str, iterations)
+      print "Encode (%s): " % size_str, get_throughput(avg_time, size_str)
 
-for i in range(len(num_datas)):
-  y=[]
-  for size_str in sizes:
-    avg_time = time_decode(num_datas[i], num_parities[i], 16, type, size_str, iterations)
-    y.append(get_throughput(avg_time, size_str))
-    print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
+  for i in range(len(num_datas)):
+    for size_str in sizes:
+      avg_time = time_decode(num_datas[i], num_parities[i], w, type, size_str, iterations)
+      print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
 
 cleanup(sizes)

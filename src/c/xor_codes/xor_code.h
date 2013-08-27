@@ -70,6 +70,8 @@ int index_of_connected_parity(xor_code_t *code_desc, int data_index, int *missin
 
 void remove_from_missing_list(int element, int *missing_list);
 
+int * get_symbols_needed(xor_code_t *code_desc, int *missing_list);
+
 xor_code_t* init_xor_hd_code(int k, int m, int hd);
 
 #endif
