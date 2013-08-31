@@ -107,6 +107,34 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations):
 
   return sum / iterations
 
+def test_get_required_fragments(num_data, num_parity, w, type):
+  handle = pyeclib.init(num_data, num_parity, w, type)
+  
+  #
+  # MDS codes need any k fragments
+  #
+  if type in ["rs_vand", "rs_cauchy_orig"]:
+    expected_fragments = [i for i in range(num_data + num_parity)]
+    missing_fragments = [] 
+
+    #
+    # Remove between 1 and num_parity
+    #
+    for i in range(random.randint(0, num_parity-1)):
+      missing_fragment = random.sample(expected_fragments, 1)[0]
+      missing_fragments.append(missing_fragment)
+      expected_fragments.remove(missing_fragment)
+
+    expected_fragments = expected_fragments[:num_data]
+    required_fragments = pyeclib.get_required_fragments(handle, missing_fragments)
+
+    if expected_fragments != required_fragments:
+      print "Unexpected required fragments list (exp != req): %s != %s" % (expected_fragments, required_fragments)
+      sys.exit(2)  
+  
+
+  
+
 def get_throughput(avg_time, size_str):
   size_desc = size_str.split("-")  
 
@@ -120,17 +148,20 @@ def get_throughput(avg_time, size_str):
 num_datas = [12, 12, 12] 
 num_parities = [2, 3, 4]
 iterations=100
-type="rs_cauchy_orig"
-#type="rs_vand"
 
 types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
 
-sizes = ["100-K", "1-M", "10-M"]
+#sizes = ["100-K", "1-M", "10-M"]
+sizes = ["100-K"]
 
 setup(sizes)
 
 for (type, w) in types:
   print "Running tests for %s w=%d\n" % (type, w)
+
+  for i in range(len(num_datas)):
+    test_get_required_fragments(num_datas[i], num_parities[i], w, type)
+
   for i in range(len(num_datas)):
     for size_str in sizes:
       avg_time = time_encode(num_datas[i], num_parities[i], w, type, size_str, iterations)
@@ -140,5 +171,7 @@ for (type, w) in types:
     for size_str in sizes:
       avg_time = time_decode(num_datas[i], num_parities[i], w, type, size_str, iterations)
       print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
+
+
 
 cleanup(sizes)

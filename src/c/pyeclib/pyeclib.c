@@ -17,6 +17,18 @@
  *
  */
 
+/*
+ * TODO (kmg): Use bitmaps internally instead of lists.  This will make the code simpler 
+ * and faster.  It also requires a maximum value for k+m.  Assuming 64-bit long, k+m <= 64.
+ * That is totally reasonable.  There is no reason to have stripes wider than 20, let alone 
+ * 64.
+ */
+
+/*
+ * TODO (kmg): Do a big cleanup: standardize naming, types (typedef stuff), comments, standard error
+ * handling and refactor where needed.
+ */
+
 static PyObject *PyECLibError;
 
 typedef enum { PYECC_RS_VAND, PYECC_RS_CAUCHY_ORIG, PYECC_NUM_TYPES, PYECC_NOT_FOUND } pyeclib_type_t;
@@ -86,6 +98,26 @@ static int validate_args(int k, int m, int w, pyeclib_type_t type)
       }
   }
   return 0;
+}
+
+/*
+ * Convert an int list into a bitmap
+ * Assume the list is '-1' terminated.
+ */
+static unsigned long convert_list_to_bitmap(int *list)
+{
+  int i = 0;
+  unsigned long bm = 0;
+
+  while (list[i] > -1) {
+    /*
+     * TODO: Assert list[i] < 64
+     */
+    bm |= (1 << list[i]);  
+    i++;
+  } 
+
+  return bm;
 }
 
 /*
@@ -231,12 +263,8 @@ char* get_fragment_data(char *buf)
 static 
 char* get_fragment_ptr_from_data_novalidate(char *buf)
 {
-  fragment_header_t *header;
-
   buf -= sizeof(fragment_header_t);
 
-  header = (fragment_header_t*)buf;
-  
   return buf;
 }
 
@@ -777,10 +805,12 @@ pyeclib_get_required_fragments(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle;
   PyObject *missing_list;
+  PyObject *fragment_idx_list = NULL;
   pyeclib_t* pyeclib_handle;
   int num_missing;
   int *c_missing_list;
-  int i;
+  int i, j;
+  int missing_bm = 0;
 
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &missing_list)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
@@ -789,7 +819,7 @@ pyeclib_get_required_fragments(PyObject *self, PyObject *args)
 
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
+    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.get_required_fragments");
     return NULL;
   }
 
@@ -805,10 +835,39 @@ pyeclib_get_required_fragments(PyObject *self, PyObject *args)
 
   c_missing_list[num_missing] = -1;
 
-  /*
-   * TODO Finish writing this!!!  Needs a hook into XOR library
-   */
-  return NULL;
+  missing_bm = convert_list_to_bitmap(c_missing_list);
+
+  switch(pyeclib_handle->type) {
+    case PYECC_RS_CAUCHY_ORIG:
+    case PYECC_RS_VAND:
+      fragment_idx_list = PyList_New(pyeclib_handle->k);
+      j=0;
+      for (i=0; i < pyeclib_handle->k + pyeclib_handle->m; i++) {
+        if (!(missing_bm & (1 << i))) {
+          PyList_SET_ITEM(fragment_idx_list, j, Py_BuildValue("i", i));
+          j++;
+        }
+        if (j == pyeclib_handle->k) {
+          break;
+        }
+      }
+
+      if (j != pyeclib_handle->k) {
+        // Let the garbage collector clean this up
+        Py_DECREF(fragment_idx_list);
+        PyErr_Format(PyECLibError, "Not enough fragments for pyeclib.get_required_fragments (need at least %d, %d are given)", pyeclib_handle->k, j);
+        fragment_idx_list = NULL;
+      }
+      break;
+    default:
+      PyErr_SetString(PyECLibError, "Invalid EC type used in pyeclib.get_required_fragments");
+      break;
+  }
+
+  // Free the temporary list
+  free(c_missing_list);
+
+  return fragment_idx_list;
 }
 
 static PyObject *
