@@ -107,6 +107,52 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations):
 
   return sum / iterations
 
+def test_get_fragment_partition(num_data, num_parity, w, type, file_size, iterations):
+  filename = "test_file.%s" % file_size
+  fp = open("test_files/%s" % filename, "r")
+  handle = pyeclib.init(num_data, num_parity, w, type)
+
+  whole_file_str = fp.read()
+  
+  fragments=pyeclib.encode(handle, whole_file_str)
+
+  for i in range(iterations):
+    missing_fragments = random.sample(fragments, 3)
+    avail_fragments = fragments[:]
+    missing_fragment_idxs = []
+    for missing_frag in missing_fragments:
+      missing_fragment_idxs.append(fragments.index(missing_frag))
+      avail_fragments.remove(missing_frag)
+
+    (data_frags, parity_frags, missing_idxs) = pyeclib.get_fragment_partition(handle, avail_fragments)
+
+    missing_fragment_idxs.sort() 
+    missing_idxs.sort()
+
+    if missing_fragment_idxs != missing_idxs:
+      print "Missing idx mismatch in test_get_fragment_partition: %s != %s\n" % (missing_fragment_idxs, missing_idxs)  
+      sys.exit()
+
+    missing_idxs.append(-1)
+
+    decoded_fragments = pyeclib.decode(handle, data_frags, parity_frags, missing_idxs, len(data_frags[0]))
+
+
+def test_fragments_to_string(num_data, num_parity, w, type, file_size):
+  filename = "test_file.%s" % file_size
+  fp = open("test_files/%s" % filename, "r")
+  handle = pyeclib.init(num_data, num_parity, w, type)
+
+  whole_file_str = fp.read()
+  
+  fragments=pyeclib.encode(handle, whole_file_str)
+
+  concat_str = pyeclib.fragments_to_string(handle, fragments[:num_data])
+
+  if concat_str != whole_file_str:
+    print "String does not equal the original string (len(orig) = %d, len(new) = %d\n" % (whole_file_str, concat_str)
+
+
 def test_get_required_fragments(num_data, num_parity, w, type):
   handle = pyeclib.init(num_data, num_parity, w, type)
   
@@ -131,9 +177,6 @@ def test_get_required_fragments(num_data, num_parity, w, type):
     if expected_fragments != required_fragments:
       print "Unexpected required fragments list (exp != req): %s != %s" % (expected_fragments, required_fragments)
       sys.exit(2)  
-  
-
-  
 
 def get_throughput(avg_time, size_str):
   size_desc = size_str.split("-")  
@@ -151,13 +194,20 @@ iterations=100
 
 types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
 
-#sizes = ["100-K", "1-M", "10-M"]
 sizes = ["100-K"]
 
 setup(sizes)
 
 for (type, w) in types:
   print "Running tests for %s w=%d\n" % (type, w)
+  
+  for i in range(len(num_datas)):
+    for size_str in sizes:
+      test_get_fragment_partition(num_datas[i], num_parities[i], w, type, size_str, iterations)
+
+  for i in range(len(num_datas)):
+    for size_str in sizes:
+      test_fragments_to_string(num_datas[i], num_parities[i], w, type, size_str)
 
   for i in range(len(num_datas)):
     test_get_required_fragments(num_datas[i], num_parities[i], w, type)
@@ -171,7 +221,5 @@ for (type, w) in types:
     for size_str in sizes:
       avg_time = time_decode(num_datas[i], num_parities[i], w, type, size_str, iterations)
       print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
-
-
 
 cleanup(sizes)
