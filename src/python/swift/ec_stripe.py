@@ -19,7 +19,7 @@ class ECStripingDriver(object):
 
     self.m = m
 
-  def encode(bytes):
+  def encode(self, bytes):
     """
     Stripe an arbitrary-sized string into k fragments
     :param bytes: the buffer to encode
@@ -42,7 +42,7 @@ class ECStripingDriver(object):
 
     return fragments
   
-  def decode(fragment_payloads):
+  def decode(self, fragment_payloads):
     """
     Convert a k-fragment data stripe into a string 
     :param fragment_payloads: fragments (in order) to convert into a string
@@ -60,7 +60,7 @@ class ECStripingDriver(object):
 
     return ret_string
   
-  def reconstruct(available_fragment_payloads, missing_fragment_indexes):
+  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes):
     """
     We cannot reconstruct a fragment using other fragments.  This means that
     reconstruction means all fragments must be specified, otherwise we cannot
@@ -75,7 +75,7 @@ class ECStripingDriver(object):
 
     return available_fragment_payloads
 
-  def fragments_needed(missing_fragment_indexes):
+  def fragments_needed(self, missing_fragment_indexes):
     """
     By definition, all missing fragment indexes are needed to reconstruct,
     so just return the list handed to this function.
@@ -84,7 +84,7 @@ class ECStripingDriver(object):
     """
     return missing_fragment_indexes 
 
-  def get_metadata(fragment):
+  def get_metadata(self, fragment):
     """
     This driver does not include fragment metadata, so return an empty string
     :param fragment: a fragment
@@ -92,7 +92,7 @@ class ECStripingDriver(object):
     """
     return '' 
 
-  def verify_stripe_metadata(fragment_metadata_list):
+  def verify_stripe_metadata(self, fragment_metadata_list):
     """
     This driver does not include fragment metadata, so return true
     :param fragment_metadata_list: a list of fragments

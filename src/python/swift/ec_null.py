@@ -3,21 +3,21 @@ class ECNullDriver(object):
     self.k = k
     self.m = m
 
-  def encode(bytes):
+  def encode(self, bytes):
     pass
   
-  def decode(fragment_payloads):
+  def decode(self, fragment_payloads):
     pass
   
-  def reconstruct(available_fragment_payloads, missing_fragment_indexes):
+  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes):
     pass
 
-  def fragments_needed(missing_fragment_indexes):
+  def fragments_needed(self, missing_fragment_indexes):
     pass
 
-  def get_metadata(fragment):
+  def get_metadata(self, fragment):
     pass
 
-  def verify_stripe_metadata(fragment_metadata_list):
+  def verify_stripe_metadata(self, fragment_metadata_list):
     pass
 
