@@ -1123,6 +1123,7 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
 static PyObject *
 pyeclib_decode(PyObject *self, PyObject *args)
 {
+  PyObject *list_of_strips;
   PyObject *pyeclib_obj_handle;
   PyObject *data_list;
   PyObject *parity_list;
@@ -1132,7 +1133,7 @@ pyeclib_decode(PyObject *self, PyObject *args)
   char **data;
   char **parity;
   int *missing_idxs;
-  PyObject *list_of_strips;
+  int missing_size;
   int padding = -1;
   int i, j;
 
@@ -1161,18 +1162,20 @@ pyeclib_decode(PyObject *self, PyObject *args)
     PyErr_SetString(PyECLibError, "The parity list does not have the correct number of entries");
     return NULL;
   }
+
+  missing_size = (int)PyList_Size(missing_idx_list);
   
-  missing_idxs = (int*)malloc(sizeof(int)*(pyeclib_handle->k+pyeclib_handle->m));
-  for (i = 0; i < (pyeclib_handle->k+pyeclib_handle->m); i++) {
+  missing_idxs = (int*)malloc(sizeof(int)*(missing_size+1));
+  for (i = 0; i < missing_size; i++) {
     PyObject *obj_idx = PyList_GetItem(missing_idx_list, i); 
-    long idx = PyLong_AsLong(obj_idx);
+    int idx;
 
-    missing_idxs[i] = (int)idx;  
+    idx = (int)PyInt_AsLong(obj_idx);
 
-    if (idx < 0) {
-      break;
-    }
+    missing_idxs[i] = idx;
   }
+
+  missing_idxs[i] = -1;
 
   data = (char**)malloc(sizeof(char*) * pyeclib_handle->k); 
   if (data == NULL) {

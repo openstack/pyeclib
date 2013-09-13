@@ -30,7 +30,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
   def __init__(self, *args):
     self.file_sizes = ["100-K"]
-    self.num_iterations = 1
+    self.num_iterations = 100
 
     unittest.TestCase.__init__(self, *args)
   
@@ -58,43 +58,42 @@ class TestPyECLibDriver(unittest.TestCase):
     for size_str in self.file_sizes:
       filename = "test_files/test_file.%s" % size_str
       os.unlink(filename)
-
-  def test_rs(self):
-
-    pyeclib_driver = ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=2, type="rs_vand", w=16)
-
-    for file_size in self.file_sizes:
-      filename = "test_file.%s" % file_size
-      fp = open("test_files/%s" % filename, "r")
-
-      whole_file_str = fp.read()
   
-      fp=open("orig", "w")
-      fp.write(whole_file_str)
-      fp.close()
+  def test_rs(self):
+    pyeclib_drivers = []
+    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=2, type="rs_vand", w=16))
+    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=2, type="rs_cauchy_orig", w=4))
+    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=3, type="rs_vand", w=16))
+    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=3, type="rs_cauchy_orig", w=4))
 
-      orig_fragments=pyeclib_driver.encode(whole_file_str)
-
-      fragments = orig_fragments[:]
-      num_missing = 2
-      idxs_to_remove = []
-      for j in range(num_missing):
-        idx = random.randint(0, 13)
-        if idx not in idxs_to_remove:
-          idxs_to_remove.append(idx)
-        
-      # Reverse sort the list, so we can always
-      # remove from the original index 
-      idxs_to_remove.sort(lambda x,y: y-x)
-      for idx in idxs_to_remove:
-        fragments.pop(idx)
-
-      decoded_string = pyeclib_driver.decode(fragments)
-      fp=open("decoded", "w")
-      fp.write(decoded_string)
-      fp.close()
-
-      self.assertTrue(whole_file_str == decoded_string)
+    for pyeclib_driver in pyeclib_drivers:
+	    for file_size in self.file_sizes:
+	      filename = "test_file.%s" % file_size
+	      fp = open("test_files/%s" % filename, "r")
+	
+	      whole_file_str = fp.read()
+	  
+	      orig_fragments=pyeclib_driver.encode(whole_file_str)
+	
+	
+	      for iter in range(self.num_iterations):
+	        num_missing = 2
+	        idxs_to_remove = []
+	        fragments = orig_fragments[:]
+	        for j in range(num_missing):
+	          idx = random.randint(0, 13)
+	          if idx not in idxs_to_remove:
+	            idxs_to_remove.append(idx)
+	        
+	        # Reverse sort the list, so we can always
+	        # remove from the original index 
+	        idxs_to_remove.sort(lambda x,y: y-x)
+	        for idx in idxs_to_remove:
+	          fragments.pop(idx)
+	
+	        decoded_string = pyeclib_driver.decode(fragments)
+	
+	        self.assertTrue(whole_file_str == decoded_string)
 
 if __name__ == '__main__':
     unittest.main()
