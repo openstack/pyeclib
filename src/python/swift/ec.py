@@ -104,7 +104,7 @@ class ECDriver(object):
     :returns: a list of buffers (first k entries are data and the last m are parity) 
     :raises: ECDriverError if there is an error during encoding
     """
-    pass
+    return self.ec_lib_reference.encode(bytes) 
 
   def decode(self, fragment_payloads):
     """
@@ -116,9 +116,9 @@ class ECDriver(object):
     :returns: a buffer
     :raises: ECDriverError if there is an error during decoding
     """
-    pass
+    return self.ec_lib_reference.decode(fragment_payloads)
 
-  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes, destination_index):
+  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes):
     """
     Reconstruct a missing fragment from a subset of available fragments.
   
@@ -132,7 +132,7 @@ class ECDriver(object):
     :raises: ECDriverError if there is an error during decoding or there are not sufficient
              fragments to decode
     """
-    pass
+    return self.ec_lib_reference.reconstruct(available_fragment_payloads, missing_fragment_indexes) 
 
   def fragments_needed(self, missing_fragment_indexes):
     """
@@ -147,7 +147,7 @@ class ECDriver(object):
     :raises: ECDriverError if there is an error during decoding or there are not 
              sufficient fragments to decode
     """
-    pass
+    return self.ec_lib_reference.fragments_needed(missing_fragment_indexes)
 
   def get_metadata(self, fragment):
     """
@@ -160,7 +160,7 @@ class ECDriver(object):
     :returns: an opaque buffer to be passed into verify_stripe_metadata()
     :raises: ECDriverError if there was a problem getting the metadata.
     """
-    pass
+    return self.ec_lib_reference.get_metadata(fragment)
    
 
   def verify_stripe_metadata(self, fragment_metadata_list):
@@ -174,5 +174,5 @@ class ECDriver(object):
     :raises: ECDriverError if there was a problem verifying the metadata
   
     """
-    pass
+    return self.ec_lib_reference.verify_stripe_metadata(fragment_metadata_list) 
 

@@ -121,10 +121,10 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
   fragments = orig_fragments[:]
 
   for i in range(iterations):
-    num_missing = num_parity
+    num_missing = 1
     missing_idxs = []
     for j in range(num_missing):
-      idx = random.randint(0, num_data-1)
+      idx = random.randint(0, num_data+num_parity-1)
       missing_idxs.append(idx)
       fragments[idx] = '\0' * len(fragments[0])
     missing_idxs.append(-1)

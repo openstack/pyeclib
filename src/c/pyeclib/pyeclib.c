@@ -41,6 +41,12 @@
  *
  */
 
+/*
+ * All of the 'get_fragment_*' functions need better handling!!!!!!  I took the exit(2)'s out...  Need to properly
+ * handle bad headers.
+ *
+ */
+
 static PyObject *PyECLibError;
 
 typedef enum { PYECC_RS_VAND, PYECC_RS_CAUCHY_ORIG, PYECC_NUM_TYPES, PYECC_NOT_FOUND } pyeclib_type_t;
@@ -317,7 +323,7 @@ int get_fragment_idx(char *buf)
 
   if (header->magic != PYECC_HEADER_MAGIC) {
     fprintf(stderr, "Invalid fragment header (get idx)!\n");
-    exit(2);
+    return -1; 
   }
 
   return header->idx;
@@ -343,7 +349,7 @@ int get_fragment_size(char *buf)
 
   if (header->magic != PYECC_HEADER_MAGIC) {
     fprintf(stderr, "Invalid fragment header (get size)!\n");
-    exit(2);
+    return -1; 
   }
 
   return header->size;
@@ -369,7 +375,7 @@ int get_fragment_padding(char *buf)
 
   if (header->magic != PYECC_HEADER_MAGIC) {
     fprintf(stderr, "Invalid fragment header (padding check)!\n");
-    exit(2);
+    return -1; 
   }
 
   return header->padding;
@@ -598,7 +604,15 @@ pyeclib_fragments_to_string(PyObject *self, PyObject *args)
      * Get fragment index and size
      */
     index = get_fragment_idx(tmp_buf);
+    if (index < 0) {
+      ret_string = NULL;
+      goto out;
+    }
     data_size = get_fragment_size(tmp_buf);
+    if (data_size < 0) {
+      ret_string = NULL;
+      goto out;
+    }
 
     /*
      * Skip over parity fragments
@@ -893,6 +907,9 @@ pyeclib_get_required_fragments(PyObject *self, PyObject *args)
   return fragment_idx_list;
 }
 
+/*
+ * TODO: If we are reconstructing a parity element, ensure that all of the data elements are available!
+ */
 static PyObject *
 pyeclib_reconstruct(PyObject *self, PyObject *args)
 {
@@ -911,6 +928,7 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
   int padding = -1;
   int i, j;
   int *decoding_matrix;
+  int *decoding_row;
   int *dm_ids;
   int ret;
 
@@ -1021,31 +1039,47 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
 
   switch (pyeclib_handle->type) {
     case PYECC_RS_CAUCHY_ORIG:
-      decoding_matrix = (int*)malloc(sizeof(int*)*pyeclib_handle->k*pyeclib_handle->k*pyeclib_handle->w*pyeclib_handle->w);
 
-      dm_ids = (int*)malloc(sizeof(int)*pyeclib_handle->k);
-
-      ret = jerasure_make_decoding_bitmatrix(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->bitmatrix, erased, decoding_matrix, dm_ids);
+      if (destination_idx < pyeclib_handle->k) {
+        decoding_matrix = (int*)malloc(sizeof(int*)*pyeclib_handle->k*pyeclib_handle->k*pyeclib_handle->w*pyeclib_handle->w);
+        dm_ids = (int*)malloc(sizeof(int)*pyeclib_handle->k);
+        ret = jerasure_make_decoding_bitmatrix(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->bitmatrix, erased, decoding_matrix, dm_ids);
+        decoding_row = decoding_matrix + (destination_idx*pyeclib_handle->k*pyeclib_handle->w*pyeclib_handle->w);    
+      } else {
+        dm_ids = NULL;
+        decoding_row = pyeclib_handle->bitmatrix + ((destination_idx - pyeclib_handle->k)*pyeclib_handle->k*pyeclib_handle->w*pyeclib_handle->w);    
+        ret = 0;
+      }
       if (ret == 0) {
-        jerasure_bitmatrix_dotprod(pyeclib_handle->k, pyeclib_handle->w, decoding_matrix + (destination_idx*pyeclib_handle->k*pyeclib_handle->w*pyeclib_handle->w), dm_ids, destination_idx, data, parity, blocksize-sizeof(fragment_header_t), PYECC_CAUCHY_PACKETSIZE);
+        jerasure_bitmatrix_dotprod(pyeclib_handle->k, pyeclib_handle->w, decoding_row, dm_ids, destination_idx, data, parity, blocksize-sizeof(fragment_header_t), PYECC_CAUCHY_PACKETSIZE);
       }
 
-      free(decoding_matrix);
+      if (destination_idx < pyeclib_handle->k) {
+        free(decoding_matrix);
+      }
       free(dm_ids);
 
       break;
     case PYECC_RS_VAND:
-      decoding_matrix = (int*)malloc(sizeof(int*)*pyeclib_handle->k*pyeclib_handle->k);
-
-      dm_ids = (int*)malloc(sizeof(int)*pyeclib_handle->k);
   
-      ret = jerasure_make_decoding_matrix(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->matrix, erased, decoding_matrix, dm_ids);
+      if (destination_idx < pyeclib_handle->k) {
+        decoding_matrix = (int*)malloc(sizeof(int*)*pyeclib_handle->k*pyeclib_handle->k);
+        dm_ids = (int*)malloc(sizeof(int)*pyeclib_handle->k);
+        ret = jerasure_make_decoding_matrix(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->matrix, erased, decoding_matrix, dm_ids);
+        decoding_row = decoding_matrix + (destination_idx * pyeclib_handle->k);
+      } else {
+        dm_ids = NULL;
+        decoding_row = pyeclib_handle->matrix + ((destination_idx - pyeclib_handle->k) * pyeclib_handle->k);
+        ret = 0;
+      }
       if (ret == 0) {
-        jerasure_matrix_dotprod(pyeclib_handle->k, pyeclib_handle->w, decoding_matrix + (destination_idx * pyeclib_handle->k), dm_ids, destination_idx, data, parity, blocksize-sizeof(fragment_header_t));
+        jerasure_matrix_dotprod(pyeclib_handle->k, pyeclib_handle->w, decoding_row, dm_ids, destination_idx, data, parity, blocksize-sizeof(fragment_header_t));
       }
 
-      free(decoding_matrix);
-      free(dm_ids);
+      if (destination_idx < pyeclib_handle->k) {
+        free(decoding_matrix);
+        free(dm_ids);
+      }
   
       break;
 
@@ -1218,7 +1252,6 @@ pyeclib_decode(PyObject *self, PyObject *args)
   }
 
   list_of_strips = PyList_New(pyeclib_handle->k + pyeclib_handle->m);
-
 
   /*
    * Create headers for the newly decoded elements

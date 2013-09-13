@@ -8,7 +8,7 @@ module = Extension('pyeclib',
                    library_dirs = ['/usr/lib', '/usr/local/lib'],
                    libraries = ['python2.7', 'Jerasure'],
                    # The extra arguments are for debugging
-                   #extra_compile_args = ['-g', '-O0'],
+                   extra_compile_args = ['-g', '-O0'],
                    extra_link_args=['-static'],
                    sources = ['src/c/pyeclib/pyeclib.c'])
 
