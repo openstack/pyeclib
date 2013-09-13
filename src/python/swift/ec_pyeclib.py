@@ -30,7 +30,7 @@ class ECPyECLibDriver(object):
   def decode(fragment_payloads):
     pass
   
-  def reconstruct(available_fragment_payloads, missing_fragment_indexes):
+  def reconstruct(available_fragment_payloads, missing_fragment_indexes, destination_index):
     pass
 
   def fragments_needed(missing_fragment_indexes):

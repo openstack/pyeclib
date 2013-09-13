@@ -833,7 +833,7 @@ pyeclib_get_required_fragments(PyObject *self, PyObject *args)
   int num_missing;
   int *c_missing_list;
   int i, j;
-  int missing_bm = 0;
+  unsigned long missing_bm = 0;
 
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &missing_list)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
@@ -891,6 +891,199 @@ pyeclib_get_required_fragments(PyObject *self, PyObject *args)
   free(c_missing_list);
 
   return fragment_idx_list;
+}
+
+static PyObject *
+pyeclib_reconstruct(PyObject *self, PyObject *args)
+{
+  PyObject *pyeclib_obj_handle;
+  PyObject *data_list;
+  PyObject *parity_list;
+  PyObject *missing_idx_list;
+  PyObject *reconstructed;
+  int *erased;
+  pyeclib_t *pyeclib_handle;
+  int blocksize;
+  char **data;
+  char **parity;
+  int *missing_idxs;
+  int destination_idx;
+  int padding = -1;
+  int i, j;
+  int *decoding_matrix;
+  int *dm_ids;
+  int ret;
+
+  if (!PyArg_ParseTuple(args, "OOOOii", &pyeclib_obj_handle, &data_list, &parity_list, &missing_idx_list, &destination_idx, &blocksize)) {
+    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
+    return NULL;
+  }
+  
+  pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
+  if (pyeclib_handle == NULL) {
+    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
+    return NULL;
+  }
+
+  if (!PyList_Check(data_list) || !PyList_Check(parity_list) || !PyList_Check(missing_idx_list)) {
+    PyErr_SetString(PyECLibError, "Invalid structure passed in for data, parity and/or missing_idx list");
+    return NULL;
+  }
+
+  if (pyeclib_handle->k != PyList_Size(data_list)) {
+    PyErr_SetString(PyECLibError, "The data list does not have the correct number of entries");
+    return NULL;
+  }
+  
+  if (pyeclib_handle->m != PyList_Size(parity_list)) {
+    PyErr_SetString(PyECLibError, "The parity list does not have the correct number of entries");
+    return NULL;
+  }
+  
+  missing_idxs = (int*)malloc(sizeof(int)*(pyeclib_handle->k+pyeclib_handle->m));
+  for (i = 0; i < (pyeclib_handle->k+pyeclib_handle->m); i++) {
+    PyObject *obj_idx = PyList_GetItem(missing_idx_list, i); 
+    long idx = PyLong_AsLong(obj_idx);
+
+    missing_idxs[i] = (int)idx;  
+
+    if (idx < 0) {
+      break;
+    }
+  }
+
+  data = (char**)malloc(sizeof(char*) * pyeclib_handle->k); 
+  if (data == NULL) {
+    PyErr_SetString(PyECLibError, "Could not allocate memory for data buffers");
+    return NULL;
+  }
+  for (i=0; i < pyeclib_handle->k; i++) {
+    PyObject *tmp_data = PyList_GetItem(data_list, i);
+    Py_ssize_t len = 0;
+    PyString_AsStringAndSize(tmp_data, &(data[i]), &len);
+    if (validate_fragment(data[i]) < 0) {
+      int is_missing = 0;
+      j = 0;
+      while (missing_idxs[j] >= 0) {
+        if (missing_idxs[j] == i) {
+          is_missing = 1;
+          break;
+        }
+        j++;
+      }
+      if (is_missing) {
+        // TODO: Really need a clean way to manage the headers + fragment payload
+        data[i] += sizeof(fragment_header_t);
+        continue;
+      }
+    }
+    /*
+     * Need to determine if the payload of the last data fragment
+     * was padded.  we write the padding to all fragments, so we
+     * get it out of the first valid fragment.
+     */
+    if (padding < 0) {
+      padding = get_fragment_padding(data[i]);
+    }
+    data[i] = get_fragment_data(data[i]);
+  }
+
+  parity = (char**)malloc(sizeof(char*) * pyeclib_handle->m); 
+  if (parity == NULL) {
+    PyErr_SetString(PyECLibError, "Could not allocate memory for parity buffers");
+    return NULL;
+  }
+
+  for (i=0; i < pyeclib_handle->m; i++) {
+    PyObject *tmp_parity = PyList_GetItem(parity_list, i);
+    Py_ssize_t len = 0;
+    PyString_AsStringAndSize(tmp_parity, &(parity[i]), &len);
+    if (validate_fragment(parity[i]) < 0) {
+      int is_missing = 0;
+      j = 0;
+      while (missing_idxs[j] >= 0) {
+        if (missing_idxs[j] == pyeclib_handle->k + i) {
+          is_missing = 1;
+          break;
+        }
+        j++;
+      }
+      if (is_missing) {
+        // TODO: Really need a clean way to manage the headers + fragment payload
+        parity[i] += sizeof(fragment_header_t);
+        continue;
+      }
+    }
+    parity[i] = get_fragment_data(parity[i]);
+  }
+
+  erased = jerasure_erasures_to_erased(pyeclib_handle->k, pyeclib_handle->m, missing_idxs);
+
+  switch (pyeclib_handle->type) {
+    case PYECC_RS_CAUCHY_ORIG:
+      decoding_matrix = (int*)malloc(sizeof(int*)*pyeclib_handle->k*pyeclib_handle->k*pyeclib_handle->w*pyeclib_handle->w);
+
+      dm_ids = (int*)malloc(sizeof(int)*pyeclib_handle->k);
+
+      ret = jerasure_make_decoding_bitmatrix(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->bitmatrix, erased, decoding_matrix, dm_ids);
+      if (ret == 0) {
+        jerasure_bitmatrix_dotprod(pyeclib_handle->k, pyeclib_handle->w, decoding_matrix + (destination_idx*pyeclib_handle->k*pyeclib_handle->w*pyeclib_handle->w), dm_ids, destination_idx, data, parity, blocksize-sizeof(fragment_header_t), PYECC_CAUCHY_PACKETSIZE);
+      }
+
+      free(decoding_matrix);
+      free(dm_ids);
+
+      break;
+    case PYECC_RS_VAND:
+      decoding_matrix = (int*)malloc(sizeof(int*)*pyeclib_handle->k*pyeclib_handle->k);
+
+      dm_ids = (int*)malloc(sizeof(int)*pyeclib_handle->k);
+  
+      ret = jerasure_make_decoding_matrix(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->matrix, erased, decoding_matrix, dm_ids);
+      if (ret == 0) {
+        jerasure_matrix_dotprod(pyeclib_handle->k, pyeclib_handle->w, decoding_matrix + (destination_idx * pyeclib_handle->k), dm_ids, destination_idx, data, parity, blocksize-sizeof(fragment_header_t));
+      }
+
+      free(decoding_matrix);
+      free(dm_ids);
+  
+      break;
+
+    default:
+      ret = -1;
+      break;
+  }
+  
+
+  if (ret == 0) {
+    char *fragment_ptr;
+    if (destination_idx < pyeclib_handle->k) {
+      fragment_ptr = get_fragment_ptr_from_data_novalidate(data[destination_idx]);
+      init_fragment_header(fragment_ptr);
+      set_fragment_idx(fragment_ptr, destination_idx);
+      set_fragment_padding(fragment_ptr, padding);
+      if (destination_idx < (pyeclib_handle->k-1)) {
+        set_fragment_size(fragment_ptr, blocksize-sizeof(fragment_header_t));
+      } else {
+        set_fragment_size(fragment_ptr, blocksize-padding-sizeof(fragment_header_t));
+      }
+    } else {
+      fragment_ptr = get_fragment_ptr_from_data_novalidate(parity[destination_idx - pyeclib_handle->k]);
+      init_fragment_header(fragment_ptr);
+      set_fragment_idx(fragment_ptr, destination_idx);
+      set_fragment_padding(fragment_ptr, padding);
+      set_fragment_size(fragment_ptr, blocksize-sizeof(fragment_header_t));
+    }
+    reconstructed = Py_BuildValue("s#", fragment_ptr, blocksize);
+  } else {
+    reconstructed = NULL;
+  }
+  
+  free(missing_idxs);
+  free(data);
+  free(parity);
+
+  return reconstructed;
 }
 
 static PyObject *
@@ -1077,6 +1270,8 @@ pyeclib_decode(PyObject *self, PyObject *args)
   }
 
   free(missing_idxs);
+  free(data);
+  free(parity);
 
   return list_of_strips;
 }
@@ -1084,7 +1279,8 @@ pyeclib_decode(PyObject *self, PyObject *args)
 static PyMethodDef PyECLibMethods[] = {
     {"init",  pyeclib_init, METH_VARARGS, "Initialize a new erasure encoder/decoder"},
     {"encode",  pyeclib_encode, METH_VARARGS, "Create parity using source data"},
-    {"decode",  pyeclib_decode, METH_VARARGS, "Recover lost data/parity"},
+    {"decode",  pyeclib_decode, METH_VARARGS, "Recover all lost data/parity"},
+    {"reconstruct",  pyeclib_reconstruct, METH_VARARGS, "Recover selective data/parity"},
     {"fragments_to_string", pyeclib_fragments_to_string, METH_VARARGS, "Try to transform a set of fragments into original string without calling the decoder"},
     {"get_fragment_partition", pyeclib_get_fragment_partition, METH_VARARGS, "Parition fragments into data and parity, also returns a list of missing indexes"},
     {"get_required_fragments", pyeclib_get_required_fragments, METH_VARARGS, "Return the fragments required to reconstruct a set of missing fragments"},

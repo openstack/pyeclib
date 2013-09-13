@@ -107,6 +107,49 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations):
 
   return sum / iterations
 
+def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
+  filename = "test_file.%s" % file_size
+  fp = open("test_files/%s" % filename, "r")
+  timer = Timer()
+  sum = 0
+  handle = pyeclib.init(num_data, num_parity, w, type)
+  
+  whole_file_str = fp.read()
+
+  orig_fragments=pyeclib.encode(handle, whole_file_str)
+
+  fragments = orig_fragments[:]
+
+  for i in range(iterations):
+    num_missing = num_parity
+    missing_idxs = []
+    for j in range(num_missing):
+      idx = random.randint(0, num_data-1)
+      missing_idxs.append(idx)
+      fragments[idx] = '\0' * len(fragments[0])
+    missing_idxs.append(-1)
+
+    timer.start()
+    reconstructed_fragment = pyeclib.reconstruct(handle, fragments[:num_data], fragments[num_data:], missing_idxs, missing_idxs[0], len(fragments[0]))
+ 
+    sum += timer.stop_and_return()
+    
+    decoded_fragments = pyeclib.decode(handle, fragments[:num_data], fragments[num_data:], missing_idxs, len(fragments[0]))
+  
+    if orig_fragments[missing_idxs[0]] != reconstructed_fragment:
+      fd_orig = open("orig_fragments", "w")
+      fd_decoded = open("decoded_fragments", "w")
+
+      fd_orig.write(orig_fragments[missing_idxs[0]])
+      fd_decoded.write(reconstructed_fragment)
+      fd_orig.close()
+      fd_decoded.close()
+      print "Fragment %d was not reconstructed!!!" % missing_idxs[0]
+      sys.exit(2)
+
+
+  return sum / iterations
+
 def test_get_fragment_partition(num_data, num_parity, w, type, file_size, iterations):
   filename = "test_file.%s" % file_size
   fp = open("test_files/%s" % filename, "r")
@@ -221,5 +264,10 @@ for (type, w) in types:
     for size_str in sizes:
       avg_time = time_decode(num_datas[i], num_parities[i], w, type, size_str, iterations)
       print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
+  
+  for i in range(len(num_datas)):
+    for size_str in sizes:
+      avg_time = test_reconstruct(num_datas[i], num_parities[i], w, type, size_str, iterations)
+      print "Reconstruct (%s): " % size_str, get_throughput(avg_time, size_str)
 
 cleanup(sizes)
