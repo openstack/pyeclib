@@ -67,33 +67,44 @@ class TestPyECLibDriver(unittest.TestCase):
     pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=3, type="rs_cauchy_orig", w=4))
 
     for pyeclib_driver in pyeclib_drivers:
-	    for file_size in self.file_sizes:
-	      filename = "test_file.%s" % file_size
-	      fp = open("test_files/%s" % filename, "r")
-	
-	      whole_file_str = fp.read()
-	  
-	      orig_fragments=pyeclib_driver.encode(whole_file_str)
-	
-	
-	      for iter in range(self.num_iterations):
-	        num_missing = 2
-	        idxs_to_remove = []
-	        fragments = orig_fragments[:]
-	        for j in range(num_missing):
-	          idx = random.randint(0, 13)
-	          if idx not in idxs_to_remove:
-	            idxs_to_remove.append(idx)
-	        
-	        # Reverse sort the list, so we can always
-	        # remove from the original index 
-	        idxs_to_remove.sort(lambda x,y: y-x)
-	        for idx in idxs_to_remove:
-	          fragments.pop(idx)
-	
-	        decoded_string = pyeclib_driver.decode(fragments)
-	
-	        self.assertTrue(whole_file_str == decoded_string)
+      for file_size in self.file_sizes:
+        filename = "test_file.%s" % file_size
+        fp = open("test_files/%s" % filename, "r")
+  
+        whole_file_str = fp.read()
+    
+        orig_fragments=pyeclib_driver.encode(whole_file_str)
+  
+  
+        for iter in range(self.num_iterations):
+          num_missing = 2
+          idxs_to_remove = []
+          fragments = orig_fragments[:]
+          for j in range(num_missing):
+            idx = random.randint(0, 13)
+            if idx not in idxs_to_remove:
+              idxs_to_remove.append(idx)
+          
+          # Reverse sort the list, so we can always
+          # remove from the original index 
+          idxs_to_remove.sort(lambda x,y: y-x)
+          for idx in idxs_to_remove:
+            fragments.pop(idx)
+  
+          #
+          # Test decoder (send copy, because we want to re-use
+          # fragments for reconstruction)
+          #
+          decoded_string = pyeclib_driver.decode(fragments[:])
+  
+          self.assertTrue(whole_file_str == decoded_string)
+
+          #
+          # Test reconstructor
+          #
+          reconstructed_fragments = pyeclib_driver.reconstruct(fragments, idxs_to_remove)
+
+          self.assertTrue(reconstructed_fragments[0] == orig_fragments[idxs_to_remove[0]])
 
 if __name__ == '__main__':
     unittest.main()

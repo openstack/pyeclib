@@ -926,6 +926,7 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
   int *missing_idxs;
   int destination_idx;
   int padding = -1;
+  int missing_size;
   int i, j;
   int *decoding_matrix;
   int *decoding_row;
@@ -958,17 +959,17 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
     return NULL;
   }
   
-  missing_idxs = (int*)malloc(sizeof(int)*(pyeclib_handle->k+pyeclib_handle->m));
-  for (i = 0; i < (pyeclib_handle->k+pyeclib_handle->m); i++) {
+  missing_size = (int)PyList_Size(missing_idx_list);
+  
+  missing_idxs = (int*)malloc(sizeof(int)*(missing_size+1));
+  for (i = 0; i < missing_size; i++) {
     PyObject *obj_idx = PyList_GetItem(missing_idx_list, i); 
     long idx = PyLong_AsLong(obj_idx);
 
     missing_idxs[i] = (int)idx;  
-
-    if (idx < 0) {
-      break;
-    }
   }
+
+  missing_idxs[i] = -1;
 
   data = (char**)malloc(sizeof(char*) * pyeclib_handle->k); 
   if (data == NULL) {

@@ -47,12 +47,15 @@ class ECPyECLibDriver(object):
     # The parity cannot be reconstructed until
     # after all data is reconstructed
     indexes_to_reconstruct.sort()
+    _indexes_to_reconstruct = indexes_to_reconstruct[:]
 
-    while len(indexes_to_reconstruct) > 0:
-      index = indexes_to_reconstruct.pop(0)
+    while len(_indexes_to_reconstruct) > 0:
+      index = _indexes_to_reconstruct.pop(0)
       (data_frags, parity_frags, missing_idxs) = pyeclib.get_fragment_partition(self.handle, fragment_payloads)
       reconstructed = pyeclib.reconstruct(self.handle, data_frags, parity_frags, missing_idxs, index, len(data_frags[0]))
-      fragment_payloads[index] = reconstructed
+      reconstructed_bytes.append(reconstructed)
+
+    return reconstructed_bytes
 
   def fragments_needed(self, missing_fragment_indexes):
     return pyeclib.get_required_fragments(missing_fragment_indexes) 
