@@ -60,7 +60,7 @@ class ECStripingDriver(object):
 
     return ret_string
   
-  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes, destination_index):
+  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes):
     """
     We cannot reconstruct a fragment using other fragments.  This means that
     reconstruction means all fragments must be specified, otherwise we cannot

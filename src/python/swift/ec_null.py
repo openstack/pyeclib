@@ -9,7 +9,7 @@ class ECNullDriver(object):
   def decode(self, fragment_payloads):
     pass
   
-  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes, destination_index):
+  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes):
     pass
 
   def fragments_needed(self, missing_fragment_indexes):
