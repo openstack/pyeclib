@@ -84,7 +84,6 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations):
       idx = random.randint(0, (num_data+num_parity)-1)
       missing_idxs.append(idx)
       fragments[idx] = '\0' * len(fragments[0])
-    missing_idxs.append(-1)
 
     timer.start()
     decoded_fragments = pyeclib.decode(handle, fragments[:num_data], fragments[num_data:], missing_idxs, len(fragments[0]))
@@ -127,7 +126,6 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
       idx = random.randint(0, num_data+num_parity-1)
       missing_idxs.append(idx)
       fragments[idx] = '\0' * len(fragments[0])
-    missing_idxs.append(-1)
 
     timer.start()
     reconstructed_fragment = pyeclib.reconstruct(handle, fragments[:num_data], fragments[num_data:], missing_idxs, missing_idxs[0], len(fragments[0]))
@@ -176,7 +174,6 @@ def test_get_fragment_partition(num_data, num_parity, w, type, file_size, iterat
       print "Missing idx mismatch in test_get_fragment_partition: %s != %s\n" % (missing_fragment_idxs, missing_idxs)  
       sys.exit()
 
-    missing_idxs.append(-1)
 
     decoded_fragments = pyeclib.decode(handle, data_frags, parity_frags, missing_idxs, len(data_frags[0]))
 
@@ -193,7 +190,7 @@ def test_fragments_to_string(num_data, num_parity, w, type, file_size):
   concat_str = pyeclib.fragments_to_string(handle, fragments[:num_data])
 
   if concat_str != whole_file_str:
-    print "String does not equal the original string (len(orig) = %d, len(new) = %d\n" % (whole_file_str, concat_str)
+    print "String does not equal the original string (len(orig) = %d, len(new) = %d\n" % (len(whole_file_str), len(concat_str))
 
 
 def test_get_required_fragments(num_data, num_parity, w, type):
