@@ -238,6 +238,9 @@ void xor_hd_decode(xor_code_t *code_desc, char **data, char **parity, int *missi
         free(missing_parity);
       }
       break;
+    case FAIL_PATTERN_GE_HD: 
+    default:
+      break;
   }
 
   return;

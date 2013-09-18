@@ -64,7 +64,7 @@ def time_encode(num_data, num_parity, w, type, file_size, iterations):
 
   return sum / iterations
 
-def time_decode(num_data, num_parity, w, type, file_size, iterations):
+def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
   filename = "test_file.%s" % file_size
   fp = open("test_files/%s" % filename, "r")
   timer = Timer()
@@ -78,16 +78,18 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations):
   fragments = orig_fragments[:]
 
   for i in range(iterations):
-    num_missing = num_parity
+    fragments = orig_fragments[:]
     missing_idxs = []
+    num_missing = hd-1
     for j in range(num_missing):
       idx = random.randint(0, (num_data+num_parity)-1)
+      while idx in missing_idxs:
+        idx = random.randint(0, (num_data+num_parity)-1)
       missing_idxs.append(idx)
       fragments[idx] = '\0' * len(fragments[0])
 
     timer.start()
     decoded_fragments = pyeclib.decode(handle, fragments[:num_data], fragments[num_data:], missing_idxs, len(fragments[0]))
- 
     sum += timer.stop_and_return()
   
     for j in range(num_data+num_parity):
@@ -120,10 +122,13 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
   fragments = orig_fragments[:]
 
   for i in range(iterations):
+    fragments = orig_fragments[:]
     num_missing = 1
     missing_idxs = []
     for j in range(num_missing):
-      idx = random.randint(0, num_data+num_parity-1)
+      idx = random.randint(0, (num_data+num_parity)-1)
+      while idx in missing_idxs:
+        idx = random.randint(0, (num_data+num_parity)-1)
       missing_idxs.append(idx)
       fragments[idx] = '\0' * len(fragments[0])
 
@@ -232,13 +237,14 @@ num_datas = [12, 12, 12]
 num_parities = [2, 3, 4]
 iterations=100
 
-types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
+rs_types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
+xor_types = [("xor_hd_4", 12, 6)]
 
 sizes = ["100-K"]
 
 setup(sizes)
 
-for (type, w) in types:
+for (type, w) in rs_types:
   print "Running tests for %s w=%d\n" % (type, w)
   
   for i in range(len(num_datas)):
@@ -259,12 +265,23 @@ for (type, w) in types:
 
   for i in range(len(num_datas)):
     for size_str in sizes:
-      avg_time = time_decode(num_datas[i], num_parities[i], w, type, size_str, iterations)
+      avg_time = time_decode(num_datas[i], num_parities[i], w, type, size_str, iterations, num_parities[i]+1)
       print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
   
   for i in range(len(num_datas)):
     for size_str in sizes:
       avg_time = test_reconstruct(num_datas[i], num_parities[i], w, type, size_str, iterations)
       print "Reconstruct (%s): " % size_str, get_throughput(avg_time, size_str)
+
+for (type, k, m) in xor_types:
+  print "Running tests for %s k=%d, m=%d\n" % (type, k, m)
+
+  for size_str in sizes:
+    avg_time = time_encode(k, m, 0, type, size_str, iterations)
+    print "Encode (%s): " % size_str, get_throughput(avg_time, size_str)
+  
+  for size_str in sizes:
+    avg_time = time_decode(k, m, 0, type, size_str, iterations, 3)
+    print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
 
 cleanup(sizes)

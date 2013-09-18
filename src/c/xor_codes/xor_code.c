@@ -4,6 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <xor_code.h>
+#include<common.h>
 
 const int g_bit_lookup[] = {0x1, 0x2, 0x4, 0x8,
                                  0x10, 0x20, 0x40, 0x80,
@@ -87,6 +88,9 @@ failure_pattern_t get_failure_pattern(xor_code_t *code_desc, int *missing_idxs)
       case FAIL_PATTERN_0D_3P:
         pattern = FAIL_PATTERN_GE_HD; 
         break;
+      case FAIL_PATTERN_GE_HD:
+      default:
+        break;
     } 
     if (pattern == FAIL_PATTERN_GE_HD) {
       break;
@@ -95,26 +99,6 @@ failure_pattern_t get_failure_pattern(xor_code_t *code_desc, int *missing_idxs)
   }
 
   return pattern; 
-}
-
-void *aligned_malloc( size_t size, int align )
-{
-    void *mem = malloc( size + (align-1) + sizeof(void*) );
-    char *amem;
-    if (!mem) {
-      return NULL;
-    }
-
-    amem = ((char*)mem) + sizeof(void*);
-    amem += align - ((unsigned long)amem & (align - 1));
-
-    ((void**)amem)[-1] = mem;
-    return amem;
-}
-
-void aligned_free( void *mem )
-{
-    free( ((void**)mem)[-1] );
 }
 
 void fast_memcpy(char *dst, char *src, int size)
@@ -136,7 +120,7 @@ void xor_bufs_and_store(char *buf1, char *buf2, int blocksize)
   int i;
   __m128i *_buf1 = (__m128i*)buf1; 
   __m128i *_buf2 = (__m128i*)buf2; 
- 
+
   /*
    * XOR aligned region using 128-bit XOR
    */

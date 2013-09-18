@@ -1,4 +1,5 @@
 #include<Python.h>
+#include<xor_code.h>
 #include<reed_sol.h>
 #include<cauchy.h>
 #include<jerasure.h>
@@ -6,6 +7,7 @@
 #include<galois.h>
 #include<math.h>
 #include<pyeclib.h>
+#include<common.h>
 
 /*
  * TODO (kmg): Cauchy restriction (k*w*PACKETSIZE)  < data_len / k, otherwise you could
@@ -115,7 +117,14 @@ char *alloc_fragment_buffer(int size)
 
   size += sizeof(fragment_header_t);
 
-  buf = (char*)malloc(size);
+  /*
+   * Ensure all memory is aligned to
+   * 16-byte boundaries to support 
+   * 128-bit operations
+   */
+  if (posix_memalign((void**)&buf, 16, size) < 0) {
+    return NULL;
+  }
   bzero(buf, size);
 
   header = (fragment_header_t*)buf;
@@ -297,7 +306,6 @@ static void pyeclib_destructor(PyObject *obj)
 /*
  * Buffers for data, parity and missing_idxs
  * must be alloc'd by the caller.
- *
  */
 static int get_decoding_info(pyeclib_t *pyeclib_handle,
                              PyObject  *data_list, 
@@ -306,11 +314,13 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
                              char      **data,
                              char      **parity,
                              int       *missing_idxs,
-                             int       *stripe_padding)
+                             int       *stripe_padding,
+                             int       fragment_size)
 {
-  int i, j;
+  int i;
   int data_size, parity_size, missing_size;
-  int padding;
+  int padding = -1;
+  unsigned long long missing_bm;
 
   data_size = (int)PyList_Size(data_list);
   parity_size = (int)PyList_Size(parity_list);
@@ -332,40 +342,54 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
 
     missing_idxs[i] = (int)idx;
   }
-
   missing_idxs[i] = -1; 
+
+  missing_bm = convert_list_to_bitmap(missing_idxs);
+
+  /*
+   * Determine if each fragment is:
+   * 1.) Alloc'd: if not, alloc new buffer (for missing fragments)
+   * 2.) Aligned to 16-byte boundaries: if not, alloc a new buffer
+   *     memcpy the contents and free the old buffer 
+   */
+  for (i = 0; i < missing_size; i++) {
+    if (missing_idxs[i] < pyeclib_handle->k) {
+      // TODO Ugh!!!  Kinda crappy that we have to subtract the header size
+      // out here...  Make this better!
+      data[missing_idxs[i]] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+    } else {
+      parity[missing_idxs[i] - pyeclib_handle->k] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+    }
+  }
 
   for (i=0; i < pyeclib_handle->k; i++) {
     PyObject *tmp_data = PyList_GetItem(data_list, i);
     Py_ssize_t len = 0;
     PyString_AsStringAndSize(tmp_data, &(data[i]), &len);
-    if (validate_fragment(data[i]) < 0) {
-      int is_missing = 0;
-      j = 0;
-      while (missing_idxs[j] >= 0) {
-        if (missing_idxs[j] == i) {
-          is_missing = 1;
-          break;
-        }
-        j++;
-      }
-      if (is_missing) {
-        // TODO: Really need a clean way to manage the headers + fragment payload
-        data[i] += sizeof(fragment_header_t);
-        continue;
-      }
-    }
+
     /*
      * Need to determine if the payload of the last data fragment
      * was padded.  we write the stripe padding to all fragments, so we
      * get it out of the first valid fragment.
      */
-    if (padding < 0) {
+    if (((missing_bm & (1 << i)) == 0) && padding < 0) {
       padding = get_stripe_padding(data[i]);
       if (padding < 0) {
         return -1;
       }
     }
+
+    /*
+     * Replace with aligned buffer, if the buffer was not 
+     * aligned.  DO NOT FREE: the python GC should free
+     * the original when cleaning up 'data_list'
+     */
+    if (!is_addr_aligned((unsigned long)data[i], 16)) {
+      char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      memcpy(tmp_buf, data[i], fragment_size);
+      data[i] = tmp_buf;
+    } 
+
     data[i] = get_fragment_data(data[i]);
     if (data[i] == NULL) {
       return -1;
@@ -376,22 +400,18 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
     PyObject *tmp_parity = PyList_GetItem(parity_list, i);
     Py_ssize_t len = 0;
     PyString_AsStringAndSize(tmp_parity, &(parity[i]), &len);
-    if (validate_fragment(parity[i]) < 0) {
-      int is_missing = 0;
-      j = 0;
-      while (missing_idxs[j] >= 0) {
-        if (missing_idxs[j] == pyeclib_handle->k + i) {
-          is_missing = 1;
-          break;
-        }
-        j++;
-      }
-      if (is_missing) {
-        // TODO: Really need a clean way to manage the headers + fragment payload
-        parity[i] += sizeof(fragment_header_t);
-        continue;
-      }
-    }
+    
+    /*
+     * Replace with aligned buffer, if the buffer was not 
+     * aligned.  DO NOT FREE: the python GC should free
+     * the original when cleaning up 'data_list'
+     */
+    if (!is_addr_aligned((unsigned long)parity[i], 16)) {
+      char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      memcpy(tmp_buf, parity[i], fragment_size);
+      parity[i] = tmp_buf;
+    } 
+
     parity[i] = get_fragment_data(parity[i]);
     if (parity[i] == NULL) {
       return -1;
@@ -410,9 +430,6 @@ pyeclib_init(PyObject *self, PyObject *args)
   int k, m, w;
   const char *type_str;
   pyeclib_type_t type;
-  int *matrix;
-  int *bitmatrix;
-  int **schedule;
 
   if (!PyArg_ParseTuple(args, "iiis", &k, &m, &w, &type_str)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.init");
@@ -430,23 +447,6 @@ pyeclib_init(PyObject *self, PyObject *args)
     PyErr_SetString(PyECLibError, "Invalid args passed to pyeclib.init");
     return NULL;
   }
-
-  switch (type) {
-    case PYECC_RS_CAUCHY_ORIG:
-      matrix = cauchy_original_coding_matrix(k, m, w);
-      bitmatrix = jerasure_matrix_to_bitmatrix(k, m, w, matrix);
-      schedule = jerasure_smart_bitmatrix_to_schedule(k, m, w, bitmatrix);
-      break;
-    case PYECC_RS_VAND:
-    default:
-      matrix = reed_sol_vandermonde_coding_matrix(k, m, w);
-      break;
-  }
-
-  if (matrix == NULL) {
-    PyErr_SetString(PyECLibError, "Could not create a generator matrix in pyeclib.init");
-    return NULL;
-  }
   
   pyeclib_handle = (pyeclib_t*)malloc(sizeof(pyeclib_t));
   if (pyeclib_handle == NULL) {
@@ -454,15 +454,29 @@ pyeclib_init(PyObject *self, PyObject *args)
     return NULL;
   }
 
+  memset(pyeclib_handle, 0, sizeof(pyeclib_t));
+  
   pyeclib_handle->k = k;
   pyeclib_handle->m = m;
   pyeclib_handle->w = w;
-  pyeclib_handle->matrix = matrix;
   pyeclib_handle->type = type;
 
-  if (type == PYECC_RS_CAUCHY_ORIG) {
-    pyeclib_handle->bitmatrix = bitmatrix;
-    pyeclib_handle->schedule = schedule;
+  switch (type) {
+    case PYECC_RS_CAUCHY_ORIG:
+      pyeclib_handle->matrix = cauchy_original_coding_matrix(k, m, w);
+      pyeclib_handle->bitmatrix = jerasure_matrix_to_bitmatrix(k, m, w, pyeclib_handle->matrix);
+      pyeclib_handle->schedule = jerasure_smart_bitmatrix_to_schedule(k, m, w, pyeclib_handle->bitmatrix);
+      break;
+    case PYECC_XOR_HD_3:
+      pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 3);
+      break;
+    case PYECC_XOR_HD_4:
+      pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 4);
+      break;
+    case PYECC_RS_VAND:
+    default:
+      pyeclib_handle->matrix = reed_sol_vandermonde_coding_matrix(k, m, w);
+      break;
   }
 
   pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME, pyeclib_destructor);
@@ -567,10 +581,12 @@ pyeclib_encode(PyObject *self, PyObject *args)
 
   switch (pyeclib_handle->type) {
     case PYECC_RS_CAUCHY_ORIG:
-      {
-        jerasure_bitmatrix_encode(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->bitmatrix, data_to_encode, encoded_parity, blocksize, PYECC_CAUCHY_PACKETSIZE);
-        break;
-      }
+      jerasure_bitmatrix_encode(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->bitmatrix, data_to_encode, encoded_parity, blocksize, PYECC_CAUCHY_PACKETSIZE);
+      break;
+    case PYECC_XOR_HD_3:
+    case PYECC_XOR_HD_4:
+      pyeclib_handle->xor_code_desc->encode(pyeclib_handle->xor_code_desc, data_to_encode, encoded_parity, blocksize);
+      break;
     case PYECC_RS_VAND:
     default:
       jerasure_matrix_encode(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->matrix, data_to_encode, encoded_parity, blocksize);
@@ -1050,7 +1066,7 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding)) {
+  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding, fragment_size)) {
     PyErr_SetString(PyECLibError, "Could not extract adequate decoding info from data, parity and missing lists");
     reconstructed = NULL;
     goto out; 
@@ -1208,17 +1224,19 @@ pyeclib_decode(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding)) {
+  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding, fragment_size)) {
     PyErr_SetString(PyECLibError, "Could not extract adequate decoding info from data, parity and missing lists");
     return NULL;
   }
 
   switch (pyeclib_handle->type) {
     case PYECC_RS_CAUCHY_ORIG:
-      {
-        jerasure_bitmatrix_decode(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->bitmatrix, 0, missing_idxs, data, parity, blocksize, PYECC_CAUCHY_PACKETSIZE);
-        break;
-      }
+      jerasure_bitmatrix_decode(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->bitmatrix, 0, missing_idxs, data, parity, blocksize, PYECC_CAUCHY_PACKETSIZE);
+      break;
+    case PYECC_XOR_HD_3:
+    case PYECC_XOR_HD_4:
+      pyeclib_handle->xor_code_desc->decode(pyeclib_handle->xor_code_desc, data, parity, missing_idxs, blocksize, 1);
+      break;
     case PYECC_RS_VAND:
     default:
       jerasure_matrix_decode(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->matrix, 1, missing_idxs, data, parity, blocksize);
