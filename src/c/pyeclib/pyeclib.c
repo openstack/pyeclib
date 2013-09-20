@@ -23,16 +23,10 @@
 /*
  * TODO (kmg): Need to clean-up all of the reference counting related stuff.  That is, INCREF before 
  * calling a function that will "steal" a reference and create functions to DECREF stuff.
- *
  */
 
 /*
- * Yet Another TODO (kmg): Make sure that each fragment is symbol-aligned.  The unit tests caught a case 
- * where the buffer was not symbol aligned in GF(2^16).
- */
-
-/*
- * All of the 'get_fragment_*' functions need better handling!!!!!!  
+ * Make the buffer alignment code in 'encode' generic and simple...  It sucks right now.
  */
 
 static PyObject *PyECLibError;
@@ -526,10 +520,19 @@ pyeclib_encode(PyObject *self, PyObject *args)
     stripe_padding = aligned_data_len - data_len;
 
   } else {
+    int num_words, fragment_padding;
+
     /*
      * Compute the blocksize 
      */
     blocksize = (int)ceill((double)data_len / pyeclib_handle->k);
+
+    num_words = (int)ceill((double)blocksize / PYECLIB_WORD_SIZE(pyeclib_handle->type));
+      
+    fragment_padding = (num_words * PYECLIB_WORD_SIZE(pyeclib_handle->type)) - blocksize;
+
+    blocksize += fragment_padding;
+
     /*
      * Since the buffer is probably not aligned, 
      * the last block will probably need stripe padding

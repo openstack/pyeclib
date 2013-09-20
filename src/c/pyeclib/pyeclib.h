@@ -4,7 +4,7 @@
 typedef enum { PYECC_RS_VAND, PYECC_RS_CAUCHY_ORIG, PYECC_XOR_HD_4, PYECC_XOR_HD_3, PYECC_NUM_TYPES, PYECC_NOT_FOUND } pyeclib_type_t;
 
 const char *pyeclib_type_str[] = { "rs_vand", "rs_cauchy_orig", "xor_hd_4", "xor_hd_3" };
-const int pyeclib_type_word_size_bytes[] = { 2, sizeof(int) };
+const int pyeclib_type_word_size_bytes[] = { sizeof(long), sizeof(long), sizeof(long), sizeof(long) };
 
 #define PYECC_FLAGS_MASK          0x1
 #define PYECC_FLAGS_READ_VERIFY   0x1
