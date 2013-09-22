@@ -309,12 +309,14 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
                              char      **parity,
                              int       *missing_idxs,
                              int       *stripe_padding,
-                             int       fragment_size)
+                             int       fragment_size,
+                             unsigned long long *realloc_bm)
 {
   int i;
   int data_size, parity_size, missing_size;
   int padding = -1;
   unsigned long long missing_bm;
+  int needs_addr_alignment = PYECLIB_NEEDS_ADDR_ALIGNMENT(pyeclib_handle->type);
 
   data_size = (int)PyList_Size(data_list);
   parity_size = (int)PyList_Size(parity_list);
@@ -350,9 +352,13 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
     if (missing_idxs[i] < pyeclib_handle->k) {
       // TODO Ugh!!!  Kinda crappy that we have to subtract the header size
       // out here...  Make this better!
-      data[missing_idxs[i]] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      if (needs_addr_alignment && !data[missing_idxs[i]]) {
+        data[missing_idxs[i]] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      }
     } else {
-      parity[missing_idxs[i] - pyeclib_handle->k] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      if (needs_addr_alignment && !data[missing_idxs[i]]) {
+        parity[missing_idxs[i] - pyeclib_handle->k] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      }
     }
   }
 
@@ -378,10 +384,11 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
      * aligned.  DO NOT FREE: the python GC should free
      * the original when cleaning up 'data_list'
      */
-    if (!is_addr_aligned((unsigned long)data[i], 16)) {
+    if (needs_addr_alignment && !is_addr_aligned((unsigned long)data[i], 16)) {
       char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
       memcpy(tmp_buf, data[i], fragment_size);
       data[i] = tmp_buf;
+      *realloc_bm = *realloc_bm | (i << 1);
     } 
 
     data[i] = get_fragment_data(data[i]);
@@ -400,12 +407,13 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
      * aligned.  DO NOT FREE: the python GC should free
      * the original when cleaning up 'data_list'
      */
-    if (!is_addr_aligned((unsigned long)parity[i], 16)) {
+    if (needs_addr_alignment && !is_addr_aligned((unsigned long)parity[i], 16)) {
       char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
       memcpy(tmp_buf, parity[i], fragment_size);
       parity[i] = tmp_buf;
+      *realloc_bm = *realloc_bm | ((pyeclib_handle->k + i) << 1);
     } 
-
+    
     parity[i] = get_fragment_data(parity[i]);
     if (parity[i] == NULL) {
       return -1;
@@ -875,7 +883,7 @@ pyeclib_get_fragment_partition(PyObject *self, PyObject *args)
       memset(tmp_data, 0, fragment_size);
       zero_string = Py_BuildValue("s#", tmp_data, fragment_size);
       Py_INCREF(zero_string);
-      PyList_SET_ITEM(data_list, i, Py_BuildValue("s#", tmp_data, fragment_size));
+      PyList_SET_ITEM(data_list, i, zero_string);
       free(tmp_data);
     }
   }
@@ -1012,6 +1020,7 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
   char **parity;
   int *missing_idxs;
   int destination_idx;
+  unsigned long long realloc_bm = 0; // Identifies symbols that had to be allocated for alignment 
   int stripe_padding = -1;
   int missing_size;
   int *decoding_matrix;
@@ -1069,7 +1078,7 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding, fragment_size)) {
+  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding, fragment_size, &realloc_bm)) {
     PyErr_SetString(PyECLibError, "Could not extract adequate decoding info from data, parity and missing lists");
     reconstructed = NULL;
     goto out; 
@@ -1173,6 +1182,7 @@ pyeclib_decode(PyObject *self, PyObject *args)
   pyeclib_t *pyeclib_handle;
   int fragment_size;
   int blocksize;
+  unsigned long long realloc_bm = 0; // Identifies symbols that had to be allocated for alignment 
   char **data;
   char **parity;
   int *missing_idxs;
@@ -1227,7 +1237,7 @@ pyeclib_decode(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding, fragment_size)) {
+  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding, fragment_size, &realloc_bm)) {
     PyErr_SetString(PyECLibError, "Could not extract adequate decoding info from data, parity and missing lists");
     return NULL;
   }
@@ -1288,6 +1298,9 @@ pyeclib_decode(PyObject *self, PyObject *args)
   for (i=0; i < pyeclib_handle->k; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(data[i]);
     PyList_SET_ITEM(list_of_strips, i, Py_BuildValue("s#", fragment_ptr, fragment_size));
+    if (realloc_bm & (i << 1)) {
+      free(fragment_ptr);
+    }
   }
   /*
    * Fill in the parity fragments
@@ -1295,6 +1308,9 @@ pyeclib_decode(PyObject *self, PyObject *args)
   for (i=0; i < pyeclib_handle->m; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(parity[i]);
     PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, Py_BuildValue("s#", fragment_ptr, fragment_size));
+    if (realloc_bm & ((i + pyeclib_handle->k) << 1)) {
+      free(fragment_ptr);
+    }
   }
 
   free(missing_idxs);

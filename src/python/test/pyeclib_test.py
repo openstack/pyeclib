@@ -73,9 +73,9 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
 
   whole_file_str = fp.read()
 
-  orig_fragments=pyeclib.encode(handle, whole_file_str)
+  fragments=pyeclib.encode(handle, whole_file_str)
 
-  fragments = orig_fragments[:]
+  orig_fragments = fragments[:]
 
   for i in range(iterations):
     missing_idxs = []
@@ -92,7 +92,7 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
     sum += timer.stop_and_return()
     
     fragments = decoded_fragments
-  
+
     for j in range(num_data+num_parity):
       if orig_fragments[j] != decoded_fragments[j]:
         fd_orig = open("orig_fragments", "w")
@@ -105,6 +105,8 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
         fd_decoded.close()
         print "Fragment %d was not reconstructed!!!" % j
         sys.exit(2)
+
+    decoded_fragments = None
 
 
   return sum / iterations
@@ -241,7 +243,7 @@ iterations=100
 rs_types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
 xor_types = [("xor_hd_4", 12, 6)]
 
-sizes = ["303-K"]
+sizes = ["101-K", "202-K", "303-K"]
 
 setup(sizes)
 
