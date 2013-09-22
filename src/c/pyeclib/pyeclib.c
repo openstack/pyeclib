@@ -348,24 +348,27 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
    * 2.) Aligned to 16-byte boundaries: if not, alloc a new buffer
    *     memcpy the contents and free the old buffer 
    */
-  for (i = 0; i < missing_size; i++) {
-    if (missing_idxs[i] < pyeclib_handle->k) {
-      // TODO Ugh!!!  Kinda crappy that we have to subtract the header size
-      // out here...  Make this better!
-      if (needs_addr_alignment && !data[missing_idxs[i]]) {
-        data[missing_idxs[i]] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
-      }
-    } else {
-      if (needs_addr_alignment && !data[missing_idxs[i]]) {
-        parity[missing_idxs[i] - pyeclib_handle->k] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
-      }
-    }
-  }
-
   for (i=0; i < pyeclib_handle->k; i++) {
     PyObject *tmp_data = PyList_GetItem(data_list, i);
     Py_ssize_t len = 0;
     PyString_AsStringAndSize(tmp_data, &(data[i]), &len);
+    
+    /*
+     * Replace with aligned buffer, if the buffer was not 
+     * aligned.  DO NOT FREE: the python GC should free
+     * the original when cleaning up 'data_list'
+     */
+    if (len == 0 || !data[i]) {
+      // Missing item has not been allocated...  Allocate it
+      data[i] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      *realloc_bm = *realloc_bm | (1 << i);
+    } else if ((needs_addr_alignment && !is_addr_aligned((unsigned long)data[i], 16))) {
+      char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      memcpy(tmp_buf, data[i], fragment_size);
+      data[i] = tmp_buf;
+      *realloc_bm = *realloc_bm | (1 << i);
+    }
+
 
     /*
      * Need to determine if the payload of the last data fragment
@@ -378,18 +381,6 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
         return -1;
       }
     }
-
-    /*
-     * Replace with aligned buffer, if the buffer was not 
-     * aligned.  DO NOT FREE: the python GC should free
-     * the original when cleaning up 'data_list'
-     */
-    if (needs_addr_alignment && !is_addr_aligned((unsigned long)data[i], 16)) {
-      char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
-      memcpy(tmp_buf, data[i], fragment_size);
-      data[i] = tmp_buf;
-      *realloc_bm = *realloc_bm | (i << 1);
-    } 
 
     data[i] = get_fragment_data(data[i]);
     if (data[i] == NULL) {
@@ -407,11 +398,15 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
      * aligned.  DO NOT FREE: the python GC should free
      * the original when cleaning up 'data_list'
      */
-    if (needs_addr_alignment && !is_addr_aligned((unsigned long)parity[i], 16)) {
+    if (len == 0 || !parity[i]) {
+      // Missing item has not been allocated...  Allocate it
+      parity[i] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      *realloc_bm = *realloc_bm | (1 << (pyeclib_handle->k + i));
+    } else if (needs_addr_alignment && !is_addr_aligned((unsigned long)parity[i], 16)) {
       char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
       memcpy(tmp_buf, parity[i], fragment_size);
       parity[i] = tmp_buf;
-      *realloc_bm = *realloc_bm | ((pyeclib_handle->k + i) << 1);
+      *realloc_bm = *realloc_bm | (1 << (pyeclib_handle->k + i));
     } 
     
     parity[i] = get_fragment_data(parity[i]);
@@ -875,6 +870,8 @@ pyeclib_get_fragment_partition(PyObject *self, PyObject *args)
    */
   for (i=0; i < pyeclib_handle->k; i++) {
     if (data[i] != NULL) {
+      // This is a borrowed reference, so increment the ref count
+      // before inserting into list
       Py_INCREF(data[i]);
       PyList_SET_ITEM(data_list, i, data[i]);
     } else {
@@ -882,7 +879,7 @@ pyeclib_get_fragment_partition(PyObject *self, PyObject *args)
       PyObject *zero_string;
       memset(tmp_data, 0, fragment_size);
       zero_string = Py_BuildValue("s#", tmp_data, fragment_size);
-      Py_INCREF(zero_string);
+      //Py_INCREF(zero_string);
       PyList_SET_ITEM(data_list, i, zero_string);
       free(tmp_data);
     }
@@ -895,14 +892,16 @@ pyeclib_get_fragment_partition(PyObject *self, PyObject *args)
    */
   for (i=0; i < pyeclib_handle->m; i++) {
     if (parity[i] != NULL) {
+      // This is a borrowed reference, so increment the ref count
+      // before inserting into list
       Py_INCREF(parity[i]);
       PyList_SET_ITEM(parity_list, i, parity[i]);
     } else {
       char *tmp_parity = (char*)malloc(fragment_size);
       PyObject *zero_string;
-      zero_string = Py_BuildValue("s#", tmp_parity, fragment_size);
-      Py_INCREF(zero_string);
       memset(tmp_parity, 0, fragment_size);
+      zero_string = Py_BuildValue("s#", tmp_parity, fragment_size);
+      //Py_INCREF(zero_string);
       PyList_SET_ITEM(parity_list, i, zero_string);
       free(tmp_parity);
     }
@@ -926,7 +925,7 @@ pyeclib_get_fragment_partition(PyObject *self, PyObject *args)
   PyTuple_SetItem(return_lists, 1, parity_list);
   PyTuple_SetItem(return_lists, 2, missing_list);
 
-  Py_INCREF(return_lists);
+  //Py_INCREF(return_lists);
 
   return return_lists;
 }
@@ -1298,7 +1297,7 @@ pyeclib_decode(PyObject *self, PyObject *args)
   for (i=0; i < pyeclib_handle->k; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(data[i]);
     PyList_SET_ITEM(list_of_strips, i, Py_BuildValue("s#", fragment_ptr, fragment_size));
-    if (realloc_bm & (i << 1)) {
+    if (realloc_bm & (1 << i)) {
       free(fragment_ptr);
     }
   }
@@ -1308,7 +1307,7 @@ pyeclib_decode(PyObject *self, PyObject *args)
   for (i=0; i < pyeclib_handle->m; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(parity[i]);
     PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, Py_BuildValue("s#", fragment_ptr, fragment_size));
-    if (realloc_bm & ((i + pyeclib_handle->k) << 1)) {
+    if (realloc_bm & (1 << (i + pyeclib_handle->k))) {
       free(fragment_ptr);
     }
   }
