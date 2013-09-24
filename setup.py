@@ -12,7 +12,7 @@ module = Extension('pyeclib',
                    libraries = ['python2.7', 'Jerasure'],
                    # The extra arguments are for debugging
                    #extra_compile_args = ['-g', '-O0', '-msse3'],
-                    extra_compile_args = ['-msse3'],
+                   extra_compile_args = ['-msse3'],
                    extra_link_args=['-static'],
                    sources = ['src/c/pyeclib/pyeclib.c', 'src/c/xor_codes/xor_code.c', 'src/c/xor_codes/xor_hd_code.c', 'src/c/common.c'])
 

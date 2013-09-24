@@ -199,6 +199,71 @@ int * get_missing_data(xor_code_t *code_desc, int *missing_idxs)
   return missing_data;
 }
 
+/*
+ * Reconstruct a single missing symbol, given other symbols may be missing
+ */
+void xor_reconstruct_one(xor_code_t *code_desc, char **data, char **parity, int *missing_idxs, int index_to_reconstruct, int blocksize)
+{
+  int *missing_data = get_missing_data(code_desc, missing_idxs);
+  int *missing_parity = get_missing_parity(code_desc, missing_idxs);
+  int i;
+
+  // If it is a data symbol, we need to figure out
+  // what data+parity symbols are needed to reconstruct
+  // If there is not at least one parity equation with
+  // one missing data element (the index to resonstruct),
+  // just call the underlying decode function
+  if (index_to_reconstruct < code_desc->k) {
+    int connected_parity_idx = index_of_connected_parity(code_desc, index_to_reconstruct, missing_parity, missing_data);
+
+    if (connected_parity_idx >= 0) {
+      // Can do a cheap reoncstruction!
+      int relative_parity_idx = connected_parity_idx - code_desc->k;
+      int parity_bm = code_desc->parity_bms[relative_parity_idx];
+
+      fast_memcpy(data[index_to_reconstruct], parity[relative_parity_idx], blocksize);
+
+      for (i=0; i < code_desc->k; i++) {
+        if (parity_bm & (1 << i)) {
+          if (i != index_to_reconstruct) {
+            xor_bufs_and_store(data[i], data[index_to_reconstruct], blocksize);
+          }
+        }
+      }
+
+    } else {
+      // Just call decode
+      code_desc->decode(code_desc, data, parity, missing_idxs, blocksize, 1);
+    }
+
+  } else {
+
+    // If it is a parity symbol, we need to figure out
+    // what data symbols are needed to reconstruct the
+    // parity.  If *any* data symbols in the parity 
+    // equation are missing, we are better off calling
+    // the underlying decode function.
+    int num_data_missing = num_missing_data_in_parity(code_desc, index_to_reconstruct, missing_data);
+
+    if (num_data_missing == 0) {
+      int relative_parity_idx = index_to_reconstruct - code_desc->k;
+      int parity_bm = code_desc->parity_bms[relative_parity_idx];   
+
+      memset(parity[relative_parity_idx], 0, blocksize);
+      
+      for (i=0; i < code_desc->k; i++) {
+        if (parity_bm & (1 << i)) {
+          xor_bufs_and_store(data[i], parity[relative_parity_idx], blocksize);
+        }
+      }
+
+    } else {
+      // Just call decode
+      code_desc->decode(code_desc, data, parity, missing_idxs, blocksize, 1);
+    }
+  }
+}
+
 int num_missing_data_in_parity(xor_code_t *code_desc, int parity_idx, int *missing_data)
 {
   int i = 0;

@@ -41,24 +41,27 @@ static int validate_args(int k, int m, int w, pyeclib_type_t type)
     case PYECC_RS_CAUCHY_ORIG:
       {
         if (w < 31 && (k+m) > (1 << w)) {
-          return -1;
+          return 0;
         }
       }
+    case PYECC_XOR_HD_4:
+    case PYECC_XOR_HD_3:
+      return 1; 
     case PYECC_RS_VAND:
     default:
       {
         int max_symbols;
       
-        if (w != 8 || w != 16 || w != 32) {
-          return -1;
+        if (w != 8 && w != 16 && w != 32) {
+          return 0;
         }
         max_symbols = 1 << w;
         if ((k+m) > max_symbols) {
-          return -1;
+          return 0;
         }
       }
   }
-  return 0;
+  return 1;
 }
 
 /*
@@ -1129,6 +1132,12 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
         free(dm_ids);
       }
   
+      break;
+
+    case PYECC_XOR_HD_3:
+    case PYECC_XOR_HD_4:
+      xor_reconstruct_one(pyeclib_handle->xor_code_desc, data, parity, missing_idxs, destination_idx, blocksize);
+      ret = 0;
       break;
 
     default:

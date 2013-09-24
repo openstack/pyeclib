@@ -1,7 +1,7 @@
 import pyeclib
 
 class ECPyECLibDriver(object):
-  def __init__(self, k, m, type, w=-1, hd=-1):
+  def __init__(self, k, m, type, w=0, hd=-1):
     self.ec_rs_vand = "rs_vand"
     self.ec_rs_cauchy_orig = "rs_cauchy_orig"
     self.ec_flat_xor = "flat_xor"

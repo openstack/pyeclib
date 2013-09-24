@@ -241,22 +241,28 @@ num_parities = [2, 3, 4]
 iterations=100
 
 rs_types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
-xor_types = [("xor_hd_4", 12, 6)]
+xor_types = [("flat_xor", 12, 6, 4), ("flat_xor", 10, 5, 3)]
 
 sizes = ["101-K", "202-K", "303-K"]
 
 setup(sizes)
 
-for (type, k, m) in xor_types:
+for (type, k, m, hd) in xor_types:
   print "Running tests for %s k=%d, m=%d\n" % (type, k, m)
 
+  type_str = "%s_%d_%d_%d" % (type, k, m, hd)
+
   for size_str in sizes:
-    avg_time = time_encode(k, m, 0, type, size_str, iterations)
+    avg_time = time_encode(k, m, 0, type_str, size_str, iterations)
     print "Encode (%s): " % size_str, get_throughput(avg_time, size_str)
   
   for size_str in sizes:
-    avg_time = time_decode(k, m, 0, type, size_str, iterations, 3)
+    avg_time = time_decode(k, m, 0, type_str, size_str, iterations, 3)
     print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
+  
+  for size_str in sizes:
+    avg_time = test_reconstruct(k, m, 0, type_str, size_str, iterations)
+    print "Reconstruct (%s): " % size_str, get_throughput(avg_time, size_str)
 
 for (type, w) in rs_types:
   print "Running tests for %s w=%d\n" % (type, w)
