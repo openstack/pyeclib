@@ -284,21 +284,21 @@ int main()
     }
   }
   
-  for (i=5; i < 10; i++) {
+  for (i=5; i < 11; i++) {
     ret = run_test(i, 5, 3);
     if (ret != 0) {
       return ret;
     }
   }
   
-  for (i=6; i < 20; i++) {
+  for (i=6; i < 21; i++) {
     ret = run_test(i, 6, 4);
     if (ret != 0) {
       return ret;
     }
   }
   
-  for (i=5; i < 10; i++) {
+  for (i=5; i < 11; i++) {
     ret = run_test(i, 5, 4);
     if (ret != 0) {
       return ret;
