@@ -126,8 +126,8 @@ bm_parity_combinations = list_of_list_to_bm_list(parity_combinations)
 
 needed_parity_bm = create_full_bm(m)
 
-parity_bms_template = "int g_%d_%d_hd_code_parity_bms[] = { %s };"
-data_bms_template = "int g_%d_%d_hd_code_data_bms[] = { %s };"
+parity_bms_template = "int g_%d_%d_%d_hd_code_parity_bms[] = { %s };"
+data_bms_template = "int g_%d_%d_%d_hd_code_data_bms[] = { %s };"
 
 k = mpmath.binomial(m, num_bits)
 used_parities = []
@@ -159,14 +159,17 @@ for parity_bm in used_parities:
   num_data_in_parity = get_num_data_in_parity(bm_parity_combinations)
   parity_eqns = get_parity_eqns(bm_parity_combinations) 
   #print "(%d, %d) : %s : %s : %s" % (k, m, bm_parity_combinations, parity_eqns, num_data_in_parity)
-  print parity_bms_template % (k, m, ("%s" % parity_eqns).replace("[", "").replace("]", ""))
-  print data_bms_template % (k, m, ("%s" % bm_parity_combinations).replace("[", "").replace("]", ""))
+  print parity_bms_template % (k, m, num_bits + 1, ("%s" % parity_eqns).replace("[", "").replace("]", ""))
+  print data_bms_template % (k, m, num_bits + 1, ("%s" % bm_parity_combinations).replace("[", "").replace("]", ""))
   
   bm_parity_combinations.append(parity_bm)
   k += 1
   
 num_data_in_parity = get_num_data_in_parity(bm_parity_combinations)
-print "(%d, %d) : %s : %s" % (k, m, bm_parity_combinations, num_data_in_parity)
+parity_eqns = get_parity_eqns(bm_parity_combinations) 
+#print "(%d, %d) : %s : %s" % (k, m, bm_parity_combinations, num_data_in_parity)
+print parity_bms_template % (k, m, num_bits + 1, ("%s" % parity_eqns).replace("[", "").replace("]", ""))
+print data_bms_template % (k, m, num_bits + 1, ("%s" % bm_parity_combinations).replace("[", "").replace("]", ""))
 
 
 

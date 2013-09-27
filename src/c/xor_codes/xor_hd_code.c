@@ -2,12 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <xor_code.h>
-
-int g_12_6_hd_code_parity_bms[] = { 1649, 3235, 2375, 718, 1436, 2872 };
-int g_12_6_hd_code_data_bms[] = { 7, 14, 28, 56, 49, 35, 13, 26, 52, 41, 19, 38 };
-
-int g_10_5_hd_code_parity_bms[] = { 1425, 1571, 3270, 2348, 2648 };
-int g_10_5_hd_code_data_bms[] = { 3, 6, 12, 24, 17, 10, 20, 5, 9, 18, 7, 28 };
+#include <xor_hd_code_defs.h>
 
 /*
  * There is one unavailable data element, so any available parity connected to
@@ -249,11 +244,48 @@ void xor_hd_decode(xor_code_t *code_desc, char **data, char **parity, int *missi
 xor_code_t* init_xor_hd_code(int k, int m, int hd)
 {
   xor_code_t *code_desc = NULL;
+  int is_valid = 0;
 
+  if (hd == 3) {
+    if (m == 6) {
+      if (k <= 15 && k >= 6) {
+        is_valid = 1;
+      }
+    } else if (m == 5) {
+      if (k <= 10 && k >= 5) {
+        is_valid = 1;
+      }
+    }
+  }
+  
+  if (hd == 4) {
+    if (m == 6) {
+      if (k <= 20 && k >= 6) {
+        is_valid = 1;
+      }
+    } else if (m == 5) {
+      if (k <= 10 && k >= 5) {
+        is_valid = 1;
+      }
+    }
+  }
+
+  if (is_valid) {
+    code_desc = (xor_code_t*)malloc(sizeof(xor_code_t));
+    code_desc->parity_bms = PARITY_BM_ARY(k, m, hd);
+    code_desc->data_bms = DATA_BM_ARY(k, m, hd);
+    code_desc->k = k;
+    code_desc->m = m;
+    code_desc->hd = hd;
+    code_desc->decode = xor_hd_decode;
+    code_desc->encode = xor_code_encode;
+  }
+
+#if 0
   if (k == 12 && m == 6 && hd == 4) {
     code_desc = (xor_code_t*)malloc(sizeof(xor_code_t));
-    code_desc->parity_bms = g_12_6_hd_code_parity_bms;
-    code_desc->data_bms = g_12_6_hd_code_data_bms;
+    code_desc->parity_bms = g_12_6_4_hd_code_parity_bms;
+    code_desc->data_bms = g_12_6_4_hd_code_data_bms;
     code_desc->k = k;
     code_desc->m = m;
     code_desc->hd = hd;
@@ -261,14 +293,16 @@ xor_code_t* init_xor_hd_code(int k, int m, int hd)
     code_desc->encode = xor_code_encode;
   } else if (k == 10 && m == 5 && hd == 3) {
     code_desc = (xor_code_t*)malloc(sizeof(xor_code_t));
-    code_desc->parity_bms = g_10_5_hd_code_parity_bms;
-    code_desc->data_bms = g_10_5_hd_code_data_bms;
+    code_desc->parity_bms = g_10_5_3_hd_code_parity_bms;
+    code_desc->data_bms = g_10_5_3_hd_code_data_bms;
     code_desc->k = k;
     code_desc->m = m;
     code_desc->hd = hd;
     code_desc->decode = xor_hd_decode;
     code_desc->encode = xor_code_encode;
   }
+#endif
+
   return code_desc;
 }
 
