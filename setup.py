@@ -23,5 +23,5 @@ setup (name = 'PyECLib',
        ext_modules = [module],
        packages=['swift_ec_iface'],
         package_dir={'swift_ec_iface': 'src/python/swift'},
-        py_modules = ['swift_ec_iface.ec_null', 'swift_ec_iface.ec_stripe', 'swift_ec_iface.ec_pyeclib'])
+        py_modules = ['swift_ec_iface.ec', 'swift_ec_iface.ec_null', 'swift_ec_iface.ec_stripe', 'swift_ec_iface.ec_pyeclib'])
 
