@@ -1,15 +1,17 @@
 import pyeclib
 
 class ECPyECLibDriver(object):
-  def __init__(self, k, m, type, w=0, hd=-1):
+  def __init__(self, k, m, type, hd=-1):
     self.ec_rs_vand = "rs_vand"
     self.ec_rs_cauchy_orig = "rs_cauchy_orig"
     self.ec_flat_xor = "flat_xor"
     self.ec_types = [self.ec_rs_vand, self.ec_rs_cauchy_orig, self.ec_flat_xor]
     self.ec_valid_xor_params = ["12_6_4", "10_5_3"]
+    self.ec_rs_vand_best_w = 16
+    self.ec_default_w = 32
+    self.ec_rs_cauchy_best_w = 4
     self.k = k
     self.m = m
-    self.w = w
     self.hd = hd
     if type in self.ec_types:
       self.type = type
@@ -21,6 +23,13 @@ class ECPyECLibDriver(object):
       if param_str not in self.ec_valid_xor_params:
         raise ECDriverError("%s are not valid flat-XOR code params for PyECLib!" % param_str)
       self.type = type + "_" + param_str
+
+    if self.type == self.ec_rs_vand:
+      self.w = self.ec_rs_vand_best_w
+    elif self.type == self.ec_rs_cauchy_orig:
+      self.w = self.ec_rs_cauchy_best_w
+    else:
+      self.w = self.ec_default_w
 
     self.handle = pyeclib.init(self.k, self.m, self.w, self.type)
 
