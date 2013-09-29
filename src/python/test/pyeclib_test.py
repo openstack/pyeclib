@@ -241,7 +241,7 @@ num_parities = [2, 3, 4]
 iterations=100
 
 rs_types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
-xor_types = [("flat_xor", 12, 6, 4), ("flat_xor", 10, 5, 3)]
+xor_types = [("flat_xor_4", 12, 6, 4), ("flat_xor_4", 10, 5, 4), ("flat_xor_3", 10, 5, 3)]
 
 sizes = ["101-K", "202-K", "303-K"]
 
@@ -250,7 +250,7 @@ setup(sizes)
 for (type, k, m, hd) in xor_types:
   print "Running tests for %s k=%d, m=%d\n" % (type, k, m)
 
-  type_str = "%s_%d_%d_%d" % (type, k, m, hd)
+  type_str = "%s" % (type)
 
   for size_str in sizes:
     avg_time = time_encode(k, m, 0, type_str, size_str, iterations)

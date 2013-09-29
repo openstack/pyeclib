@@ -7,7 +7,6 @@
 #include<galois.h>
 #include<math.h>
 #include<pyeclib.h>
-#include<common.h>
 
 /*
  * TODO (kmg): Cauchy restriction (k*w*PACKETSIZE)  < data_len / k, otherwise you could
@@ -30,6 +29,14 @@
  */
 
 static PyObject *PyECLibError;
+
+/*
+ * Determine if an address is aligned to a particular boundary
+ */
+static int is_addr_aligned(unsigned int addr, int align)
+{
+  return (addr & (align-1)) == 0;
+}
 
 /*
  * Validate the basic erasure code parameters 

@@ -4,7 +4,6 @@
 #include <string.h>
 #include <time.h>
 #include <xor_code.h>
-#include<common.h>
 
 const int g_bit_lookup[] = {0x1, 0x2, 0x4, 0x8,
                                  0x10, 0x20, 0x40, 0x80,
@@ -45,6 +44,26 @@ int missing_elements_bm(xor_code_t *code_desc, int *missing_elements, int (*bit_
   } 
 
   return bm;
+}
+
+void *aligned_malloc( size_t size, int align )
+{
+    void *mem = malloc( size + (align-1) + sizeof(void*) );
+    char *amem;
+    if (!mem) {
+      return NULL;
+    }
+
+    amem = ((char*)mem) + sizeof(void*);
+    amem += align - ((unsigned long)amem & (align - 1));
+
+    ((void**)amem)[-1] = mem;
+    return amem;
+}
+
+void aligned_free( void *mem )
+{
+    free( ((void**)mem)[-1] );
 }
 
 failure_pattern_t get_failure_pattern(xor_code_t *code_desc, int *missing_idxs)
