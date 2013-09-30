@@ -8,14 +8,14 @@ pyeclib_core_dir="%s/pyeclib" % (base_c_dir)
 xor_code_test = "./test_xor_hd_code"
 alg_sig_test = "./alg_sig_test"
 pyeclib_core_test = "pyeclib_test.py"
-pyeclib_swift_test = "ec_test.py"
+pyeclib_iface_test = "ec_test.py"
 base_python_dir = "../src/python"
 pyeclib_core_test_dir = "%s/test" % (base_python_dir)
-pyeclib_swift_test_dir = "%s/swift" % (base_python_dir)
+pyeclib_iface_test_dir = "%s/ec_iface" % (base_python_dir)
 pyeclib_core_test = "pyeclib_test.py"
-pyeclib_swift_test = "ec_test.py"
+pyeclib_iface_test = "ec_test.py"
 c_build_dirs=[(xor_code_dir, xor_code_test), (alg_sig_dir, alg_sig_test)]
-py_test_dirs=[(pyeclib_core_test_dir, pyeclib_core_test), (pyeclib_swift_test_dir, pyeclib_swift_test)]
+py_test_dirs=[(pyeclib_core_test_dir, pyeclib_core_test), (pyeclib_iface_test_dir, pyeclib_iface_test)]
 
 def test_c_stuff():
   cur_dir = os.getcwd()

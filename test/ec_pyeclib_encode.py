@@ -1,7 +1,7 @@
-import swift_ec_iface
-import swift_ec_iface.ec
-import swift_ec_iface.ec_pyeclib as ec_pyeclib
-from swift_ec_iface.ec import ECDriver
+import ec_iface
+from ec_iface import ec
+import ec_iface.ec_pyeclib as ec_pyeclib
+from ec_iface.ec import ECDriver
 import pyeclib
 import random
 import string
@@ -24,7 +24,7 @@ print args.m
 print args.type
 print args.filename
 
-ec_driver = ECDriver("swift_ec_iface.ec_pyeclib.ECPyECLibDriver", k=args.k, m=args.m, type=args.type)
+ec_driver = ECDriver("ec_iface.ec_pyeclib.ECPyECLibDriver", k=args.k, m=args.m, type=args.type)
 
 fp = open("%s/%s" % (args.file_dir, args.filename), "r")
  
