@@ -33,4 +33,8 @@ for file in `cd ${FILES}; echo *; cd ..`; do
   done
   python ec_pyeclib_decode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${fragments[*]} ${DECODED_DIR}/${file} 
   diff ${FILE_DIR}/${file} ${DECODED_DIR}/${file}.decoded
+  if [[ $? != 0 ]]; then
+    echo "${FILE_DIR}/${file} != ${DECODED_DIR}/${file}.decoded"
+    exit 1
+  fi
 done
