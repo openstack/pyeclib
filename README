@@ -1,1 +1,59 @@
-This is the README
+This is v0.1 of PyECLib.  This library provides a simple Python interface for
+implementing erasure codes.  To obtain the best possible performance, the
+underlying erasure code algorithms are written in C.
+
+This library makes use of Jerasure for Reed-Solomon and provides its own flat
+XOR-based erasure code encoder and decoder.  Currently, it implements a
+specific class of HD Combination Codes (see "Flat XOR-based erasure codes in
+storage systems: Constructions, efficient recovery, and tradeoffs" in IEEE MSST
+2010).
+
+The XOR-based codes make use of 128-bit registers using the Intel SIMD
+extensions.  We are currently working on incorporating GF-Complete into
+Jerasure.  Version 1.0 of this library will link to a new version of Jerasure
+that uses the Intel SIMD instruction set for Vandermonde Reed-Solomon encoding
+(see GF-Complete 1.0: http://web.eecs.utk.edu/~plank/plank/papers/CS-13-703.html
+and "Screaming fast Galois Field arithmetic using Intel SIMD instructions" in
+USENIX FAST 2013).
+
+Examples of using this library are provided in ./test:
+
+Command-line encoder: ec_pyeclib_encode.py
+Command-line decoder: ec_pyeclib_decode.py
+
+The main Python interface only contains 6 functions:
+
+  Encode N bytes into k+m fragments (returns list of fragments):
+  def encode(self, bytes)
+
+  Decode between k and k+m fragments into a string (returns a string):
+  def decode(self, fragment_payloads)
+
+  Reconstruct "missing_fragment_indexes" using "available_fragment_payloads":
+  def reconstruct(self, available_fragment_payloads, missing_fragment_indexes)
+
+  Return the indexes of fragments needed to reconstruct "missing_fragment_indexes":
+  def fragments_needed(self, missing_fragment_indexes)
+
+  Return an opaque buffer known by the underlying library:
+  def get_metadata(self, fragment)
+
+  Use opaque buffers from get_metadata() to verify a the consistency of a stripe:
+  def verify_stripe_metadata(self, fragment_metadata_list)
+
+Quick Start:
+
+  If you do not have Jerasure installed.  Install it:
+
+  CUR_DIR=${PWD}; cd lib/jerasure; sudo make install; cd ${CUR_DIR}
+
+  Install PyECLib:
+
+  sudo python setup.py install
+
+  Run the test suite:
+
+  cd test; python run_tests.py; ./ec_pyeclib_file_test.sh; cd ..
+
+  If all of this works, then you should be good to go.  If not, send me an email!
+

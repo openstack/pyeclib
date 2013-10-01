@@ -60,3 +60,5 @@ for TYPE in ${TYPES}; do
 	done
 done
 
+rm ${DECODED_DIR}/*
+rm ${FRAGMENT_DIR}/*
