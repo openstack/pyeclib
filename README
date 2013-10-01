@@ -24,21 +24,27 @@ Command-line decoder: ec_pyeclib_decode.py
 The main Python interface only contains 6 functions:
 
   Encode N bytes into k+m fragments (returns list of fragments):
+
   def encode(self, bytes)
 
   Decode between k and k+m fragments into a string (returns a string):
+
   def decode(self, fragment_payloads)
 
   Reconstruct "missing_fragment_indexes" using "available_fragment_payloads":
+
   def reconstruct(self, available_fragment_payloads, missing_fragment_indexes)
 
   Return the indexes of fragments needed to reconstruct "missing_fragment_indexes":
+
   def fragments_needed(self, missing_fragment_indexes)
 
   Return an opaque buffer known by the underlying library:
+
   def get_metadata(self, fragment)
 
   Use opaque buffers from get_metadata() to verify a the consistency of a stripe:
+
   def verify_stripe_metadata(self, fragment_metadata_list)
 
 Quick Start:
