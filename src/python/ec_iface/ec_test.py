@@ -36,6 +36,9 @@ class TestPyECLibDriver(unittest.TestCase):
   
   def setUp(self):
 
+    if not os.path.isdir("test_files"):
+      os.mkdir("./test_files")
+
     for size_str in self.file_sizes:
       filename = "test_file.%s" % size_str
       fp = open("test_files/%s" % filename, "w")
@@ -58,6 +61,7 @@ class TestPyECLibDriver(unittest.TestCase):
     for size_str in self.file_sizes:
       filename = "test_files/test_file.%s" % size_str
       os.unlink(filename)
+    os.rmdir("./test_files")
   
   def test_rs(self):
     pyeclib_drivers = []

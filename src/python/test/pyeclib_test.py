@@ -24,6 +24,8 @@ class Timer:
     return self.curr_delta()
 
 def setup(file_sizes):
+  if not os.path.isdir("test_files"):
+    os.mkdir("./test_files")
 
   for size_str in file_sizes:
     filename = "test_file.%s" % size_str
@@ -47,6 +49,7 @@ def cleanup(file_sizes):
   for size_str in file_sizes:
     filename = "test_files/test_file.%s" % size_str
     os.unlink(filename)
+  os.rmdir("./test_files")
 
 def time_encode(num_data, num_parity, w, type, file_size, iterations):
   filename = "test_file.%s" % file_size

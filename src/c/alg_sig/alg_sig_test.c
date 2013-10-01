@@ -53,6 +53,8 @@ int check_parity_of_sigs(char **sigs, int num_data, int size)
 
 out:
   free(parity_sig);
+
+  return ret;
 }
 
 static int basic_xor_test()
