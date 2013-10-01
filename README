@@ -18,8 +18,9 @@ USENIX FAST 2013).
 
 Examples of using this library are provided in ./test:
 
-Command-line encoder: ec_pyeclib_encode.py
-Command-line decoder: ec_pyeclib_decode.py
+  Command-line encoder: ec_pyeclib_encode.py
+
+  Command-line decoder: ec_pyeclib_decode.py
 
 The main Python interface only contains 6 functions:
 
