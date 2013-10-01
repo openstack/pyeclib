@@ -1036,6 +1036,7 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
   int *decoding_row;
   int *dm_ids;
   int ret;
+  int i;
 
   if (!PyArg_ParseTuple(args, "OOOOii", &pyeclib_obj_handle, &data_list, &parity_list, &missing_idx_list, &destination_idx, &fragment_size)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
@@ -1172,9 +1173,24 @@ pyeclib_reconstruct(PyObject *self, PyObject *args)
       set_stripe_padding(fragment_ptr, stripe_padding);
       set_fragment_size(fragment_ptr, blocksize);
     }
+
     reconstructed = Py_BuildValue("s#", fragment_ptr, fragment_size);
+
   } else {
     reconstructed = NULL;
+  }
+    
+  for (i=0; i < pyeclib_handle->k; i++) {
+    if (realloc_bm & (1 << i)) {
+      char *ptr = get_fragment_ptr_from_data_novalidate(data[i]);
+      free(ptr);
+    }
+  }
+  for (i=0; i < pyeclib_handle->m; i++) {
+    if (realloc_bm & (1 << (i + pyeclib_handle->k))) {
+      char *ptr = get_fragment_ptr_from_data_novalidate(parity[i]);
+      free(ptr);
+    }
   }
   
 out:
