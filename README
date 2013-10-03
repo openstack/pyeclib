@@ -10,7 +10,9 @@ This library makes use of Jerasure for Reed-Solomon and provides its own flat
 XOR-based erasure code encoder and decoder.  Currently, it implements a
 specific class of HD Combination Codes (see "Flat XOR-based erasure codes in
 storage systems: Constructions, efficient recovery, and tradeoffs" in IEEE MSST
-2010).
+2010).  These codes are well-suited to archival use-cases, have a simple
+construction and require a minimum number of participating disks during
+single-disk reconstruction (think XOR-based LRC code).
 
 The XOR-based codes make use of 128-bit registers using the Intel SIMD
 extensions.  We are currently working on incorporating GF-Complete into
