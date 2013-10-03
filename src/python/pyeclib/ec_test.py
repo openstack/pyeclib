@@ -22,9 +22,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ec import ECDriver
-import unittest
 import pyeclib
+from pyeclib.ec_iface import ECDriver
+import unittest
 import random
 import string
 import sys
@@ -33,7 +33,7 @@ import os
 class TestNullDriver(unittest.TestCase):
 
   def setUp(self):
-    self.null_driver = ECDriver("ec_null.ECNullDriver", k=8, m=2)
+    self.null_driver = ECDriver("pyeclib.core.ECNullDriver", k=8, m=2)
 
   def tearDown(self):
     pass
@@ -45,7 +45,7 @@ class TestNullDriver(unittest.TestCase):
 
 class TestStripeDriver(unittest.TestCase):
   def setUp(self):
-    self.stripe_driver = ECDriver("ec_stripe.ECStripingDriver", k=8, m=0)
+    self.stripe_driver = ECDriver("pyeclib.core.ECStripingDriver", k=8, m=0)
 
   def tearDown(self):
     pass
@@ -89,14 +89,14 @@ class TestPyECLibDriver(unittest.TestCase):
   
   def test_rs(self):
     pyeclib_drivers = []
-    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=2, type="rs_vand"))
-    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=2, type="rs_cauchy_orig"))
-    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=3, type="rs_vand"))
-    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=3, type="rs_cauchy_orig"))
-    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=12, m=6, type="flat_xor_4"))
-    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=10, m=5, type="flat_xor_4"))
-    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=10, m=5, type="flat_xor_3"))
-    pyeclib_drivers.append(ECDriver("ec_pyeclib.ECPyECLibDriver", k=9, m=5, type="flat_xor_3"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_cauchy_orig"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=3, type="rs_vand"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=3, type="rs_cauchy_orig"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=6, type="flat_xor_4"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=10, m=5, type="flat_xor_4"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=10, m=5, type="flat_xor_3"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=9, m=5, type="flat_xor_3"))
 
     for pyeclib_driver in pyeclib_drivers:
       for file_size in self.file_sizes:

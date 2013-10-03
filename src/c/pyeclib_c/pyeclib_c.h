@@ -22,8 +22,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __PYEC_LIB_H_
-#define __PYEC_LIB_H_
+#ifndef __PYEC_LIB_C_H_
+#define __PYEC_LIB_C_H_
 
 typedef enum { PYECC_RS_VAND, PYECC_RS_CAUCHY_ORIG, PYECC_XOR_HD_4, PYECC_XOR_HD_3, PYECC_NUM_TYPES, PYECC_NOT_FOUND } pyeclib_type_t;
 

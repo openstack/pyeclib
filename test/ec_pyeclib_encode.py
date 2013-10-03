@@ -22,11 +22,8 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import ec_iface
-from ec_iface import ec
-import ec_iface.ec_pyeclib as ec_pyeclib
-from ec_iface.ec import ECDriver
 import pyeclib
+from pyeclib.ec_iface import ECDriver
 import random
 import string
 import sys
@@ -48,7 +45,7 @@ print args.m
 print args.type
 print args.filename
 
-ec_driver = ECDriver("ec_iface.ec_pyeclib.ECPyECLibDriver", k=args.k, m=args.m, type=args.type)
+ec_driver = ECDriver("pyeclib.core.ECPyECLibDriver", k=args.k, m=args.m, type=args.type)
 
 fp = open("%s/%s" % (args.file_dir, args.filename), "r")
  

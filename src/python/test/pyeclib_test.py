@@ -22,7 +22,7 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pyeclib
+import pyeclib_c
 import time
 import random
 import string
@@ -80,13 +80,13 @@ def time_encode(num_data, num_parity, w, type, file_size, iterations):
   fp = open("test_files/%s" % filename, "r")
   timer = Timer()
   sum = 0
-  handle = pyeclib.init(num_data, num_parity, w, type)
+  handle = pyeclib_c.init(num_data, num_parity, w, type)
 
   whole_file_str = fp.read()
 
   timer.start()
   for i in range(iterations):
-    fragments=pyeclib.encode(handle, whole_file_str)
+    fragments=pyeclib_c.encode(handle, whole_file_str)
   sum = timer.stop_and_return()
 
   return sum / iterations
@@ -96,11 +96,11 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
   fp = open("test_files/%s" % filename, "r")
   timer = Timer()
   sum = 0
-  handle = pyeclib.init(num_data, num_parity, w, type)
+  handle = pyeclib_c.init(num_data, num_parity, w, type)
 
   whole_file_str = fp.read()
 
-  fragments=pyeclib.encode(handle, whole_file_str)
+  fragments=pyeclib_c.encode(handle, whole_file_str)
 
   orig_fragments = fragments[:]
 
@@ -115,7 +115,7 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
       fragments[idx] = '\0' * len(fragments[0])
 
     timer.start()
-    decoded_fragments = pyeclib.decode(handle, fragments[:num_data], fragments[num_data:], missing_idxs, len(fragments[0]))
+    decoded_fragments = pyeclib_c.decode(handle, fragments[:num_data], fragments[num_data:], missing_idxs, len(fragments[0]))
     sum += timer.stop_and_return()
     
     fragments = decoded_fragments
@@ -143,11 +143,11 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
   fp = open("test_files/%s" % filename, "r")
   timer = Timer()
   sum = 0
-  handle = pyeclib.init(num_data, num_parity, w, type)
+  handle = pyeclib_c.init(num_data, num_parity, w, type)
   
   whole_file_str = fp.read()
 
-  orig_fragments=pyeclib.encode(handle, whole_file_str)
+  orig_fragments=pyeclib_c.encode(handle, whole_file_str)
 
   fragments = orig_fragments[:]
 
@@ -162,11 +162,11 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
       fragments[idx] = '\0' * len(fragments[0])
 
     timer.start()
-    reconstructed_fragment = pyeclib.reconstruct(handle, fragments[:num_data], fragments[num_data:], missing_idxs, missing_idxs[0], len(fragments[0]))
+    reconstructed_fragment = pyeclib_c.reconstruct(handle, fragments[:num_data], fragments[num_data:], missing_idxs, missing_idxs[0], len(fragments[0]))
  
     sum += timer.stop_and_return()
     
-    decoded_fragments = pyeclib.decode(handle, fragments[:num_data], fragments[num_data:], missing_idxs, len(fragments[0]))
+    decoded_fragments = pyeclib_c.decode(handle, fragments[:num_data], fragments[num_data:], missing_idxs, len(fragments[0]))
     fragments = decoded_fragments
   
     if orig_fragments[missing_idxs[0]] != reconstructed_fragment:
@@ -186,11 +186,11 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
 def test_get_fragment_partition(num_data, num_parity, w, type, file_size, iterations):
   filename = "test_file.%s" % file_size
   fp = open("test_files/%s" % filename, "r")
-  handle = pyeclib.init(num_data, num_parity, w, type)
+  handle = pyeclib_c.init(num_data, num_parity, w, type)
 
   whole_file_str = fp.read()
   
-  fragments=pyeclib.encode(handle, whole_file_str)
+  fragments=pyeclib_c.encode(handle, whole_file_str)
 
   for i in range(iterations):
     missing_fragments = random.sample(fragments, 3)
@@ -200,7 +200,7 @@ def test_get_fragment_partition(num_data, num_parity, w, type, file_size, iterat
       missing_fragment_idxs.append(fragments.index(missing_frag))
       avail_fragments.remove(missing_frag)
 
-    (data_frags, parity_frags, missing_idxs) = pyeclib.get_fragment_partition(handle, avail_fragments)
+    (data_frags, parity_frags, missing_idxs) = pyeclib_c.get_fragment_partition(handle, avail_fragments)
 
     missing_fragment_idxs.sort() 
     missing_idxs.sort()
@@ -210,26 +210,26 @@ def test_get_fragment_partition(num_data, num_parity, w, type, file_size, iterat
       sys.exit()
 
 
-    decoded_fragments = pyeclib.decode(handle, data_frags, parity_frags, missing_idxs, len(data_frags[0]))
+    decoded_fragments = pyeclib_c.decode(handle, data_frags, parity_frags, missing_idxs, len(data_frags[0]))
 
 
 def test_fragments_to_string(num_data, num_parity, w, type, file_size):
   filename = "test_file.%s" % file_size
   fp = open("test_files/%s" % filename, "r")
-  handle = pyeclib.init(num_data, num_parity, w, type)
+  handle = pyeclib_c.init(num_data, num_parity, w, type)
 
   whole_file_str = fp.read()
   
-  fragments=pyeclib.encode(handle, whole_file_str)
+  fragments=pyeclib_c.encode(handle, whole_file_str)
 
-  concat_str = pyeclib.fragments_to_string(handle, fragments[:num_data])
+  concat_str = pyeclib_c.fragments_to_string(handle, fragments[:num_data])
 
   if concat_str != whole_file_str:
     print "String does not equal the original string (len(orig) = %d, len(new) = %d\n" % (len(whole_file_str), len(concat_str))
 
 
 def test_get_required_fragments(num_data, num_parity, w, type):
-  handle = pyeclib.init(num_data, num_parity, w, type)
+  handle = pyeclib_c.init(num_data, num_parity, w, type)
   
   #
   # MDS codes need any k fragments
@@ -247,7 +247,7 @@ def test_get_required_fragments(num_data, num_parity, w, type):
       expected_fragments.remove(missing_fragment)
 
     expected_fragments = expected_fragments[:num_data]
-    required_fragments = pyeclib.get_required_fragments(handle, missing_fragments)
+    required_fragments = pyeclib_c.get_required_fragments(handle, missing_fragments)
 
     if expected_fragments != required_fragments:
       print "Unexpected required fragments list (exp != req): %s != %s" % (expected_fragments, required_fragments)

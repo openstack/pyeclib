@@ -30,7 +30,7 @@
 #include<liberation.h>
 #include<galois.h>
 #include<math.h>
-#include<pyeclib.h>
+#include<pyeclib_c.h>
 
 /*
  * TODO (kmg): Cauchy restriction (k*w*PACKETSIZE)  < data_len / k, otherwise you could
@@ -314,7 +314,7 @@ int free_fragment_buffer(char *buf)
   return 0;
 }
 
-static void pyeclib_destructor(PyObject *obj)
+static void pyeclib_c_destructor(PyObject *obj)
 {
   pyeclib_t *pyeclib_handle = NULL;
 
@@ -454,7 +454,7 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
 }
 
 static PyObject *
-pyeclib_init(PyObject *self, PyObject *args)
+pyeclib_c_init(PyObject *self, PyObject *args)
 {
   pyeclib_t *pyeclib_handle;
   PyObject* pyeclib_obj_handle;
@@ -510,7 +510,7 @@ pyeclib_init(PyObject *self, PyObject *args)
       break;
   }
 
-  pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME, pyeclib_destructor);
+  pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME, pyeclib_c_destructor);
 
   if (pyeclib_obj_handle == NULL) {
     PyErr_SetString(PyECLibError, "Could not encapsulate pyeclib_handle into Python object in pyeclib.init");
@@ -523,7 +523,7 @@ pyeclib_init(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-pyeclib_encode(PyObject *self, PyObject *args)
+pyeclib_c_encode(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle;
   pyeclib_t *pyeclib_handle;
@@ -664,7 +664,7 @@ pyeclib_encode(PyObject *self, PyObject *args)
  * otherwise return a string.
  */
 static PyObject *
-pyeclib_fragments_to_string(PyObject *self, PyObject *args)
+pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle;
   PyObject *fragment_list;
@@ -789,7 +789,7 @@ out:
  * for missing fragments.
  */
 static PyObject *
-pyeclib_get_fragment_partition(PyObject *self, PyObject *args)
+pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle;
   PyObject *fragment_list;
@@ -965,7 +965,7 @@ pyeclib_get_fragment_partition(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-pyeclib_get_required_fragments(PyObject *self, PyObject *args)
+pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle;
   PyObject *missing_list;
@@ -1038,7 +1038,7 @@ pyeclib_get_required_fragments(PyObject *self, PyObject *args)
  * TODO: If we are reconstructing a parity element, ensure that all of the data elements are available!
  */
 static PyObject *
-pyeclib_reconstruct(PyObject *self, PyObject *args)
+pyeclib_c_reconstruct(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle;
   PyObject *data_list;
@@ -1227,7 +1227,7 @@ out:
 }
 
 static PyObject *
-pyeclib_decode(PyObject *self, PyObject *args)
+pyeclib_c_decode(PyObject *self, PyObject *args)
 {
   PyObject *list_of_strips;
   PyObject *pyeclib_obj_handle;
@@ -1376,24 +1376,24 @@ pyeclib_decode(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef PyECLibMethods[] = {
-    {"init",  pyeclib_init, METH_VARARGS, "Initialize a new erasure encoder/decoder"},
-    {"encode",  pyeclib_encode, METH_VARARGS, "Create parity using source data"},
-    {"decode",  pyeclib_decode, METH_VARARGS, "Recover all lost data/parity"},
-    {"reconstruct",  pyeclib_reconstruct, METH_VARARGS, "Recover selective data/parity"},
-    {"fragments_to_string", pyeclib_fragments_to_string, METH_VARARGS, "Try to transform a set of fragments into original string without calling the decoder"},
-    {"get_fragment_partition", pyeclib_get_fragment_partition, METH_VARARGS, "Parition fragments into data and parity, also returns a list of missing indexes"},
-    {"get_required_fragments", pyeclib_get_required_fragments, METH_VARARGS, "Return the fragments required to reconstruct a set of missing fragments"},
+    {"init",  pyeclib_c_init, METH_VARARGS, "Initialize a new erasure encoder/decoder"},
+    {"encode",  pyeclib_c_encode, METH_VARARGS, "Create parity using source data"},
+    {"decode",  pyeclib_c_decode, METH_VARARGS, "Recover all lost data/parity"},
+    {"reconstruct",  pyeclib_c_reconstruct, METH_VARARGS, "Recover selective data/parity"},
+    {"fragments_to_string", pyeclib_c_fragments_to_string, METH_VARARGS, "Try to transform a set of fragments into original string without calling the decoder"},
+    {"get_fragment_partition", pyeclib_c_get_fragment_partition, METH_VARARGS, "Parition fragments into data and parity, also returns a list of missing indexes"},
+    {"get_required_fragments", pyeclib_c_get_required_fragments, METH_VARARGS, "Return the fragments required to reconstruct a set of missing fragments"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
 PyMODINIT_FUNC
-initpyeclib(void)
+initpyeclib_c(void)
 {
     PyObject *m;
 
     Py_Initialize();
 
-    m = Py_InitModule("pyeclib", PyECLibMethods);
+    m = Py_InitModule("pyeclib_c", PyECLibMethods);
     if (m == NULL) {
       return;
     }
