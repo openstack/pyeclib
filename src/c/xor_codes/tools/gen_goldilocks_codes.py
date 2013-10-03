@@ -182,15 +182,15 @@ while k > m:
 for parity_bm in used_parities:
   num_data_in_parity = get_num_data_in_parity(bm_parity_combinations)
   parity_eqns = get_parity_eqns(bm_parity_combinations) 
-  print "(%d, %d) : %s : %s : %s" % (k, m, bm_parity_combinations, parity_eqns, num_data_in_parity)
-  #print parity_bms_template % (k, m, num_bits + 1, ("%s" % parity_eqns).replace("[", "").replace("]", ""))
-  #print data_bms_template % (k, m, num_bits + 1, ("%s" % bm_parity_combinations).replace("[", "").replace("]", ""))
+  #print "(%d, %d) : %s : %s : %s" % (k, m, bm_parity_combinations, parity_eqns, num_data_in_parity)
+  print parity_bms_template % (k, m, num_bits + 1, ("%s" % parity_eqns).replace("[", "").replace("]", ""))
+  print data_bms_template % (k, m, num_bits + 1, ("%s" % bm_parity_combinations).replace("[", "").replace("]", ""))
   
   bm_parity_combinations.append(parity_bm)
   k += 1
   
 num_data_in_parity = get_num_data_in_parity(bm_parity_combinations)
 parity_eqns = get_parity_eqns(bm_parity_combinations) 
-print "(%d, %d) : %s : %s" % (k, m, bm_parity_combinations, num_data_in_parity)
-#print parity_bms_template % (k, m, num_bits + 1, ("%s" % parity_eqns).replace("[", "").replace("]", ""))
-#print data_bms_template % (k, m, num_bits + 1, ("%s" % bm_parity_combinations).replace("[", "").replace("]", ""))
+#print "(%d, %d) : %s : %s" % (k, m, bm_parity_combinations, num_data_in_parity)
+print parity_bms_template % (k, m, num_bits + 1, ("%s" % parity_eqns).replace("[", "").replace("]", ""))
+print data_bms_template % (k, m, num_bits + 1, ("%s" % bm_parity_combinations).replace("[", "").replace("]", ""))

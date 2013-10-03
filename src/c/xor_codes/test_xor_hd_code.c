@@ -61,17 +61,22 @@ int check_buffer(unsigned char *buf, int size, int seed)
 
 int test_hd_code(xor_code_t *code_desc, int num_failure_combs, int failure_combs[][4])
 {
-  int i;
+  int i, j;
   int num_iter = 1000;
   int blocksize = 32768;
   int missing_idxs[4] = { -1 };
+  int ret = 0;
   char **data, **parity;
   clock_t start_time, end_time;
+  int *fragments_needed;
 
   srand(time(NULL));
 
   data = (char**)malloc(code_desc->k * sizeof(char*));
   parity = (char**)malloc(code_desc->m * sizeof(char*));
+  fragments_needed = (int*)malloc(code_desc->k*code_desc->m*sizeof(int));
+
+  bzero(fragments_needed, code_desc->k*code_desc->m*sizeof(int));
 
   for (i=0; i < code_desc->k; i++) {
     data[i] = aligned_malloc(blocksize, 16);
@@ -136,6 +141,33 @@ int test_hd_code(xor_code_t *code_desc, int num_failure_combs, int failure_combs
         memset(parity[missing_idxs[2] - code_desc->k], 0, blocksize);
       }
     }
+
+    /*
+     * Spot check to ensure missing elements are not included in
+     * list of fragments needed and that decode is 'doable'
+     */
+    ret = code_desc->fragments_needed(code_desc, missing_idxs, fragments_needed);
+
+    if (ret < 0) {
+      fprintf(stderr, "xor_hd_fragments_needed thinks reconstruction not possible, when it is!\n");
+      exit(2);
+    }
+
+    j = 0;
+    while (fragments_needed[j] > -1) {
+      if (fragments_needed[j] == missing_idxs[0] ||
+          fragments_needed[j] == missing_idxs[1] ||
+          fragments_needed[j] == missing_idxs[2]) {
+        fprintf(stderr, "fragments_needed[%d]=%d in missing index list: (%d %d %d)!\n", j, fragments_needed[j], missing_idxs[0], missing_idxs[1], missing_idxs[2]);
+        exit(2);
+      }
+      j++;
+    }
+    
+    missing_idxs[0] = missing_idx_0;
+    missing_idxs[1] = missing_idx_1;
+    missing_idxs[2] = missing_idx_2;
+    missing_idxs[3] = -1;
 
     code_desc->decode(code_desc, data, parity, missing_idxs, blocksize, 1);
   

@@ -94,7 +94,7 @@ class ECPyECLibDriver(object):
     return reconstructed_bytes
 
   def fragments_needed(self, missing_fragment_indexes):
-    return pyeclib_c.get_required_fragments(missing_fragment_indexes) 
+    return pyeclib_c.get_required_fragments(self.handle, missing_fragment_indexes) 
 
   def get_metadata(self, fragment):
     pass

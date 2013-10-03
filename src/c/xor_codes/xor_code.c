@@ -65,6 +65,7 @@ int missing_elements_bm(xor_code_t *code_desc, int *missing_elements, int (*bit_
 
   while (missing_elements[i] > -1) {
     bm |= bit_lookup_func(code_desc, missing_elements[i]);
+    i++;
   } 
 
   return bm;

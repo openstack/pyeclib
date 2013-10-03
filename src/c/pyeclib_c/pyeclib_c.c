@@ -977,7 +977,7 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   unsigned long missing_bm = 0;
 
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &missing_list)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
+    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_required_fragments");
     return NULL;
   }
 
@@ -1000,15 +1000,16 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   c_missing_list[num_missing] = -1;
 
   missing_bm = convert_list_to_bitmap(c_missing_list);
+      
+  fragment_idx_list = PyList_New(0);
 
   switch(pyeclib_handle->type) {
     case PYECC_RS_CAUCHY_ORIG:
     case PYECC_RS_VAND:
-      fragment_idx_list = PyList_New(pyeclib_handle->k);
       j=0;
       for (i=0; i < pyeclib_handle->k + pyeclib_handle->m; i++) {
         if (!(missing_bm & (1 << i))) {
-          PyList_SET_ITEM(fragment_idx_list, j, Py_BuildValue("i", i));
+          PyList_Append(fragment_idx_list, Py_BuildValue("i", i));
           j++;
         }
         if (j == pyeclib_handle->k) {
@@ -1023,6 +1024,28 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
         fragment_idx_list = NULL;
       }
       break;
+    case PYECC_XOR_HD_3:
+    case PYECC_XOR_HD_4:
+    {
+      int *fragments_needed = (int*)malloc(sizeof(int)*(pyeclib_handle->k+pyeclib_handle->m));
+      int ret = pyeclib_handle->xor_code_desc->fragments_needed(pyeclib_handle->xor_code_desc, c_missing_list, fragments_needed);
+
+      if (ret < 0) {
+        Py_DECREF(fragment_idx_list);
+        PyErr_Format(PyECLibError, "Not enough fragments for pyeclib.get_required_fragments!");
+        fragment_idx_list = NULL;
+        free(fragments_needed);
+        break;
+      }
+
+      j=0;
+      while (fragments_needed[j] > -1) {
+        PyList_Append(fragment_idx_list, Py_BuildValue("i", fragments_needed[j]));
+        j++;
+      } 
+      free(fragments_needed);
+      break;
+    }
     default:
       PyErr_SetString(PyECLibError, "Invalid EC type used in pyeclib.get_required_fragments");
       break;

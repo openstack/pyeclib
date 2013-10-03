@@ -30,8 +30,10 @@
 // I made these by hand...
 int g_12_6_4_hd_code_parity_bms[] = { 1649, 3235, 2375, 718, 1436, 2872 };
 int g_12_6_4_hd_code_data_bms[] = { 7, 14, 28, 56, 49, 35, 13, 26, 52, 41, 19, 38 };
-int g_10_5_3_hd_code_parity_bms[] = { 1425, 1571, 3270, 2348, 2648 };
-int g_10_5_3_hd_code_data_bms[] = { 3, 6, 12, 24, 17, 10, 20, 5, 9, 18, 7, 28 };
+
+int g_10_5_3_hd_code_parity_bms[] = { 163, 300, 337, 582, 664 };
+int g_10_5_3_hd_code_data_bms[] = { 5, 9, 10, 18, 20, 3, 12, 17, 6, 24 };
+
 
 // The rest were generated via the "goldilocks" code algorithm
 int g_6_6_3_hd_code_parity_bms[] = { 3, 48, 36, 24, 9, 6 };
