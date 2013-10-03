@@ -32,7 +32,6 @@ class ECPyECLibDriver(object):
     self.ec_flat_xor_3 = "flat_xor_3"
     self.ec_flat_xor_4 = "flat_xor_4"
     self.ec_types = [self.ec_rs_vand, self.ec_rs_cauchy_orig, self.ec_flat_xor_3, self.ec_flat_xor_4]
-    self.ec_valid_xor_params = ["12_6_4", "10_5_3"]
     self.ec_rs_vand_best_w = 16
     self.ec_default_w = 32
     self.ec_rs_cauchy_best_w = 4

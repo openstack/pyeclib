@@ -78,4 +78,4 @@ def pyeclib_core_valgrind():
   
 test_c_stuff()
 pyeclib_core_test()
-pyeclib_core_valgrind()
+#pyeclib_core_valgrind()

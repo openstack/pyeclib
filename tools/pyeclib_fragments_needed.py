@@ -30,7 +30,7 @@ import sys
 import os
 import argparse
 
-parser = argparse.ArgumentParser(description='Encoder for PyECLib.')
+parser = argparse.ArgumentParser(description='PyECLib tool to determine fragment indexes needed to recover missing fragments.')
 parser.add_argument('k', type=int, help='number of data elements')
 parser.add_argument('m', type=int, help='number of parity elements')
 parser.add_argument('type', help='EC algorithm used')

@@ -16,11 +16,13 @@ that uses the Intel SIMD instruction set for Vandermonde Reed-Solomon encoding
 and "Screaming fast Galois Field arithmetic using Intel SIMD instructions" in
 USENIX FAST 2013).
 
-Examples of using this library are provided in ./test:
+Examples of using this library are provided in ./tools:
 
   Command-line encoder: ec_pyeclib_encode.py
 
   Command-line decoder: ec_pyeclib_decode.py
+
+  Utility to determine what is needed to reconstruct missing fragments: pyeclib_fragments_needed.py
 
 The main Python interface only contains 6 functions:
 

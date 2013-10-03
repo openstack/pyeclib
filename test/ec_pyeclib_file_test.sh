@@ -26,6 +26,7 @@ FILE_DIR=./test_files
 DECODED_DIR=./decoded_files
 FRAGMENT_DIR=./test_fragments
 FILES=`echo ${FILE_DIR}`
+TOOLS_DIR=../tools
 
 if [ ! -d ${DECODED_DIR} ]; then
   mkdir ${DECODED_DIR}
@@ -62,7 +63,7 @@ for TYPE in ${TYPES}; do
         FAULT_TOL="2"
       fi 
 			for file in `cd ${FILES}; echo *; cd ..`; do
-			  python ec_pyeclib_encode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${FILE_DIR} ${file} ${FRAGMENT_DIR}
+			  python ${TOOLS_DIR}/pyeclib_encode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${FILE_DIR} ${file} ${FRAGMENT_DIR}
 			done
 			
 			for file in `cd ${FILES}; echo *; cd ..`; do
@@ -73,7 +74,7 @@ for TYPE in ${TYPES}; do
 			    fragments[${index}]="" 
 			    let i=$i+1
 			  done
-			  python ec_pyeclib_decode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${fragments[*]} ${DECODED_DIR}/${file} 
+			  python ${TOOLS_DIR}/pyeclib_decode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${fragments[*]} ${DECODED_DIR}/${file} 
 			  diff ${FILE_DIR}/${file} ${DECODED_DIR}/${file}.decoded
 			  if [[ $? != 0 ]]; then
 			    echo "${FILE_DIR}/${file} != ${DECODED_DIR}/${file}.decoded"
