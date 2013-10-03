@@ -58,7 +58,7 @@ Quick Start:
 
   If you do not have Jerasure installed.  Install it:
 
-  CUR_DIR=${PWD}; cd lib/jerasure; sudo make install; cd ${CUR_DIR}
+  http://web.eecs.utk.edu/~plank/plank/papers/CS-08-627.html
 
   Install PyECLib:
 
