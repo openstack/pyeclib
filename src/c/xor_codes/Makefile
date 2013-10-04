@@ -1,4 +1,4 @@
-CFLAGS=-O3 -msse3
+CFLAGS=-O3 -msse3 -fPIC
 GCC=gcc
 INCLUDE_DIRS=-I./ -I../include
 

@@ -1,6 +1,7 @@
-CFLAGS=-g
+CFLAGS=-g -fPIC
 GCC=gcc
 INCLUDE_DIRS=-I./ -I../include -I/usr/local/include/jerasure
+LIB_DIR=-L/usr/local/lib
 LIBS=-lJerasure
 
 all: alg_sig_test
