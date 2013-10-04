@@ -58,8 +58,8 @@ The main Python interface only contains 6 functions:
 
 Quick Start:
 
-  If you do not have Jerasure installed.  Install it (setup.py assumes it will
-  be in /usr/local):
+  If you do not have Jerasure installed.  Install it from the unofficial GitHub
+  repo linked from here (setup.py assumes it will be in /usr/local):
 
   http://web.eecs.utk.edu/~plank/plank/papers/CS-08-627.html
 
