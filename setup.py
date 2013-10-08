@@ -11,7 +11,7 @@ module = Extension('pyeclib_c',
                                    'src/c/xor_codes',
                                    '/usr/local/include/jerasure'],
                    library_dirs = ['/usr/lib', '/usr/local/lib'],
-                   libraries = ['python2.6', 'Jerasure'],
+                   libraries = ['python2.7', 'Jerasure'],
                    # The extra arguments are for debugging
                    #extra_compile_args = ['-g', '-O0', '-msse3'],
                    extra_compile_args = ['-msse3', '-fPIC'],
