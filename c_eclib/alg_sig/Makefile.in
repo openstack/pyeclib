@@ -83,6 +83,9 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libalg_sig_la_LIBADD =
 am_libalg_sig_la_OBJECTS = alg_sig.lo
 libalg_sig_la_OBJECTS = $(am_libalg_sig_la_OBJECTS)
+libalg_sig_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libalg_sig_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(bin_PROGRAMS)
 am_alg_sig_test_OBJECTS = alg_sig_test.$(OBJEXT)
 alg_sig_test_OBJECTS = $(am_alg_sig_test_OBJECTS)
@@ -226,6 +229,7 @@ INCLUDES = -I./ -I../include
 AM_CFLAGS = -O3 $(SIMD_FLAGS) -fPIC $(INCLUDES)
 lib_LTLIBRARIES = libalg_sig.la
 libalg_sig_la_SOURCES = alg_sig.c
+libalg_sig_la_LDFLAGS = -version-info 0:1:0
 alg_sig_test_SOURCES = alg_sig_test.c
 alg_sig_test_LDFLAGS = -lalg_sig
 all: all-am
@@ -294,7 +298,7 @@ clean-libLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libalg_sig.la: $(libalg_sig_la_OBJECTS) $(libalg_sig_la_DEPENDENCIES) $(EXTRA_libalg_sig_la_DEPENDENCIES) 
-	$(LINK) -rpath $(libdir) $(libalg_sig_la_OBJECTS) $(libalg_sig_la_LIBADD) $(LIBS)
+	$(libalg_sig_la_LINK) -rpath $(libdir) $(libalg_sig_la_OBJECTS) $(libalg_sig_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"

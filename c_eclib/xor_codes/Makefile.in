@@ -83,6 +83,9 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libXorcode_la_LIBADD =
 am_libXorcode_la_OBJECTS = xor_code.lo xor_hd_code.lo
 libXorcode_la_OBJECTS = $(am_libXorcode_la_OBJECTS)
+libXorcode_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libXorcode_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(bin_PROGRAMS)
 am_test_xor_hd_code_OBJECTS = test_xor_hd_code.$(OBJEXT)
 test_xor_hd_code_OBJECTS = $(am_test_xor_hd_code_OBJECTS)
@@ -226,6 +229,7 @@ INCLUDES = -I./ -I../include
 AM_CFLAGS = -O3 $(SIMD_FLAGS) -fPIC $(INCLUDES)
 lib_LTLIBRARIES = libXorcode.la
 libXorcode_la_SOURCES = xor_code.c xor_hd_code.c
+libXorcode_la_LDFLAGS = -version-info 0:1:0
 test_xor_hd_code_SOURCES = test_xor_hd_code.c
 test_xor_hd_code_LDFLAGS = -lXorcode
 all: all-am
@@ -294,7 +298,7 @@ clean-libLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libXorcode.la: $(libXorcode_la_OBJECTS) $(libXorcode_la_DEPENDENCIES) $(EXTRA_libXorcode_la_DEPENDENCIES) 
-	$(LINK) -rpath $(libdir) $(libXorcode_la_OBJECTS) $(libXorcode_la_LIBADD) $(LIBS)
+	$(libXorcode_la_LINK) -rpath $(libdir) $(libXorcode_la_OBJECTS) $(libXorcode_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
