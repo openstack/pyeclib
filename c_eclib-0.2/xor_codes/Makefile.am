@@ -11,3 +11,4 @@ bin_PROGRAMS = test_xor_hd_code
 test_xor_hd_code_SOURCES = test_xor_hd_code.c test_xor_hd_code.h
 test_xor_hd_code_LDFLAGS = -lXorcode
 
+EXTRA_DIST = tools

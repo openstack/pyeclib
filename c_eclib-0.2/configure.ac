@@ -5,7 +5,7 @@ AC_INIT(c_eclib,0.2)
 
 AC_PREREQ([2.61])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE(no-dependencies)
 LT_INIT # libtool
 
 AC_CONFIG_SRCDIR(xor_codes)
