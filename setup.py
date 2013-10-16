@@ -35,10 +35,9 @@ module = Extension('pyeclib_c',
                                     ('MINOR VERSION', '1')],
                    include_dirs = ['/usr/include/%s' % python_library_name,
                                    'src/c/pyeclib_c',
-                                   'src/c/include',
-                                   'src/c/xor_codes',
+                                   'c_eclib-0.2/include',
                                    jerasure_include_dir_str],
-                   library_dirs = ['/usr/lib', '/usr/local/lib'],
+                   library_dirs = ['/usr/lib', '/usr/local/lib', 'c_eclib-0.2/xor_codes/.libs'],
                    libraries = [python_library_name, 'Jerasure', 'Xorcode'],
                    # The extra arguments are for debugging
                    #extra_compile_args = ['-g', '-O0']
@@ -46,7 +45,7 @@ module = Extension('pyeclib_c',
                    sources = ['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup (name = 'PyECLib',
-       version = '0.1.2',
+       version = '0.1.5',
        author = 'Kevin Greenan',
        author_email = 'kmgreen2@gmail.com',
        maintainer = 'Kevin Greenan and Tushar Gohad',

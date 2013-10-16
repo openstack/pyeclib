@@ -1,10 +1,7 @@
 This is v0.1 of PyECLib.  This library provides a simple Python interface for
 implementing erasure codes.  To obtain the best possible performance, the
-underlying erasure code algorithms are written in C.
-
-*** This will only build on platforms that support SSE3.  I will build-in
-support for other platforms and configurations in v1.0.  Please let me know if
-you have any other issues building/installing.
+underlying erasure code algorithms are written in C.  Please let me know if you
+have any other issues building/installing (email: kmgreen2@gmail.com).
 
 This library makes use of Jerasure for Reed-Solomon and provides its own flat
 XOR-based erasure code encoder and decoder.  Currently, it implements a
@@ -63,7 +60,18 @@ Quick Start:
   If you do not have Jerasure installed.  Install it from the unofficial GitHub
   repo linked from here (setup.py assumes it will be in /usr/local):
 
-  https://github.com/tsuraan/Jerasure 
+  https://bitbucket.org/kmgreen2/jerasure-kmg 
+
+  This version of Jerasure is a development version that includes SIMD support using
+  GF-Complete.  You will also need to install GF-Complete:
+
+  https://bitbucket.org/jimplank/gf-complete 
+
+  GF-Complete does not have an 'install' target, so either put an install target
+  into the makefile, or 
+  
+  1.) cp gf_complete.a /usr/local/lib/libgf_complete.a
+  2.) cp gf_complete.h /usr/local/include
 
   Install PyECLib:
 
