@@ -73,6 +73,10 @@ Quick Start:
   1.) cp gf_complete.a /usr/local/lib/libgf_complete.a
   2.) cp gf_complete.h /usr/local/include
 
+  Alternatively, you can install my fork of gf-complete, which includes an install:
+
+  https://bitbucket.org/kmgreen2/gf-complete-kmg
+
   Install PyECLib:
 
   sudo python setup.py install
