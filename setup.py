@@ -22,7 +22,7 @@ if found_jerasure is False:
 
 #
 # TODO: Figure out why Pypi is chaning the perms of the files when unpacking...  Is the
-$ umask set to 022 or something?
+# umask set to 022 or something?
 #
 def _pre_build(dir):
   os.system('(cd c_eclib-0.2 && chmod 755 ./configure && ./configure && make install)')
