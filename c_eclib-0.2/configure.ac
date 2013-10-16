@@ -19,7 +19,7 @@ dnl Compiling with per-target flags requires AM_PROG_CC_C_O.
 AC_PROG_CC
 
 # Check for jerasure/gf_complete headers
-AC_CHECK_HEADERS(jerasure.h cauchy.h galois.h liberation.h reed_sol.h gf_complete.h gf_general.h gf_int.h gf_method.h gf_rand.h)
+AC_CHECK_HEADERS(jerasure.h cauchy.h galois.h liberation.h reed_sol.h gf_complete.h)
 
 AC_CHECK_LIB([Jerasure], [jerasure_autoconf_test], [],
              [
