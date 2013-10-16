@@ -25,7 +25,9 @@ if found_jerasure is False:
 # umask set to 022 or something?
 #
 def _pre_build(dir):
-  os.system('(cd c_eclib-0.2 && chmod 755 ./configure && ./configure && make install)')
+  ret = os.system('(cd c_eclib-0.2 && chmod 755 ./configure && ./configure && make install)')
+  if ret != 0:
+    sys.exit(2)
 
 class build(_build):
     def run(self):
@@ -49,7 +51,7 @@ module = Extension('pyeclib_c',
                    sources = ['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup (name = 'PyECLib',
-       version = '0.1.7',
+       version = '0.1.8',
        author = 'Kevin Greenan',
        author_email = 'kmgreen2@gmail.com',
        maintainer = 'Kevin Greenan and Tushar Gohad',
