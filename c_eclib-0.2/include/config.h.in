@@ -1,5 +1,11 @@
 /* include/config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Support Altivec instructions */
+#undef HAVE_ALTIVEC
+
+/* Support AVX (Advanced Vector Extensions) instructions */
+#undef HAVE_AVX
+
 /* Define to 1 if you have the <cauchy.h> header file. */
 #undef HAVE_CAUCHY_H
 
@@ -12,18 +18,6 @@
 /* Define to 1 if you have the <gf_complete.h> header file. */
 #undef HAVE_GF_COMPLETE_H
 
-/* Define to 1 if you have the <gf_general.h> header file. */
-#undef HAVE_GF_GENERAL_H
-
-/* Define to 1 if you have the <gf_int.h> header file. */
-#undef HAVE_GF_INT_H
-
-/* Define to 1 if you have the <gf_method.h> header file. */
-#undef HAVE_GF_METHOD_H
-
-/* Define to 1 if you have the <gf_rand.h> header file. */
-#undef HAVE_GF_RAND_H
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -32,12 +26,6 @@
 
 /* Define to 1 if you have the <liberation.h> header file. */
 #undef HAVE_LIBERATION_H
-
-/* Define to 1 if you have the `gf_complete' library (-lgf_complete). */
-#undef HAVE_LIBGF_COMPLETE
-
-/* Define to 1 if you have the `Jerasure' library (-lJerasure). */
-#undef HAVE_LIBJERASURE
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -56,6 +44,12 @@
 
 /* Support SSE3 (Streaming SIMD Extensions 3) instructions */
 #undef HAVE_SSE3
+
+/* Support SSSE4.1 (Streaming SIMD Extensions 4.1) instructions */
+#undef HAVE_SSE4_1
+
+/* Support SSSE4.2 (Streaming SIMD Extensions 4.2) instructions */
+#undef HAVE_SSE4_2
 
 /* Support SSSE3 (Supplemental Streaming SIMD Extensions 3) instructions */
 #undef HAVE_SSSE3
