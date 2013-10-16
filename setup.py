@@ -16,7 +16,7 @@ module = Extension('pyeclib_c',
                    #extra_compile_args = ['-g', '-O0', '-msse3'],
                    extra_compile_args = ['-msse3', '-fPIC'],
                    extra_link_args=['-Bstatic'],
-                   sources = ['src/c/pyeclib_c/pyeclib_c.c', 'src/c/xor_codes/xor_code.c', 'src/c/xor_codes/xor_hd_code.c'])
+                   sources = ['src/c/pyeclib_c/pyeclib_c.c', 'c_eclib/xor_codes/xor_code.c', 'c_eclib/xor_codes/xor_hd_code.c'])
 
 setup (name = 'PyECLib',
        version = '0.1',
