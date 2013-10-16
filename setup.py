@@ -20,8 +20,12 @@ if found_jerasure is False:
   sys.exit(1)
 
 
+#
+# TODO: Figure out why Pypi is chaning the perms of the files when unpacking...  Is the
+$ umask set to 022 or something?
+#
 def _pre_build(dir):
-  os.system('(cd c_eclib-0.2 && ./configure && make install)')
+  os.system('(cd c_eclib-0.2 && chmod 755 ./configure && ./configure && make install)')
 
 class build(_build):
     def run(self):
@@ -45,7 +49,7 @@ module = Extension('pyeclib_c',
                    sources = ['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup (name = 'PyECLib',
-       version = '0.1.6',
+       version = '0.1.7',
        author = 'Kevin Greenan',
        author_email = 'kmgreen2@gmail.com',
        maintainer = 'Kevin Greenan and Tushar Gohad',
