@@ -12003,9 +12003,9 @@ else
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gf_dummy_init in -lgf_complete" >&5
-$as_echo_n "checking for gf_dummy_init in -lgf_complete... " >&6; }
-if ${ac_cv_lib_gf_complete_gf_dummy_init+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gf_init_easy in -lgf_complete" >&5
+$as_echo_n "checking for gf_init_easy in -lgf_complete... " >&6; }
+if ${ac_cv_lib_gf_complete_gf_init_easy+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -12019,27 +12019,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gf_dummy_init ();
+char gf_init_easy ();
 int
 main ()
 {
-return gf_dummy_init ();
+return gf_init_easy ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_gf_complete_gf_dummy_init=yes
+  ac_cv_lib_gf_complete_gf_init_easy=yes
 else
-  ac_cv_lib_gf_complete_gf_dummy_init=no
+  ac_cv_lib_gf_complete_gf_init_easy=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gf_complete_gf_dummy_init" >&5
-$as_echo "$ac_cv_lib_gf_complete_gf_dummy_init" >&6; }
-if test "x$ac_cv_lib_gf_complete_gf_dummy_init" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gf_complete_gf_init_easy" >&5
+$as_echo "$ac_cv_lib_gf_complete_gf_init_easy" >&6; }
+if test "x$ac_cv_lib_gf_complete_gf_init_easy" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBGF_COMPLETE 1
 _ACEOF

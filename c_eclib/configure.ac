@@ -28,7 +28,7 @@ AC_CHECK_LIB([Jerasure], [jerasure_autoconf_test], [],
               exit -1
              ])
 
-AC_CHECK_LIB([gf_complete], [gf_dummy_init], [],
+AC_CHECK_LIB([gf_complete], [gf_init_easy], [],
              [
               echo "Error! You need to have gf_complete installed."
               echo "gf_complete is available from http://web.eecs.utk.edu/~plank/plank/papers/CS-13-703.html"
