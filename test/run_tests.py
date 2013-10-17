@@ -29,8 +29,8 @@ base_c_dir="../src/c"
 xor_code_dir="%s/xor_codes" % (base_c_dir)
 alg_sig_dir="%s/alg_sig" % (base_c_dir)
 pyeclib_core_dir="%s/pyeclib" % (base_c_dir)
-xor_code_test = "./test_xor_hd_code"
-alg_sig_test = "./alg_sig_test"
+xor_code_test = "/usr/local/bin/test_xor_hd_code"
+alg_sig_test = "/usr/local/bin/alg_sig_test"
 pyeclib_core_test = "pyeclib_test.py"
 pyeclib_iface_test = "ec_test.py"
 base_python_dir = "../src/python"
@@ -44,14 +44,7 @@ py_test_dirs=[(pyeclib_core_test_dir, pyeclib_core_test), (pyeclib_iface_test_di
 def test_c_stuff():
   cur_dir = os.getcwd()
   for (dir, test) in c_build_dirs:
-    os.chdir(dir)
-    ret = os.system("make")
-    if ret != 0:
-      print "Building %s failed!!!" % (dir)
-      sys.exit(1) 
     os.system(test)
-    ret = os.system("make clean")
-    os.chdir(cur_dir)
 
 def pyeclib_core_test():
   cur_dir = os.getcwd()
