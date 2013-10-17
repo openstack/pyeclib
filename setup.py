@@ -1,4 +1,6 @@
 from distutils.core import setup, Extension
+from distutils.command.install import install as _install
+from distutils.command.build import build as _build
 import sys
 import os
 
@@ -16,6 +18,17 @@ for include_dir in possible_include_dirs:
 if found_jerasure is False:
   print "Could not find jerasure include directory in: %s\n" % possible_include_dirs
   sys.exit(1)
+
+
+def _pre_build(dir):
+  os.system('(cd c_eclib-0.2 && ./configure && make install)')
+
+class build(_build):
+    def run(self):
+        self.execute(_pre_build, (self.build_lib,),
+                     msg="Running pre build task(s)")
+        _build.run(self)
+
 
 module = Extension('pyeclib_c',
                    define_macros = [('MAJOR VERSION', '0'),
@@ -47,5 +60,6 @@ setup (name = 'PyECLib',
        ext_modules = [module],
        packages=['pyeclib'],
        package_dir={'pyeclib': 'src/python/pyeclib'},
+       cmdclass={'build': build},
        py_modules = ['pyeclib.ec_iface', 'pyeclib.core'])
 
