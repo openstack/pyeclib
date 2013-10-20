@@ -60,10 +60,6 @@ Quick Start:
   This package includes c_eclib, which contains a few C libraries used by
   PyECLib.  These will be built when running the PyECLib install (see below).
 
-  Alternatively, you can install my fork of gf-complete, which includes an install:
-
-  https://bitbucket.org/kmgreen2/gf-complete-kmg
-
   Install PyECLib:
 
   sudo python setup.py install
