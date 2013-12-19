@@ -6,19 +6,6 @@ import os
 
 possible_include_dirs = ["/usr/local/include", "/usr/include"]
 python_library_name = "python%d.%d" % (sys.version_info.major, sys.version_info.minor)
-jerasure_library_name = "Jerasure"
-jerasure_include_dir_str = ""
-
-found_jerasure = False
-for include_dir in possible_include_dirs:
-  if os.path.exists(os.path.join(include_dir, 'jerasure.h')):
-    jerasure_include_dir_str = include_dir
-    found_jerasure = True
-
-if found_jerasure is False:
-  print "Could not find jerasure include directory in: %s\n" % possible_include_dirs
-  sys.exit(1)
-
 
 #
 # TODO: Figure out why Pypi is chaning the perms of the files when unpacking...  Is the
@@ -42,7 +29,7 @@ module = Extension('pyeclib_c',
                    include_dirs = ['/usr/include/%s' % python_library_name,
                                    'src/c/pyeclib_c',
                                    'c_eclib-0.2/include',
-                                   jerasure_include_dir_str],
+                                   '/usr/local/include'],
                    library_dirs = ['/usr/lib', '/usr/local/lib'],
                    libraries = [python_library_name, 'Jerasure', 'Xorcode'],
                    # The extra arguments are for debugging
