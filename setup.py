@@ -5,7 +5,11 @@ import sys
 import os
 
 possible_include_dirs = ["/usr/local/include", "/usr/include"]
-python_library_name = "python%d.%d" % (sys.version_info.major, sys.version_info.minor)
+
+try:
+  python_library_name = "python%d.%d" % (sys.version_info.major, sys.version_info.minor)
+except:
+  python_library_name = "python%d.%d" % (sys.version_info[0], sys.version_info[1])
 
 #
 # TODO: Figure out why Pypi is chaning the perms of the files when unpacking...  Is the
