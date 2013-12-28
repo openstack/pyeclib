@@ -97,7 +97,7 @@ def get_viable_schemes(max_num_frags, minimum_rate, avg_stripe_size, fault_toler
   #
   # Iterate over EC(k, max_num_frags-k) k \in [min_k, n-min_m]
   #
-  for k in range(min_k, max_num_frags-min_m):
+  for k in range(min_k, max_num_frags-min_m+1):
     #
     # RS(k, max_num_frags-k) is trivial, just add it (w=[8,16,32] for vand_rs)
     #
