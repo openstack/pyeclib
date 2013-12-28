@@ -134,10 +134,10 @@ def get_viable_schemes(max_num_frags, minimum_rate, avg_stripe_size, fault_toler
   
 
 parser = argparse.ArgumentParser(description='PyECLib tool to evaluate viable EC options, benchmark them and report results with the appropriate conf entries.')
-parser.add_argument('-n', type=int, help='max number of fragments')
-parser.add_argument('-f', type=int, help='fault tolerance')
-parser.add_argument('-r', type=float, help='minimum coding rate (num_data / num_data+num_parity)')
-parser.add_argument('-s', type=int, help='average stripe size')
+parser.add_argument('-n', type=int, help='max number of fragments', required=True)
+parser.add_argument('-f', type=int, help='fault tolerance', required=True)
+parser.add_argument('-r', type=float, help='minimum coding rate (num_data / num_data+num_parity)', required=True)
+parser.add_argument('-s', type=int, help='average stripe size', required=True)
 parser.add_argument('-l', type=int, help='set limit on number of entries returned (default = 10)', default=10, )
 
 args = parser.parse_args(sys.argv[1:])
