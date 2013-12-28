@@ -25,6 +25,15 @@
 import pyeclib_c
 import math
 
+#
+# Generic ECPyECLibException
+#
+class ECPyECLibException(Exception):
+  def __init__(self, error_str):
+    self.error_str = error_str
+  def __str__(self):
+    return self.error_str
+
 class ECPyECLibDriver(object):
   def __init__(self, k, m, type):
     self.ec_rs_vand = "rs_vand"
@@ -37,10 +46,31 @@ class ECPyECLibDriver(object):
     self.ec_rs_cauchy_best_w = 4
     self.k = k
     self.m = m
+
+    #
+    # Override the default wordsize (w) for Reed-Solomon, if specified
+    #
+    if type[:len(self.ec_rs_vand)] == self.ec_rs_vand and len(type) > len(self.ec_rs_vand):
+      type_ary = type.split("_")
+      if len(type_ary) != 3:
+        raise ECPyECLibException("%s is not a valid EC type for PyECLib!" % type)
+      self.ec_rs_vand_best_w = int(type_ary[2])
+      type = self.ec_rs_vand
+
+    #
+    # Override the default wordsize (w) for Cauchy, if specified
+    #
+    if type[:len(self.ec_rs_cauchy_orig)] == self.ec_rs_cauchy_orig and len(type) > len(self.ec_rs_cauchy_orig):
+      type_ary = type.split("_")
+      if len(type_ary) != 4:
+        raise ECPyECLibException("%s is not a valid EC type for PyECLib!" % type)
+      self.ec_rs_cauchy_best_w = int(type_ary[3])
+      type = self.ec_rs_cauchy_orig
+
     if type in self.ec_types:
       self.type = type
     else:
-      raise ECDriverError("%s is not a valid EC type for PyECLib!")
+      raise ECPyECLibException("%s is not a valid EC type for PyECLib!")
 
     if self.type == self.ec_rs_vand:
       self.w = self.ec_rs_vand_best_w
@@ -66,7 +96,7 @@ class ECPyECLibDriver(object):
     try:
       ret_string = pyeclib_c.fragments_to_string(self.handle, fragment_payloads)
     except:
-      raise ECDriverError("Error in ECPyECLibDriver.decode")
+      raise ECPyECLibException("Error in ECPyECLibDriver.decode")
 
     if ret_string is None:
       (data_frags, parity_frags, missing_idxs) = pyeclib_c.get_fragment_partition(self.handle, fragment_payloads)
@@ -135,12 +165,12 @@ class ECStripingDriver(object):
     Stripe an arbitrary-sized string into k fragments
     :param k: the number of data fragments to stripe
     :param m: the number of parity fragments to stripe
-    :raises: ECDriverError if there is an error during encoding
+    :raises: ECPyECLibException if there is an error during encoding
     """
     self.k = k
 
     if m != 0:
-      raise ECDriverError("This driver only supports m=0")
+      raise ECPyECLibException("This driver only supports m=0")
 
     self.m = m
 
@@ -149,7 +179,7 @@ class ECStripingDriver(object):
     Stripe an arbitrary-sized string into k fragments
     :param bytes: the buffer to encode
     :returns: a list of k buffers (data only)
-    :raises: ECDriverError if there is an error during encoding
+    :raises: ECPyECLibException if there is an error during encoding
     """
     # Main fragment size
     fragment_size = math.ceil(len(bytes) / float(self.k))
@@ -172,11 +202,11 @@ class ECStripingDriver(object):
     Convert a k-fragment data stripe into a string 
     :param fragment_payloads: fragments (in order) to convert into a string
     :returns: a string containing the original data
-    :raises: ECDriverError if there is an error during decoding
+    :raises: ECPyECLibException if there is an error during decoding
     """
 
     if len(fragment_payloads) != self.k:
-      raise ECDriverError("Decode requires %d fragments, %d fragments were given" % (len(fragment_payloads), self.k))
+      raise ECPyECLibException("Decode requires %d fragments, %d fragments were given" % (len(fragment_payloads), self.k))
 
     ret_string = ''
 
@@ -193,10 +223,10 @@ class ECStripingDriver(object):
     :param available_fragment_payloads: available fragments (in order) 
     :param missing_fragment_indexes: indexes of missing fragments
     :returns: a string containing the original data
-    :raises: ECDriverError if there is an error during reconstruction
+    :raises: ECPyECLibException if there is an error during reconstruction
     """
     if len(available_fragment_payloads) != self.k:
-      raise ECDriverError("Reconstruction requires %d fragments, %d fragments were given" % (len(available_fragment_payloads), self.k))
+      raise ECPyECLibException("Reconstruction requires %d fragments, %d fragments were given" % (len(available_fragment_payloads), self.k))
 
     return available_fragment_payloads
 

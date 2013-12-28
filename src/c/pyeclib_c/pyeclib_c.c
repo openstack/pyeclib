@@ -81,12 +81,12 @@ static int validate_args(int k, int m, int w, pyeclib_type_t type)
     case PYECC_RS_VAND:
     default:
       {
-        int max_symbols;
+        long long max_symbols;
       
         if (w != 8 && w != 16 && w != 32) {
           return 0;
         }
-        max_symbols = 1 << w;
+        max_symbols = 1LL << w;
         if ((k+m) > max_symbols) {
           return 0;
         }
