@@ -84,7 +84,7 @@ int compute_alg_sig32(alg_sig_t *alg_sig_handle, char *buf, int len, char *sig)
 
   if (len == 0) {
     bzero(sig, 8);
-    return;
+    return 0;
   }
 
   switch (len % 2) {
