@@ -3,8 +3,21 @@ from distutils.command.install import install as _install
 from distutils.command.build import build as _build
 import sys
 import os
+import platform
 
 possible_include_dirs = ["/usr/local/include", "/usr/include"]
+
+autoconf_arguments=""
+
+#
+# Fuck Apple and their universal binaries!
+# I am not supporting powerpc, so ignoring 
+# it
+#
+platform_str = platform.platform()
+if platform_str.find("Darwin") > -1:
+  if platform_str.find("x86_64") > -1 and platform_str.find("i386"): 
+    autoconf_arguments='CC="gcc -arch i386 -arch x86_64" CPP="gcc -E"'
 
 try:
   python_library_name = "python%d.%d" % (sys.version_info.major, sys.version_info.minor)
@@ -16,7 +29,7 @@ except:
 # umask set to 022 or something?
 #
 def _pre_build(dir):
-  ret = os.system('(cd c_eclib-0.2 && chmod 755 ./configure && chmod 755 ./install-sh && ./configure && make install)')
+  ret = os.system('(cd c_eclib-0.2 && chmod 755 ./configure && chmod 755 ./install-sh && ./configure %s && make install)' % autoconf_arguments)
   if ret != 0:
     sys.exit(2)
 
@@ -35,10 +48,9 @@ module = Extension('pyeclib_c',
                                    'c_eclib-0.2/include',
                                    '/usr/local/include'],
                    library_dirs = ['/usr/lib', '/usr/local/lib'],
-                   libraries = [python_library_name, 'Jerasure', 'Xorcode'],
+                   libraries = ['Jerasure', 'Xorcode'],
                    # The extra arguments are for debugging
                    #extra_compile_args = ['-g', '-O0']
-                   extra_link_args=['-Bstatic'],
                    sources = ['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup (name = 'PyECLib',
