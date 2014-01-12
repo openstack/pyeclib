@@ -16,7 +16,7 @@ autoconf_arguments=""
 #
 platform_str = platform.platform()
 if platform_str.find("Darwin") > -1:
-  if platform_str.find("x86_64") > -1 and platform_str.find("i386"): 
+  if platform_str.find("x86_64") > -1 and platform_str.find("i386") > -1: 
     autoconf_arguments='CC="gcc -arch i386 -arch x86_64" CPP="gcc -E"'
 
 try:
