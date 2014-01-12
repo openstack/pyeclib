@@ -126,10 +126,10 @@ class ECPyECLibDriver(object):
     return pyeclib_c.get_required_fragments(self.handle, missing_fragment_indexes) 
 
   def get_metadata(self, fragment):
-    pass
+    return pyeclib_c.get_metadata(self.handle, fragment) 
 
   def verify_stripe_metadata(self, fragment_metadata_list):
-    pass
+    return pyeclib_c.check_metadata(self.handle, fragment_metadata_list)
 
   def get_segment_info(self, data_len, segment_size):
     return pyeclib_c.get_segment_info(self.handle, data_len, segment_size)

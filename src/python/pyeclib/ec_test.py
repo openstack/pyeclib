@@ -101,8 +101,44 @@ class TestPyECLibDriver(unittest.TestCase):
           decoded_str = pyeclib_driver.decode(encoded_fragments)
           
           self.assertTrue(decoded_str == encode_str)
-        
+  
+  def test_verify_fragment_metadata_fail(self):
+    pyeclib_drivers = []
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))
 
+    filesize = 1024*1024*3
+
+    file_str = ''.join(random.choice(string.letters) for i in range(filesize))
+        
+    for pyeclib_driver in pyeclib_drivers:
+      fragments = pyeclib_driver.encode(file_str) 
+
+      fragment_metadata_list = []
+
+      for fragment in fragments:
+        fragment_metadata_list.append(pyeclib_driver.get_metadata(fragment))
+
+      self.assertTrue(pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == -1)
+
+  def test_verify_fragment_metadata_succeed(self):
+    pyeclib_drivers = []
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))
+
+    filesize = 1024*1024*3
+
+    file_str = ''.join(random.choice(string.letters) for i in range(filesize))
+        
+    for pyeclib_driver in pyeclib_drivers:
+      fragments = pyeclib_driver.encode(file_str) 
+
+      fragment_metadata_list = []
+
+      for fragment in fragments:
+        fragment_metadata_list.append(pyeclib_driver.get_metadata(fragment))
+
+      self.assertTrue(pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == -1)
+
+    
   def test_get_segment_info(self):
     pyeclib_drivers = []
     pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))

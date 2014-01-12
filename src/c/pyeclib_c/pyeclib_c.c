@@ -25,6 +25,7 @@
 #include<Python.h>
 #include<xor_code.h>
 #include<reed_sol.h>
+#include<alg_sig.h>
 #include<cauchy.h>
 #include<jerasure.h>
 #include<liberation.h>
@@ -138,6 +139,24 @@ void init_fragment_header(char *buf)
 }
 
 static
+void* get_aligned_buffer16(int size)
+{
+  void *buf;
+  
+  /*
+   * Ensure all memory is aligned to
+   * 16-byte boundaries to support 
+   * 128-bit operations
+   */
+  if (posix_memalign(&buf, 16, size) < 0) {
+    return NULL;
+  }
+  bzero(buf, size);
+  
+  return buf;
+}
+
+static
 char *alloc_fragment_buffer(int size)
 {
   char *buf;
@@ -175,6 +194,13 @@ char* get_fragment_ptr_from_data_novalidate(char *buf)
   buf -= sizeof(fragment_header_t);
 
   return buf;
+}
+
+static
+int supports_alg_sig(pyeclib_t *pyeclib_handle)
+{
+  if (pyeclib_handle->alg_sig_desc != NULL) return 1;
+  return 0;
 }
 
 static
@@ -326,6 +352,31 @@ static void pyeclib_c_destructor(PyObject *obj)
     return;
   }
 }
+
+static
+int get_fragment_metadata(pyeclib_t *pyeclib_handle, char *fragment_buf, fragment_metadata_t *fragment_metadata)
+{
+  char *fragment_data = get_fragment_data(fragment_buf);
+  int fragment_size = get_fragment_size(fragment_buf);
+  int fragment_idx = get_fragment_idx(fragment_buf);
+
+  memset(fragment_metadata, 0, sizeof(fragment_metadata_t));
+
+  fragment_metadata->size = fragment_size;
+  fragment_metadata->idx = fragment_idx;
+
+  /*
+   * If w \in [8, 16] and using RS_VAND or XOR_CODE, then use Alg_sig
+   * Else use CRC32
+   */
+  if (supports_alg_sig(pyeclib_handle)) {
+    // Compute algebraic signature
+    compute_alg_sig(pyeclib_handle->alg_sig_desc, fragment_data, fragment_size, fragment_metadata->signature);
+  }
+
+  return 0;
+}
+
 
 /*
  * Buffers for data, parity and missing_idxs
@@ -494,13 +545,20 @@ pyeclib_c_init(PyObject *self, PyObject *args)
       break;
     case PYECC_XOR_HD_3:
       pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 3);
+      pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
       break;
     case PYECC_XOR_HD_4:
       pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 4);
+      pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
       break;
     case PYECC_RS_VAND:
     default:
       pyeclib_handle->matrix = reed_sol_vandermonde_coding_matrix(k, m, w);
+      if (w == 8) {
+        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 8);
+      } else if (w == 16) {
+        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+      }
       break;
   }
 
@@ -1574,6 +1632,142 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   return list_of_strips;
 }
 
+static PyObject *
+pyeclib_c_get_metadata(PyObject *self, PyObject *args)
+{
+  PyObject *pyeclib_obj_handle;
+  pyeclib_t* pyeclib_handle;
+  char *data;
+  int data_len;
+  fragment_metadata_t *fragment_metadata;
+  PyObject *ret_fragment_metadata;
+
+  if (!PyArg_ParseTuple(args, "Os#", &pyeclib_obj_handle, &data, &data_len)) {
+    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_metadata");
+    return NULL;
+  }
+
+  pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
+  if (pyeclib_handle == NULL) {
+    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.get_required_fragments");
+    return NULL;
+  }
+
+  fragment_metadata = (fragment_metadata_t*)malloc(sizeof(fragment_metadata_t));
+
+  get_fragment_metadata(pyeclib_handle, data, fragment_metadata);
+
+  ret_fragment_metadata = Py_BuildValue("s#", (char*)fragment_metadata, sizeof(fragment_metadata_t));
+
+  free(fragment_metadata);
+
+  return ret_fragment_metadata;
+}
+
+static PyObject*
+pyeclib_c_check_metadata(PyObject *self, PyObject *args)
+{
+  PyObject *pyeclib_obj_handle;
+  PyObject *fragment_metadata_list;
+  pyeclib_t *pyeclib_handle;
+  int i;
+  int ret = -1;
+  int num_fragments;
+  fragment_metadata_t** c_fragment_metadata_list;
+  char **c_fragment_signatures;
+
+  if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_metadata_list)) {
+    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
+    return NULL;
+  }
+
+  pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
+  if (pyeclib_handle == NULL) {
+    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
+    return NULL;
+  }
+
+  num_fragments = pyeclib_handle->k + pyeclib_handle->m;
+
+  if (num_fragments != PyList_Size(fragment_metadata_list)) {
+    PyErr_SetString(PyECLibError, "Not enough fragment metadata to perform integrity check");
+    return NULL;
+  }
+
+  c_fragment_metadata_list = (fragment_metadata_t**)malloc(sizeof(fragment_metadata_t*)*num_fragments);
+  memset(c_fragment_metadata_list, 0, sizeof(fragment_metadata_t*)*num_fragments);
+  
+  c_fragment_signatures = (char**)malloc(sizeof(char*)*num_fragments);
+  memset(c_fragment_signatures, 0, sizeof(char*)*num_fragments);
+
+  /*
+   * Populate and order the metadata
+   */
+  for (i=0; i < num_fragments; i++) {
+    PyObject *tmp_data = PyList_GetItem(fragment_metadata_list, i);
+    Py_ssize_t len = 0;
+    char *c_buf = NULL;
+    fragment_metadata_t *fragment_metadata;
+    PyString_AsStringAndSize(tmp_data, &(c_buf), &len);
+
+    fragment_metadata = (fragment_metadata_t*)c_buf;
+    c_fragment_metadata_list[fragment_metadata->idx] = fragment_metadata;
+
+    if (supports_alg_sig(pyeclib_handle)) {
+      c_fragment_signatures[fragment_metadata->idx] = (char*)get_aligned_buffer16(PYCC_MAX_SIG_LEN);
+      memcpy(c_fragment_signatures[fragment_metadata->idx], fragment_metadata->signature, PYCC_MAX_SIG_LEN);
+    } else {
+      c_fragment_signatures[fragment_metadata->idx] = fragment_metadata->signature;
+    }
+  }
+
+  /*
+   * Ensure all fragments are here and check integrity using alg signatures 
+   */
+  if (supports_alg_sig(pyeclib_handle)) {
+    char **parity_sigs = (char**)malloc(pyeclib_handle->m);
+    int i;
+    
+    for (i=0; i < pyeclib_handle->m; i++) {
+      parity_sigs[i] = (char*)get_aligned_buffer16(PYCC_MAX_SIG_LEN);
+      memset(parity_sigs[i], 0, PYCC_MAX_SIG_LEN);
+    }
+
+    if (pyeclib_handle->type == PYECC_RS_VAND) {
+      jerasure_matrix_encode(pyeclib_handle->k, 
+                             pyeclib_handle->m, 
+                             pyeclib_handle->w, 
+                             pyeclib_handle->matrix, 
+                             c_fragment_signatures, 
+                             parity_sigs, 
+                             PYCC_MAX_SIG_LEN);
+    } else {
+      pyeclib_handle->xor_code_desc->encode(pyeclib_handle->xor_code_desc, 
+                                            c_fragment_signatures,  
+                                            parity_sigs, 
+                                            PYCC_MAX_SIG_LEN);
+    }
+
+    for (i=0; i < pyeclib_handle->m; i++) {
+      if (memcmp(parity_sigs[i], c_fragment_signatures[pyeclib_handle->k + i], PYCC_MAX_SIG_LEN) != 0) {
+        ret = i;
+        break;
+      }
+    }
+
+    for (i=0; i < pyeclib_handle->m; i++) {
+      free(parity_sigs[i]);
+    }
+    for (i=0; i < pyeclib_handle->k; i++) {
+      free(c_fragment_signatures[i]);
+    }
+    free(c_fragment_signatures);
+  }  
+
+  // TODO: Return a list containing tuples (index, problem).  An empty list means everything is OK.
+  return PyLong_FromLong((long)ret);
+}
+
 static PyMethodDef PyECLibMethods[] = {
     {"init",  pyeclib_c_init, METH_VARARGS, "Initialize a new erasure encoder/decoder"},
     {"encode",  pyeclib_c_encode, METH_VARARGS, "Create parity using source data"},
@@ -1583,6 +1777,8 @@ static PyMethodDef PyECLibMethods[] = {
     {"get_fragment_partition", pyeclib_c_get_fragment_partition, METH_VARARGS, "Parition fragments into data and parity, also returns a list of missing indexes"},
     {"get_required_fragments", pyeclib_c_get_required_fragments, METH_VARARGS, "Return the fragments required to reconstruct a set of missing fragments"},
     {"get_segment_info", pyeclib_c_get_segment_info, METH_VARARGS, "Return segment and fragment size information needed when encoding a segmented stream"},
+    {"get_metadata", pyeclib_c_get_metadata, METH_VARARGS, "Get the integrity checking metadata for a fragment"},
+    {"check_metadata", pyeclib_c_check_metadata, METH_VARARGS, "Check the integrity checking metadata for a set of fragments"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

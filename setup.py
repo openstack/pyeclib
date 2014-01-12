@@ -48,7 +48,7 @@ module = Extension('pyeclib_c',
                                    'c_eclib-0.2/include',
                                    '/usr/local/include'],
                    library_dirs = ['/usr/lib', '/usr/local/lib'],
-                   libraries = ['Jerasure', 'Xorcode'],
+                   libraries = ['Jerasure', 'Xorcode', 'alg_sig'],
                    # The extra arguments are for debugging
                    # extra_compile_args = ['-g', '-O0'],
                    sources = ['src/c/pyeclib_c/pyeclib_c.c'])

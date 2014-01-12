@@ -28,12 +28,12 @@
 #include<string.h>
 #include<time.h>
 
-#define SIG_LEN 32
+// Max is 8 bytes right now (64-bits)
+#define MAX_SIG_LEN 8
 
 void fill_random_buffer(char *buf, int size)
 {
   int i;
-  srand(time(NULL));
   
   for (i=0; i < size; i++) {
     buf[i] = (char)(rand() % 256);
@@ -57,20 +57,20 @@ int check_parity_of_sigs(char **sigs, int num_data, int size)
 {
   int i, j;
   int ret = 0;
-  char *parity_sig = (char*)malloc(SIG_LEN);
+  char *parity_sig = (char*)malloc(MAX_SIG_LEN);
 
-  bzero(parity_sig, SIG_LEN);
+  bzero(parity_sig, MAX_SIG_LEN);
 
   for (i=0; i < num_data; i++) {
-    for (j=0; j < SIG_LEN; j++) {
+    for (j=0; j < MAX_SIG_LEN; j++) {
       parity_sig[j] ^= sigs[i][j];
     }
   } 
 
-  if (memcmp(parity_sig, sigs[num_data], SIG_LEN) != 0) {
+  if (memcmp(parity_sig, sigs[num_data], MAX_SIG_LEN) != 0) {
     fprintf(stderr, "Signatures do not match:\n");
-    for (i=0; i < SIG_LEN; i++) {
-      fprintf(stderr, "parity_sig[%d] = 0x%x, sigs[%d][%d] = 0x%x\n", i, parity_sig[i], num_data, i, sigs[i][num_data]);
+    for (i=0; i < MAX_SIG_LEN; i++) {
+      fprintf(stderr, "parity_sig[%d] = 0x%x, sigs[%d][%d] = 0x%x\n", i, parity_sig[i], num_data, i, sigs[num_data][i]);
     }
     ret = 1;
   }
@@ -81,9 +81,9 @@ out:
   return ret;
 }
 
-static int basic_xor_test()
+static int basic_xor_test_8_32()
 {
-  alg_sig_t* sig_handle = init_alg_sig(SIG_LEN, 16);
+  alg_sig_t* sig_handle = init_alg_sig(32, 8);
   int blocksize = 65536;
   int num_data = 12;
   char **data;
@@ -97,18 +97,112 @@ static int basic_xor_test()
   for (i=0; i < num_data; i++) {
     data[i] = (char*)malloc(sizeof(char)*blocksize);
     fill_random_buffer(data[i], blocksize);
-    sigs[i] = (char*)malloc(SIG_LEN);
-    
+    sigs[i] = (char*)malloc(MAX_SIG_LEN);
+
   }
   parity = (char*)malloc(sizeof(char)*blocksize);
-  sigs[i] = (char*)malloc(SIG_LEN);
+  sigs[i] = (char*)malloc(MAX_SIG_LEN);
 
   compute_parity(data, parity, num_data, blocksize);
 
   for (i=0; i < num_data; i++) {
-    compute_alg_sig32(sig_handle, data[i], blocksize, sigs[i]);
+    bzero(sigs[i], MAX_SIG_LEN);
+    compute_alg_sig(sig_handle, data[i], blocksize, sigs[i]);
   }
-  compute_alg_sig32(sig_handle, parity, blocksize, sigs[i]);
+  bzero(sigs[i], MAX_SIG_LEN);
+  compute_alg_sig(sig_handle, parity, blocksize, sigs[i]);
+
+  ret = check_parity_of_sigs(sigs, num_data, blocksize);
+
+  for (i=0; i < num_data; i++) {
+    free(data[i]);
+    free(sigs[i]);
+  }
+
+  free(parity);
+  free(sigs[num_data]);
+  free(sigs);
+  free(data);
+
+  return ret;
+}
+
+static int basic_xor_test_16_64()
+{
+  alg_sig_t* sig_handle = init_alg_sig(64, 16);
+  int blocksize = 65536;
+  int num_data = 12;
+  char **data;
+  char *parity;
+  char **sigs;
+  int i;
+  int ret = 0;
+
+  data = (char**)malloc(sizeof(char*) * num_data);
+  sigs = (char**)malloc(sizeof(char*) * (num_data + 1));
+  for (i=0; i < num_data; i++) {
+    data[i] = (char*)malloc(sizeof(char)*blocksize);
+    fill_random_buffer(data[i], blocksize);
+    sigs[i] = (char*)malloc(MAX_SIG_LEN);
+  }
+  parity = (char*)malloc(sizeof(char)*blocksize);
+  sigs[i] = (char*)malloc(MAX_SIG_LEN);
+
+  compute_parity(data, parity, num_data, blocksize);
+
+  for (i=0; i < num_data; i++) {
+    bzero(sigs[i], MAX_SIG_LEN);
+    compute_alg_sig(sig_handle, data[i], blocksize, sigs[i]);
+  }
+  bzero(sigs[i], MAX_SIG_LEN);
+  compute_alg_sig(sig_handle, parity, blocksize, sigs[i]);
+  
+  ret = check_parity_of_sigs(sigs, num_data, blocksize);
+
+  for (i=0; i < num_data; i++) {
+    free(data[i]);
+    free(sigs[i]);
+  }
+
+  free(parity);
+  free(sigs[num_data]);
+  free(sigs);
+  free(data);
+
+  return ret;
+
+}
+
+static int basic_xor_test_16_32()
+{
+  alg_sig_t* sig_handle = init_alg_sig(32, 16);
+  int blocksize = 65536;
+  int num_data = 12;
+  char **data;
+  char *parity;
+  char **sigs;
+  int i;
+  int ret = 0;
+
+  data = (char**)malloc(sizeof(char*) * num_data);
+  sigs = (char**)malloc(sizeof(char*) * (num_data + 1));
+  for (i=0; i < num_data; i++) {
+    data[i] = (char*)malloc(sizeof(char)*blocksize);
+    fill_random_buffer(data[i], blocksize);
+    sigs[i] = (char*)malloc(MAX_SIG_LEN);
+    
+  }
+  parity = (char*)malloc(sizeof(char)*blocksize);
+  sigs[i] = (char*)malloc(MAX_SIG_LEN);
+
+  compute_parity(data, parity, num_data, blocksize);
+
+  for (i=0; i < num_data; i++) {
+    bzero(sigs[i], MAX_SIG_LEN);
+    compute_alg_sig(sig_handle, data[i], blocksize, sigs[i]);
+  }
+  bzero(sigs[i], MAX_SIG_LEN);
+  compute_alg_sig(sig_handle, parity, blocksize, sigs[i]);
   
   ret = check_parity_of_sigs(sigs, num_data, blocksize);
 
@@ -129,10 +223,22 @@ int main(int argc, char**argv)
 {
   int ret;
   int num_failed = 0;
+  
+  srand(time(NULL));
 
-  ret = basic_xor_test();
+  ret = basic_xor_test_16_32();
   if (ret) {
-    fprintf(stderr, "basic_xor_test has failed!\n"); 
+    fprintf(stderr, "basic_xor_test_16_32 has failed!\n"); 
+    num_failed++;
+  }
+  ret = basic_xor_test_16_64();
+  if (ret) {
+    fprintf(stderr, "basic_xor_test_16_64 has failed!\n"); 
+    num_failed++;
+  }
+  ret = basic_xor_test_8_32();
+  if (ret) {
+    fprintf(stderr, "basic_xor_test_8_32 has failed!\n"); 
     num_failed++;
   }
 

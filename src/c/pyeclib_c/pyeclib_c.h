@@ -39,6 +39,8 @@ const int pyeclib_type_needs_addr_align[] = { 0, 0, 1, 1 };
 #define PYECC_MAX_DATA 32
 #define PYECC_MAX_PARITY 32
 
+#define PYCC_MAX_SIG_LEN 8
+
 /*
  * Prevent the compiler from padding
  * this by using the __packed__ keyword
@@ -55,6 +57,13 @@ typedef struct __attribute__((__packed__)) fragment_header_s
   int aligned_padding[3];
 } fragment_header_t;
 
+typedef struct fragment_metadata_s
+{
+  char signature[PYCC_MAX_SIG_LEN];
+  int  size;
+  int  idx;
+} fragment_metadata_t;
+
 typedef struct pyeclib_s
 {
   int k;
@@ -64,6 +73,7 @@ typedef struct pyeclib_s
   int *bitmatrix;
   int **schedule;
   xor_code_t *xor_code_desc;
+  alg_sig_t  *alg_sig_desc;
   pyeclib_type_t type;
 } pyeclib_t;
 
