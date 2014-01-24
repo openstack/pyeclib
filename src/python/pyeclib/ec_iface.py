@@ -106,7 +106,8 @@ class ECDriver(object):
       'reconstruct' : 0,
       'fragments_needed' : 0,
       'get_metadata' : 0,
-      'verify_stripe_metadata' : 0
+      'verify_stripe_metadata' : 0,
+      'get_segment_info' : 0
     }
 
     for attr in dir(self.ec_lib_reference):
@@ -199,3 +200,29 @@ class ECDriver(object):
   
     """
     return self.ec_lib_reference.verify_stripe_metadata(fragment_metadata_list) 
+  
+  def get_segment_info(self, data_len, segment_size):
+    """
+    Get segmentation info for a given data length and 
+    segment size.
+
+    Semment info returns a dict with the following keys:
+
+    segment_size: size of the payload to give to encode()
+    last_segment_size: size of the payload to give to encode()
+    fragment_size: the fragment size returned by encode()
+    last_fragment_size: the fragment size returned by encode()
+    num_segments: number of segments
+    
+    This allows the caller to prepare requests
+    when segmenting a data stream to be EC'd.
+    
+    Since the data length will rarely be aligned
+    to the segment size, the last segment will be
+    a different size than the others.
+    
+    There are restrictions on the length given to encode(),
+    so calling this before encode is highly recommended when
+    segmenting a data stream.
+    """
+    return self.ec_lib_reference.get_segment_info(data_len, segment_size)

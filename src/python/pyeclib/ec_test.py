@@ -86,6 +86,64 @@ class TestPyECLibDriver(unittest.TestCase):
       filename = "test_files/test_file.%s" % size_str
       os.unlink(filename)
     os.rmdir("./test_files")
+
+  def test_get_segment_info(self):
+    pyeclib_drivers = []
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=11, m=2, type="rs_vand"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=10, m=2, type="rs_vand"))
+
+    file_sizes = [1024*1024, 2*1024*1024, 10*1024*1024, 10*1024*1024+7]
+    segment_sizes = [3*1024, 1024*1024]
+    segment_strings = {}
+
+    #
+    # Generate some test segments for each segment size.
+    # Use 2 * segment size, because last segment may be
+    # greater than segment_size
+    #
+    char_set = string.ascii_uppercase + string.digits
+    for segment_size in segment_sizes:
+      segment_strings[segment_size] = ''.join(random.choice(char_set) for i in range(segment_size*2))
+    
+    for pyeclib_driver in pyeclib_drivers:
+      for file_size in file_sizes:
+        for segment_size in segment_sizes:
+          #
+          # Compute the segment info
+          #
+          segment_info = pyeclib_driver.get_segment_info(file_size, segment_size)
+
+          num_segments = segment_info['num_segments'] 
+          segment_size = segment_info['segment_size'] 
+          fragment_size = segment_info['fragment_size'] 
+          last_segment_size = segment_info['last_segment_size'] 
+          last_fragment_size = segment_info['last_fragment_size'] 
+
+          if num_segments > 1:
+            computed_file_size = ((num_segments-1) * segment_size) + last_segment_size
+          else:
+            computed_file_size = segment_size
+
+          #
+          # Verify that the segment sizes add up
+          #
+          self.assertTrue(computed_file_size == file_size)
+
+          encoded_fragments = pyeclib_driver.encode(segment_strings[segment_size][:segment_size])
+
+          #
+          # Verify the fragment size
+          #
+          self.assertTrue(fragment_size == len(encoded_fragments[0]))
+
+          if last_segment_size > 0:
+            encoded_fragments = pyeclib_driver.encode(segment_strings[segment_size][:last_segment_size])
+
+            #
+            # Verify the last fragment size, if there is a last fragment
+            #
+            self.assertTrue(last_fragment_size == len(encoded_fragments[0]))
   
   def test_rs(self):
     pyeclib_drivers = []

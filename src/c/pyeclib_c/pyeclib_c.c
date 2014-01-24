@@ -53,6 +53,7 @@
  */
 
 static PyObject *PyECLibError;
+static PyObject *PyECLibInvalidEncodeSize;
 
 /*
  * Determine if an address is aligned to a particular boundary
@@ -522,6 +523,136 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   return pyeclib_obj_handle;
 }
 
+/**
+ *
+ * This function takes data length and 
+ * a segment size and returns an object 
+ * containing:
+ *
+ * segment_size: size of the payload to give to encode()
+ * last_segment_size: size of the payload to give to encode()
+ * fragment_size: the fragment size returned by encode()
+ * last_fragment_size: the fragment size returned by encode()
+ * num_segments: number of segments 
+ *
+ * This allows the caller to prepare requests
+ * when segmenting a data stream to be EC'd.
+ * 
+ * Since the data length will rarely be aligned
+ * to the segment size, the last segment will be
+ * a different size than the others.  
+ * 
+ * There are restrictions on the length given to encode(),
+ * so calling this before encode is highly recommended when
+ * segmenting a data stream.
+ *
+ * Minimum segment size is: k * k * w (if it is less than this, 
+ * then the last segment will be slightly larger than the others,
+ * otherwise it will be smaller).
+ * 
+ */
+static PyObject *
+pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
+{
+  PyObject *pyeclib_obj_handle;
+  PyObject *ret_dict;
+  pyeclib_t *pyeclib_handle;
+  int data_len;
+  int segment_size, last_segment_size;
+  int num_segments;
+  int fragment_size, last_fragment_size;
+  int num_words, fragment_padding;
+  int min_segment_size;
+
+  if (!PyArg_ParseTuple(args, "Oii", &pyeclib_obj_handle, &data_len, &segment_size)) {
+    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
+    return NULL;
+  }
+
+  pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
+  if (pyeclib_handle == NULL) {
+    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
+    return NULL;
+  }
+
+  /*
+   * The minimum segment size is k*k*w
+   */
+  min_segment_size = pyeclib_handle->k * pyeclib_handle->k * pyeclib_handle->w;
+
+  /*
+   * Get the number of segments
+   */
+  num_segments = (int)ceill((double)data_len / segment_size);
+
+  /*
+   * If there are two segments and the last is smaller than the 
+   * minimum size, then combine into a single segment
+   */
+  if (num_segments == 2 && data_len < (segment_size + min_segment_size)) {
+    num_segments--;
+  }
+
+  /*
+   * Compute the fragment size from the segment size
+   */
+  if (num_segments == 1) {
+    /*
+     * There is one fragment, or two fragments, where the second is 
+     * smaller than the min_segment_size, just create one segment
+     */
+    fragment_size = (int)ceill((double)data_len / pyeclib_handle->k);
+    segment_size = data_len;
+  } else {
+    /*
+     * There will be at least 2 segments, where the last exceeeds
+     * the minimum segment size.
+     */
+    fragment_size = (int)ceill((double)segment_size / pyeclib_handle->k);
+
+    last_segment_size = data_len - (segment_size * (num_segments - 1)); 
+    /*
+     * The last segment is lower than the minimum size, so combine it 
+     * with the previous fragment
+     */
+    if (last_segment_size < min_segment_size) {
+
+      // assert(num_segments > 2)?
+
+      // Add current "last segment" to second to last segment
+      num_segments--;
+      last_segment_size = last_segment_size + segment_size;
+    } 
+     
+    // Compute the last fragment size from the last segment size
+    last_fragment_size = (int)ceill((double)last_segment_size / pyeclib_handle->k);
+  
+    // Padded to account for word size
+    num_words = (int)ceill((double)last_fragment_size / PYECLIB_WORD_SIZE(pyeclib_handle->type));
+    fragment_padding = (num_words * PYECLIB_WORD_SIZE(pyeclib_handle->type)) - last_fragment_size;
+    last_fragment_size += fragment_padding;
+    last_fragment_size += sizeof(fragment_header_t);
+  }
+
+  // Padded to account for word size
+  num_words = (int)ceill((double)fragment_size / PYECLIB_WORD_SIZE(pyeclib_handle->type));
+  fragment_padding = (num_words * PYECLIB_WORD_SIZE(pyeclib_handle->type)) - fragment_size;
+  fragment_size += fragment_padding;
+
+  // Add header to fragment size
+  fragment_size += sizeof(fragment_header_t);
+
+  ret_dict = PyDict_New();
+
+  PyDict_SetItem(ret_dict, PyString_FromString("segment_size\0"), PyInt_FromLong(segment_size));
+  PyDict_SetItem(ret_dict, PyString_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
+  PyDict_SetItem(ret_dict, PyString_FromString("fragment_size\0"), PyInt_FromLong(fragment_size));
+  PyDict_SetItem(ret_dict, PyString_FromString("last_fragment_size\0"), PyInt_FromLong(last_fragment_size));
+  PyDict_SetItem(ret_dict, PyString_FromString("num_segments\0"), PyInt_FromLong(num_segments));
+
+  return ret_dict;
+}
+
 static PyObject *
 pyeclib_c_encode(PyObject *self, PyObject *args)
 {
@@ -533,6 +664,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   char **data_to_encode;
   char **encoded_parity;
   int i;
+  int minimum_encode_size;
   PyObject *list_of_strips;
 
   if (!PyArg_ParseTuple(args, "Os#", &pyeclib_obj_handle, &data, &data_len)) {
@@ -543,6 +675,16 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
+    return NULL;
+  }
+  
+  /*
+   * TODO: Pad and set minimum size if data_len < k*k*w
+   * TODO: Put he total size in all segments for decoding
+   */
+  minimum_encode_size = (pyeclib_handle->k * pyeclib_handle->k * pyeclib_handle->w);
+  if (data_len < minimum_encode_size) {
+    PyErr_Format(PyECLibInvalidEncodeSize, "Invalid string size to encode: %d.  Minimum size is: %d", data_len, minimum_encode_size);
     return NULL;
   }
 
@@ -709,6 +851,10 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
     PyErr_SetString(PyECLibError, "Could not allocate memory for data buffers");
     return NULL;
   }
+  
+  /*
+   * TODO: Get minimum size and only copy that much into the string to return
+   */
 
   /*
    * Iterate over the fragments.  If we have all k data fragments, then we can
@@ -1406,6 +1552,7 @@ static PyMethodDef PyECLibMethods[] = {
     {"fragments_to_string", pyeclib_c_fragments_to_string, METH_VARARGS, "Try to transform a set of fragments into original string without calling the decoder"},
     {"get_fragment_partition", pyeclib_c_get_fragment_partition, METH_VARARGS, "Parition fragments into data and parity, also returns a list of missing indexes"},
     {"get_required_fragments", pyeclib_c_get_required_fragments, METH_VARARGS, "Return the fragments required to reconstruct a set of missing fragments"},
+    {"get_segment_info", pyeclib_c_get_segment_info, METH_VARARGS, "Return segment and fragment size information needed when encoding a segmented stream"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

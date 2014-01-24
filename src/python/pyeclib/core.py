@@ -131,6 +131,9 @@ class ECPyECLibDriver(object):
   def verify_stripe_metadata(self, fragment_metadata_list):
     pass
 
+  def get_segment_info(self, data_len, segment_size):
+    return pyeclib_c.get_segment_info(self.handle, data_len, segment_size)
+
 class ECNullDriver(object):
   def __init__(self, k, m):
     self.k = k
@@ -152,6 +155,9 @@ class ECNullDriver(object):
     pass
 
   def verify_stripe_metadata(self, fragment_metadata_list):
+    pass
+  
+  def get_segment_info(self, data_len, segment_size):
     pass
 
 
@@ -254,3 +260,6 @@ class ECStripingDriver(object):
     :returns: True 
     """
     return True 
+  
+  def get_segment_info(self, data_len, segment_size):
+    pass
