@@ -221,8 +221,6 @@ int get_fragment_idx(char *buf)
   }
 
   return header->idx;
-  
-  return 0;
 }
 
 static
@@ -251,8 +249,6 @@ int get_fragment_size(char *buf)
   }
 
   return header->size;
-  
-  return 0;
 }
 
 static
@@ -313,6 +309,12 @@ int free_fragment_buffer(char *buf)
   free(buf);
 
   return 0;
+}
+
+static
+int get_minimum_encode_size(pyeclib_t *pyeclib_handle)
+{
+  return (pyeclib_handle->k * pyeclib_handle->k * pyeclib_handle->w);
 }
 
 static void pyeclib_c_destructor(PyObject *obj)
@@ -603,6 +605,8 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      */
     fragment_size = (int)ceill((double)data_len / pyeclib_handle->k);
     segment_size = data_len;
+    last_fragment_size = fragment_size;
+    last_segment_size = segment_size;
   } else {
     /*
      * There will be at least 2 segments, where the last exceeeds
@@ -626,13 +630,13 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      
     // Compute the last fragment size from the last segment size
     last_fragment_size = (int)ceill((double)last_segment_size / pyeclib_handle->k);
-  
-    // Padded to account for word size
-    num_words = (int)ceill((double)last_fragment_size / PYECLIB_WORD_SIZE(pyeclib_handle->type));
-    fragment_padding = (num_words * PYECLIB_WORD_SIZE(pyeclib_handle->type)) - last_fragment_size;
-    last_fragment_size += fragment_padding;
-    last_fragment_size += sizeof(fragment_header_t);
   }
+  
+  // Padded to account for word size
+  num_words = (int)ceill((double)last_fragment_size / PYECLIB_WORD_SIZE(pyeclib_handle->type));
+  fragment_padding = (num_words * PYECLIB_WORD_SIZE(pyeclib_handle->type)) - last_fragment_size;
+  last_fragment_size += fragment_padding;
+  last_fragment_size += sizeof(fragment_header_t);
 
   // Padded to account for word size
   num_words = (int)ceill((double)fragment_size / PYECLIB_WORD_SIZE(pyeclib_handle->type));
@@ -682,7 +686,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
    * TODO: Pad and set minimum size if data_len < k*k*w
    * TODO: Put he total size in all segments for decoding
    */
-  minimum_encode_size = (pyeclib_handle->k * pyeclib_handle->k * pyeclib_handle->w);
+  minimum_encode_size = get_minimum_encode_size(pyeclib_handle);
   if (data_len < minimum_encode_size) {
     PyErr_Format(PyECLibInvalidEncodeSize, "Invalid string size to encode: %d.  Minimum size is: %d", data_len, minimum_encode_size);
     return NULL;

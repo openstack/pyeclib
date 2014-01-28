@@ -120,10 +120,7 @@ class TestPyECLibDriver(unittest.TestCase):
           last_segment_size = segment_info['last_segment_size'] 
           last_fragment_size = segment_info['last_fragment_size'] 
 
-          if num_segments > 1:
-            computed_file_size = ((num_segments-1) * segment_size) + last_segment_size
-          else:
-            computed_file_size = segment_size
+          computed_file_size = ((num_segments-1) * segment_size) + last_segment_size
 
           #
           # Verify that the segment sizes add up
