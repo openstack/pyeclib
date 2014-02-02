@@ -50,7 +50,7 @@ module = Extension('pyeclib_c',
                    library_dirs = ['/usr/lib', '/usr/local/lib'],
                    libraries = ['Jerasure', 'Xorcode'],
                    # The extra arguments are for debugging
-                   #extra_compile_args = ['-g', '-O0']
+                   # extra_compile_args = ['-g', '-O0'],
                    sources = ['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup (name = 'PyECLib',

@@ -87,6 +87,22 @@ class TestPyECLibDriver(unittest.TestCase):
       os.unlink(filename)
     os.rmdir("./test_files")
 
+  def test_small_encode(self):
+    pyeclib_drivers = []
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=11, m=2, type="rs_vand"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=10, m=2, type="rs_vand"))
+
+    encode_strs = ["a", "hello", "hellohyhi", "yo"]
+
+    for pyeclib_driver in pyeclib_drivers:
+      for encode_str in encode_strs:
+          encoded_fragments = pyeclib_driver.encode(encode_str)
+          decoded_str = pyeclib_driver.decode(encoded_fragments)
+          
+          self.assertTrue(decoded_str == encode_str)
+        
+
   def test_get_segment_info(self):
     pyeclib_drivers = []
     pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))

@@ -53,7 +53,6 @@
  */
 
 static PyObject *PyECLibError;
-static PyObject *PyECLibInvalidEncodeSize;
 
 /*
  * Determine if an address is aligned to a particular boundary
@@ -252,31 +251,31 @@ int get_fragment_size(char *buf)
 }
 
 static
-int set_stripe_padding(char *buf, int stripe_padding)
+int set_orig_data_size(char *buf, int orig_data_size)
 {
   fragment_header_t* header = (fragment_header_t*)buf;
 
   if (header->magic != PYECC_HEADER_MAGIC) {
-    PyErr_SetString(PyECLibError, "Invalid fragment header (stripe padding check)!");
+    PyErr_SetString(PyECLibError, "Invalid fragment header (set orig data check)!");
     return -1; 
   }
 
-  header->stripe_padding = stripe_padding;
+  header->orig_data_size = orig_data_size;
 
   return 0;
 }
 
 static
-int get_stripe_padding(char *buf)
+int get_orig_data_size(char *buf)
 {
   fragment_header_t* header = (fragment_header_t*)buf;
 
   if (header->magic != PYECC_HEADER_MAGIC) {
-    PyErr_SetString(PyECLibError, "Invalid fragment header (stripe padding check)!");
+    PyErr_SetString(PyECLibError, "Invalid fragment header (get orig data check)!");
     return -1;
   }
 
-  return header->stripe_padding;
+  return header->orig_data_size;
 }
 
 static
@@ -311,12 +310,6 @@ int free_fragment_buffer(char *buf)
   return 0;
 }
 
-static
-int get_minimum_encode_size(pyeclib_t *pyeclib_handle)
-{
-  return (pyeclib_handle->k * pyeclib_handle->k * pyeclib_handle->w);
-}
-
 static void pyeclib_c_destructor(PyObject *obj)
 {
   pyeclib_t *pyeclib_handle = NULL;
@@ -345,13 +338,13 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
                              char      **data,
                              char      **parity,
                              int       *missing_idxs,
-                             int       *stripe_padding,
+                             int       *orig_size,
                              int       fragment_size,
                              unsigned long long *realloc_bm)
 {
   int i;
   int data_size, parity_size, missing_size;
-  int padding = -1;
+  int orig_data_size = -1;
   unsigned long long missing_bm;
   int needs_addr_alignment = PYECLIB_NEEDS_ADDR_ALIGNMENT(pyeclib_handle->type);
 
@@ -408,13 +401,11 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
 
 
     /*
-     * Need to determine if the payload of the last data fragment
-     * was padded.  we write the stripe padding to all fragments, so we
-     * get it out of the first valid fragment.
+     * Need to determine the size of the original data
      */
-    if (((missing_bm & (1 << i)) == 0) && padding < 0) {
-      padding = get_stripe_padding(data[i]);
-      if (padding < 0) {
+    if (((missing_bm & (1 << i)) == 0) && orig_data_size < 0) {
+      orig_data_size = get_orig_data_size(data[i]);
+      if (orig_data_size < 0) {
         return -1;
       }
     }
@@ -452,7 +443,7 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
     }
   }
 
-  *stripe_padding = padding;
+  *orig_size = orig_data_size;
   return 0; 
 }
 
@@ -525,6 +516,36 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   return pyeclib_obj_handle;
 }
 
+static int
+get_aligned_data_size(pyeclib_t* pyeclib_handle, int data_len)
+{
+  int word_size = pyeclib_handle->w / 8;
+  int alignment_multiple;
+  int aligned_size = 0;
+
+  /*
+   * For Cauchy reed-solomon align to k*word_size*packet_size
+   *
+   * For Vandermonde reed-solomon and flat-XOR, align to k*word_size
+   */
+  if (pyeclib_handle->type == PYECC_RS_CAUCHY_ORIG) {
+    alignment_multiple = pyeclib_handle->k * pyeclib_handle->w * PYECC_CAUCHY_PACKETSIZE;
+  } else {
+    alignment_multiple = pyeclib_handle->k * word_size;
+  }
+
+  aligned_size = (int)ceill((double)data_len / alignment_multiple) * alignment_multiple;
+
+  return aligned_size;
+}
+
+static
+int get_minimum_encode_size(pyeclib_t *pyeclib_handle)
+{
+  return get_aligned_data_size(pyeclib_handle, 1);
+}
+
+
 /**
  *
  * This function takes data length and 
@@ -548,9 +569,9 @@ pyeclib_c_init(PyObject *self, PyObject *args)
  * so calling this before encode is highly recommended when
  * segmenting a data stream.
  *
- * Minimum segment size is: k * k * w (if it is less than this, 
- * then the last segment will be slightly larger than the others,
- * otherwise it will be smaller).
+ * Minimum segment size depends on the underlying EC type 
+ * (if it is less than this, then the last segment will be 
+ * slightly larger than the others, otherwise it will be smaller).
  * 
  */
 static PyObject *
@@ -563,8 +584,9 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   int segment_size, last_segment_size;
   int num_segments;
   int fragment_size, last_fragment_size;
-  int num_words, fragment_padding;
   int min_segment_size;
+  int aligned_segment_size;
+  int aligned_data_len;
 
   if (!PyArg_ParseTuple(args, "Oii", &pyeclib_obj_handle, &data_len, &segment_size)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
@@ -578,9 +600,9 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   }
 
   /*
-   * The minimum segment size is k*k*w
+   * The minimum segment size depends on the EC type
    */
-  min_segment_size = pyeclib_handle->k * pyeclib_handle->k * pyeclib_handle->w;
+  min_segment_size = get_minimum_encode_size(pyeclib_handle);
 
   /*
    * Get the number of segments
@@ -603,7 +625,21 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      * There is one fragment, or two fragments, where the second is 
      * smaller than the min_segment_size, just create one segment
      */
-    fragment_size = (int)ceill((double)data_len / pyeclib_handle->k);
+
+    /*
+     * This will copmpute a size algined to the number of data
+     * and the underlying wordsize of the EC algorithm.
+     */
+    aligned_data_len = get_aligned_data_size(pyeclib_handle, data_len);
+
+    /*
+     * aligned_data_len is guaranteed to be divisible by k
+     */
+    fragment_size = aligned_data_len / pyeclib_handle->k;
+
+    /*
+     * Segment size is the user-provided segment size
+     */
     segment_size = data_len;
     last_fragment_size = fragment_size;
     last_segment_size = segment_size;
@@ -612,9 +648,16 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      * There will be at least 2 segments, where the last exceeeds
      * the minimum segment size.
      */
-    fragment_size = (int)ceill((double)segment_size / pyeclib_handle->k);
+
+    aligned_segment_size = get_aligned_data_size(pyeclib_handle, segment_size);
+
+    /*
+     * aligned_data_len is guaranteed to be divisible by k
+     */
+    fragment_size = aligned_segment_size / pyeclib_handle->k;
 
     last_segment_size = data_len - (segment_size * (num_segments - 1)); 
+
     /*
      * The last segment is lower than the minimum size, so combine it 
      * with the previous fragment
@@ -627,23 +670,15 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
       num_segments--;
       last_segment_size = last_segment_size + segment_size;
     } 
+    
+    aligned_segment_size = get_aligned_data_size(pyeclib_handle, last_segment_size);
      
     // Compute the last fragment size from the last segment size
-    last_fragment_size = (int)ceill((double)last_segment_size / pyeclib_handle->k);
+    last_fragment_size = aligned_segment_size / pyeclib_handle->k;
   }
   
-  // Padded to account for word size
-  num_words = (int)ceill((double)last_fragment_size / PYECLIB_WORD_SIZE(pyeclib_handle->type));
-  fragment_padding = (num_words * PYECLIB_WORD_SIZE(pyeclib_handle->type)) - last_fragment_size;
-  last_fragment_size += fragment_padding;
+  // Add header to fragment sizes
   last_fragment_size += sizeof(fragment_header_t);
-
-  // Padded to account for word size
-  num_words = (int)ceill((double)fragment_size / PYECLIB_WORD_SIZE(pyeclib_handle->type));
-  fragment_padding = (num_words * PYECLIB_WORD_SIZE(pyeclib_handle->type)) - fragment_size;
-  fragment_size += fragment_padding;
-
-  // Add header to fragment size
   fragment_size += sizeof(fragment_header_t);
 
   ret_dict = PyDict_New();
@@ -664,11 +699,12 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   pyeclib_t *pyeclib_handle;
   char *data;
   int data_len;
-  int blocksize, residual, stripe_padding = 0;
+  int aligned_data_len;
+  int orig_data_size;
+  int blocksize;
   char **data_to_encode;
   char **encoded_parity;
   int i;
-  int minimum_encode_size;
   PyObject *list_of_strips;
 
   if (!PyArg_ParseTuple(args, "Os#", &pyeclib_obj_handle, &data, &data_len)) {
@@ -681,50 +717,22 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
     PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
     return NULL;
   }
+
+  /*
+   * Grab the original size to put in the headers
+   */
+  orig_data_size = data_len;
   
   /*
-   * TODO: Pad and set minimum size if data_len < k*k*w
-   * TODO: Put he total size in all segments for decoding
+   * This will copmpute a size algined to the number of data 
+   * and the underlying wordsize of the EC algorithm.
    */
-  minimum_encode_size = get_minimum_encode_size(pyeclib_handle);
-  if (data_len < minimum_encode_size) {
-    PyErr_Format(PyECLibInvalidEncodeSize, "Invalid string size to encode: %d.  Minimum size is: %d", data_len, minimum_encode_size);
-    return NULL;
-  }
+  aligned_data_len = get_aligned_data_size(pyeclib_handle, data_len);
 
-  if (pyeclib_handle->type == PYECC_RS_CAUCHY_ORIG) {
-    int aligned_data_len = data_len;
-    
-    while (aligned_data_len % (pyeclib_handle->k*pyeclib_handle->w*PYECC_CAUCHY_PACKETSIZE) != 0) {
-      aligned_data_len++;
-    } 
-    
-    blocksize = aligned_data_len / pyeclib_handle->k;
-    stripe_padding = aligned_data_len - data_len;
-
-  } else {
-    int num_words, fragment_padding;
-
-    /*
-     * Compute the blocksize 
-     */
-    blocksize = (int)ceill((double)data_len / pyeclib_handle->k);
-
-    num_words = (int)ceill((double)blocksize / PYECLIB_WORD_SIZE(pyeclib_handle->type));
-      
-    fragment_padding = (num_words * PYECLIB_WORD_SIZE(pyeclib_handle->type)) - blocksize;
-
-    blocksize += fragment_padding;
-
-    /*
-     * Since the buffer is probably not aligned, 
-     * the last block will probably need stripe padding
-     */
-    residual = data_len % blocksize;
-    if (residual > 0) {
-      stripe_padding = blocksize - residual;
-    }
-  }
+  /*
+   * aligned_data_len is guaranteed to be divisible by k
+   */
+  blocksize = aligned_data_len / pyeclib_handle->k;
 
   data_to_encode = (char**)malloc(sizeof(char*)*pyeclib_handle->k);
   if (data_to_encode == NULL) {
@@ -734,21 +742,33 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
 
   for (i=0; i < pyeclib_handle->k; i++) {
     char *fragment = alloc_fragment_buffer(blocksize);
+    int payload_size = data_len > blocksize ? blocksize : data_len;
     data_to_encode[i] = get_fragment_data(fragment);
     if (data_to_encode[i] == NULL) {
       PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib.encode");
       return NULL;
     }
-    memcpy(data_to_encode[i], data, data_len > blocksize ? blocksize : data_len);
-    if (data_len > blocksize) {
-      set_fragment_size(fragment, blocksize);
-    } else {
-      set_fragment_size(fragment, data_len);
+
+    /*
+     * Only do the memcpy if there is data to copy
+     * 
+     * alloc_fragment_buffer() does a bzero(), so the padding
+     * will be all 0s.
+     */
+    if (data_len > 0) {
+      memcpy(data_to_encode[i], data, payload_size);
     }
-    data += (data_len > blocksize ? blocksize : data_len);
-    data_len -= blocksize;
+
+    /*
+     * Fragment size will always be the same (may be able to get rid of this)
+     */
+    set_fragment_size(fragment, blocksize);
+
+
+    data += payload_size;
+    data_len -= payload_size;
   }
-  
+
   encoded_parity = (char**)malloc(sizeof(char*)*pyeclib_handle->m);
   if (encoded_parity == NULL) {
     PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib.encode");
@@ -785,7 +805,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
     char *fragment_ptr = get_fragment_ptr_from_data(data_to_encode[i]);
     int fragment_size = blocksize+sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, i);
-    set_stripe_padding(fragment_ptr, stripe_padding);
+    set_orig_data_size(fragment_ptr, orig_data_size);
     PyList_SET_ITEM(list_of_strips, i, Py_BuildValue("s#", fragment_ptr, fragment_size));
     free_fragment_buffer(data_to_encode[i]);
   }
@@ -795,7 +815,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
     char *fragment_ptr = get_fragment_ptr_from_data(encoded_parity[i]);
     int fragment_size = blocksize+sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, pyeclib_handle->k+i);
-    set_stripe_padding(fragment_ptr, stripe_padding);
+    set_orig_data_size(fragment_ptr, orig_data_size);
     PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, Py_BuildValue("s#", fragment_ptr, fragment_size));
     free_fragment_buffer(encoded_parity[i]);
   }
@@ -823,6 +843,8 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   int i = 0;
   int num_fragments = 0;
   int num_data = 0;
+  int orig_data_size = -1;
+  int ret_data_size;
 
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_list)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.fragments_to_string");
@@ -857,7 +879,7 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   }
   
   /*
-   * TODO: Get minimum size and only copy that much into the string to return
+   * NOTE: Update to only copy original size out of the buffers
    */
 
   /*
@@ -886,6 +908,21 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
       ret_string = NULL;
       goto out;
     }
+
+    /*
+     * If we got this far, then we shouold
+     * find a valid original data size.
+     */
+    if (orig_data_size < 0) {
+      orig_data_size = get_orig_data_size(tmp_buf);
+    } else {
+      int my_orig_data_size = get_orig_data_size(tmp_buf);
+      if (my_orig_data_size != orig_data_size) {
+        PyErr_SetString(PyECLibError, "Inconsistent orig data sizes found in headers");
+        ret_string = NULL;
+        goto out;
+      }
+    }
     
     /*
      * Skip over parity fragments
@@ -909,21 +946,26 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
     goto out;
   }
 
-  ret_cstring = (char*)malloc(string_len);
+  ret_cstring = (char*)malloc(orig_data_size);
+
+  ret_data_size = orig_data_size;
 
   /*
    * Copy data payloads into a cstring.  The
    * fragments should be ordered by index in data.
    */
-  for (i=0; i < num_data; i++) {
+  for (i=0; i < num_data && orig_data_size > 0; i++) {
     char* fragment_data = get_fragment_data(data[i]);
     int fragment_size = get_fragment_size(data[i]);
+    int payload_size = orig_data_size > fragment_size ? fragment_size : orig_data_size;
 
-    memcpy(ret_cstring + string_off, fragment_data, fragment_size);
-    string_off += fragment_size;
+    memcpy(ret_cstring + string_off, fragment_data, payload_size);
+
+    orig_data_size -= payload_size;
+    string_off += payload_size;
   }
 
-  ret_string = Py_BuildValue("s#", ret_cstring, string_len);
+  ret_string = Py_BuildValue("s#", ret_cstring, ret_data_size);
   free(ret_cstring);
 
 out:
@@ -1227,7 +1269,7 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
   int *missing_idxs;
   int destination_idx;
   unsigned long long realloc_bm = 0; // Identifies symbols that had to be allocated for alignment 
-  int stripe_padding = -1;
+  int orig_data_size = -1;
   int missing_size;
   int *decoding_matrix;
   int *decoding_row;
@@ -1285,7 +1327,7 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding, fragment_size, &realloc_bm)) {
+  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &orig_data_size, fragment_size, &realloc_bm)) {
     PyErr_SetString(PyECLibError, "Could not extract adequate decoding info from data, parity and missing lists");
     reconstructed = NULL;
     goto out; 
@@ -1356,18 +1398,13 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
       fragment_ptr = get_fragment_ptr_from_data_novalidate(data[destination_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, destination_idx);
-      set_stripe_padding(fragment_ptr, stripe_padding);
-
-      if (destination_idx < (pyeclib_handle->k-1)) {
-        set_fragment_size(fragment_ptr, blocksize);
-      } else {
-        set_fragment_size(fragment_ptr, blocksize-stripe_padding);
-      }
+      set_orig_data_size(fragment_ptr, orig_data_size);
+      set_fragment_size(fragment_ptr, blocksize);
     } else {
       fragment_ptr = get_fragment_ptr_from_data_novalidate(parity[destination_idx - pyeclib_handle->k]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, destination_idx);
-      set_stripe_padding(fragment_ptr, stripe_padding);
+      set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
     }
 
@@ -1415,7 +1452,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   char **parity;
   int *missing_idxs;
   int missing_size;
-  int stripe_padding = -1;
+  int orig_data_size = -1;
   int i, j;
 
   if (!PyArg_ParseTuple(args, "OOOOi", &pyeclib_obj_handle, &data_list, &parity_list, &missing_idx_list, &fragment_size)) {
@@ -1465,7 +1502,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &stripe_padding, fragment_size, &realloc_bm)) {
+  if (get_decoding_info(pyeclib_handle, data_list, parity_list, missing_idx_list, data, parity, missing_idxs, &orig_data_size, fragment_size, &realloc_bm)) {
     PyErr_SetString(PyECLibError, "Could not extract adequate decoding info from data, parity and missing lists");
     return NULL;
   }
@@ -1496,25 +1533,14 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
       char *fragment_ptr = get_fragment_ptr_from_data_novalidate(data[missing_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, missing_idx);
-      set_stripe_padding(fragment_ptr, stripe_padding);
-
-      /*
-       * If we rebuilt the last data fragment, then we must
-       * account for fragment size being less than fragment_size
-       * due to stripe padding.
-       */
-      if (missing_idx < (pyeclib_handle->k-1)) {
-        set_fragment_size(fragment_ptr, blocksize);
-      } else {
-        set_fragment_size(fragment_ptr, blocksize - stripe_padding);
-      }
-        
+      set_orig_data_size(fragment_ptr, orig_data_size);
+      set_fragment_size(fragment_ptr, blocksize);
     } else if (missing_idx >= pyeclib_handle->k) {
       int parity_idx = missing_idx - pyeclib_handle->k;
       char *fragment_ptr = get_fragment_ptr_from_data_novalidate(parity[parity_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, missing_idx);
-      set_stripe_padding(fragment_ptr, stripe_padding);
+      set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
     } 
     j++;

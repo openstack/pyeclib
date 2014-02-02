@@ -48,8 +48,8 @@ typedef struct __attribute__((__packed__)) fragment_header_s
   int magic;
   int idx;
   int size;
-  int stripe_padding;
-  int fragment_padding;
+  int orig_data_size;
+  int aligned_data_size;
   // We must be aligned to 16-byte boundaries
   // So, size this array accordingly
   int aligned_padding[3];
