@@ -1,4 +1,4 @@
-This is v0.1 of PyECLib.  This library provides a simple Python interface for
+This is v0.2 of PyECLib.  This library provides a simple Python interface for
 implementing erasure codes.  To obtain the best possible performance, the
 underlying erasure code algorithms are written in C.  Please let me know if you
 have any other issues building/installing (email: kmgreen2@gmail.com).

@@ -280,15 +280,15 @@ for (type, k, m, hd) in xor_types:
   type_str = "%s" % (type)
 
   for size_str in sizes:
-    avg_time = time_encode(k, m, 0, type_str, size_str, iterations)
+    avg_time = time_encode(k, m, 32, type_str, size_str, iterations)
     print "Encode (%s): " % size_str, get_throughput(avg_time, size_str)
   
   for size_str in sizes:
-    avg_time = time_decode(k, m, 0, type_str, size_str, iterations, 3)
+    avg_time = time_decode(k, m, 32, type_str, size_str, iterations, 3)
     print "Decode (%s): " % size_str, get_throughput(avg_time, size_str)
   
   for size_str in sizes:
-    avg_time = test_reconstruct(k, m, 0, type_str, size_str, iterations)
+    avg_time = test_reconstruct(k, m, 32, type_str, size_str, iterations)
     print "Reconstruct (%s): " % size_str, get_throughput(avg_time, size_str)
 
 for (type, w) in rs_types:

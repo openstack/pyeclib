@@ -51,7 +51,7 @@ typedef struct __attribute__((__packed__)) fragment_header_s
   int idx;
   int size;
   int orig_data_size;
-  int aligned_data_size;
+  int chksum;
   // We must be aligned to 16-byte boundaries
   // So, size this array accordingly
   int aligned_padding[3];
@@ -59,9 +59,10 @@ typedef struct __attribute__((__packed__)) fragment_header_s
 
 typedef struct fragment_metadata_s
 {
-  char signature[PYCC_MAX_SIG_LEN];
   int  size;
   int  idx;
+  char signature[PYCC_MAX_SIG_LEN];
+  int chksum_mismatch;
 } fragment_metadata_t;
 
 typedef struct pyeclib_s

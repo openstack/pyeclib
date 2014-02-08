@@ -221,6 +221,34 @@ char* get_fragment_ptr_from_data(char *buf)
 }
 
 static
+int set_chksum(char *buf, int chksum)
+{
+  fragment_header_t* header = (fragment_header_t*)buf;
+
+  if (header->magic != PYECC_HEADER_MAGIC) {
+    fprintf(stderr, "Invalid fragment header (set chksum)!\n");
+    return -1; 
+  }
+
+  header->chksum = chksum;
+  
+  return 0;
+}
+
+static
+int get_chksum(char *buf)
+{
+  fragment_header_t* header = (fragment_header_t*)buf;
+
+  if (header->magic != PYECC_HEADER_MAGIC) {
+    PyErr_SetString(PyECLibError, "Invalid fragment header (get chksum)!");
+    return -1;
+  }
+
+  return header->chksum;
+}
+
+static
 int set_fragment_idx(char *buf, int idx)
 {
   fragment_header_t* header = (fragment_header_t*)buf;
@@ -372,6 +400,13 @@ int get_fragment_metadata(pyeclib_t *pyeclib_handle, char *fragment_buf, fragmen
   if (supports_alg_sig(pyeclib_handle)) {
     // Compute algebraic signature
     compute_alg_sig(pyeclib_handle->alg_sig_desc, fragment_data, fragment_size, fragment_metadata->signature);
+  } else {
+    int stored_chksum = get_chksum(fragment_buf);
+    int computed_chksum = crc32(0, fragment_data, fragment_size); 
+
+    if (stored_chksum != computed_chksum) {
+      fragment_metadata->chksum_mismatch = 1;
+    }
   }
 
   return 0;
@@ -555,9 +590,9 @@ pyeclib_c_init(PyObject *self, PyObject *args)
     default:
       pyeclib_handle->matrix = reed_sol_vandermonde_coding_matrix(k, m, w);
       if (w == 8) {
-        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 8);
+        pyeclib_handle->alg_sig_desc = NULL; //init_alg_sig(32, 8);
       } else if (w == 16) {
-        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+        pyeclib_handle->alg_sig_desc = NULL; //init_alg_sig(32, 16);
       }
       break;
   }
@@ -861,9 +896,11 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   
   for (i=0; i < pyeclib_handle->k; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(data_to_encode[i]);
+    int chksum = crc32(0, data_to_encode[i], blocksize);
     int fragment_size = blocksize+sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, i);
     set_orig_data_size(fragment_ptr, orig_data_size);
+    set_chksum(fragment_ptr, chksum);
     PyList_SET_ITEM(list_of_strips, i, Py_BuildValue("s#", fragment_ptr, fragment_size));
     free_fragment_buffer(data_to_encode[i]);
   }
@@ -871,9 +908,11 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   
   for (i=0; i < pyeclib_handle->m; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(encoded_parity[i]);
+    int chksum = crc32(0, encoded_parity[i], blocksize);
     int fragment_size = blocksize+sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, pyeclib_handle->k+i);
     set_orig_data_size(fragment_ptr, orig_data_size);
+    set_chksum(fragment_ptr, chksum);
     PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, Py_BuildValue("s#", fragment_ptr, fragment_size));
     free_fragment_buffer(encoded_parity[i]);
   }
@@ -1453,17 +1492,21 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
   if (ret == 0) {
     char *fragment_ptr;
     if (destination_idx < pyeclib_handle->k) {
+      int chksum = crc32(0, data[destination_idx], blocksize);
       fragment_ptr = get_fragment_ptr_from_data_novalidate(data[destination_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, destination_idx);
       set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
+      set_chksum(fragment_ptr, chksum);
     } else {
+      int chksum = crc32(0, parity[destination_idx - pyeclib_handle->k], blocksize);
       fragment_ptr = get_fragment_ptr_from_data_novalidate(parity[destination_idx - pyeclib_handle->k]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, destination_idx);
       set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
+      set_chksum(fragment_ptr, chksum);
     }
 
     reconstructed = Py_BuildValue("s#", fragment_ptr, fragment_size);
@@ -1588,18 +1631,22 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   while (missing_idxs[j] >= 0) {
     int missing_idx = missing_idxs[j];
     if (missing_idx < pyeclib_handle->k) {
+      int chksum = crc32(0, data[missing_idx], blocksize);
       char *fragment_ptr = get_fragment_ptr_from_data_novalidate(data[missing_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, missing_idx);
       set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
+      set_chksum(fragment_ptr, chksum);
     } else if (missing_idx >= pyeclib_handle->k) {
       int parity_idx = missing_idx - pyeclib_handle->k;
+      int chksum = crc32(0, parity[parity_idx], blocksize);
       char *fragment_ptr = get_fragment_ptr_from_data_novalidate(parity[parity_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, missing_idx);
       set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
+      set_chksum(fragment_ptr, chksum);
     } 
     j++;
   }
@@ -1762,7 +1809,14 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
       free(c_fragment_signatures[i]);
     }
     free(c_fragment_signatures);
-  }  
+  } else {
+    for (i=0; i < num_fragments; i++) {
+      if (c_fragment_metadata_list[i]->chksum_mismatch == 1) {
+        ret = i;
+        break;
+      }
+    }
+  }
 
   // TODO: Return a list containing tuples (index, problem).  An empty list means everything is OK.
   return PyLong_FromLong((long)ret);

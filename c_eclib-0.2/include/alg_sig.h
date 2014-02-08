@@ -42,6 +42,7 @@ typedef struct alg_sig_s
 alg_sig_t *init_alg_sig(int sig_len, int gf_w);
 
 int compute_alg_sig(alg_sig_t* alg_sig_handle, char *buf, int len, char *sig);
+int crc32(int crc, const void *buf, int size);
 
 #endif
 
