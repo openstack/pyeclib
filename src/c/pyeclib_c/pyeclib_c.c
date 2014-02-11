@@ -196,9 +196,16 @@ char* get_fragment_ptr_from_data_novalidate(char *buf)
   return buf;
 }
 
+static 
+int use_inline_chksum(pyeclib_t *pyeclib_handle)
+{
+  return pyeclib_handle->inline_chksum;
+}
+
 static
 int supports_alg_sig(pyeclib_t *pyeclib_handle)
 {
+  if (!pyeclib_handle->algsig_chksum) return 0;
   if (pyeclib_handle->alg_sig_desc != NULL) return 1;
   return 0;
 }
@@ -539,10 +546,11 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_t *pyeclib_handle;
   PyObject* pyeclib_obj_handle;
   int k, m, w;
+  int use_inline_chksum = 0, use_algsig_chksum = 0;
   const char *type_str;
   pyeclib_type_t type;
 
-  if (!PyArg_ParseTuple(args, "iiis", &k, &m, &w, &type_str)) {
+  if (!PyArg_ParseTuple(args, "iiis|ii", &k, &m, &w, &type_str, &use_inline_chksum, &use_algsig_chksum)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.init");
     return NULL;
   }
@@ -571,6 +579,8 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_handle->m = m;
   pyeclib_handle->w = w;
   pyeclib_handle->type = type;
+  pyeclib_handle->inline_chksum = use_inline_chksum;
+  pyeclib_handle->algsig_chksum = use_algsig_chksum;
 
   switch (type) {
     case PYECC_RS_CAUCHY_ORIG:
@@ -580,19 +590,23 @@ pyeclib_c_init(PyObject *self, PyObject *args)
       break;
     case PYECC_XOR_HD_3:
       pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 3);
-      pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+      if (pyeclib_handle->algsig_chksum) {
+        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+      }
       break;
     case PYECC_XOR_HD_4:
       pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 4);
-      pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+      if (pyeclib_handle->algsig_chksum) {
+        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+      }
       break;
     case PYECC_RS_VAND:
     default:
       pyeclib_handle->matrix = reed_sol_vandermonde_coding_matrix(k, m, w);
-      if (w == 8) {
-        pyeclib_handle->alg_sig_desc = NULL; //init_alg_sig(32, 8);
-      } else if (w == 16) {
-        pyeclib_handle->alg_sig_desc = NULL; //init_alg_sig(32, 16);
+      if (pyeclib_handle->algsig_chksum && w == 8) {
+        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 8);
+      } else if (pyeclib_handle->algsig_chksum && w == 16) {
+        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
       }
       break;
   }
@@ -896,11 +910,13 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   
   for (i=0; i < pyeclib_handle->k; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(data_to_encode[i]);
-    int chksum = crc32(0, data_to_encode[i], blocksize);
     int fragment_size = blocksize+sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, i);
     set_orig_data_size(fragment_ptr, orig_data_size);
-    set_chksum(fragment_ptr, chksum);
+    if (use_inline_chksum(pyeclib_handle)) {
+      int chksum = crc32(0, data_to_encode[i], blocksize);
+      set_chksum(fragment_ptr, chksum);
+    }
     PyList_SET_ITEM(list_of_strips, i, Py_BuildValue("s#", fragment_ptr, fragment_size));
     free_fragment_buffer(data_to_encode[i]);
   }
@@ -908,11 +924,13 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   
   for (i=0; i < pyeclib_handle->m; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(encoded_parity[i]);
-    int chksum = crc32(0, encoded_parity[i], blocksize);
     int fragment_size = blocksize+sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, pyeclib_handle->k+i);
     set_orig_data_size(fragment_ptr, orig_data_size);
-    set_chksum(fragment_ptr, chksum);
+    if (use_inline_chksum(pyeclib_handle)) {
+      int chksum = crc32(0, encoded_parity[i], blocksize);
+      set_chksum(fragment_ptr, chksum);
+    }
     PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, Py_BuildValue("s#", fragment_ptr, fragment_size));
     free_fragment_buffer(encoded_parity[i]);
   }
@@ -1492,21 +1510,25 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
   if (ret == 0) {
     char *fragment_ptr;
     if (destination_idx < pyeclib_handle->k) {
-      int chksum = crc32(0, data[destination_idx], blocksize);
       fragment_ptr = get_fragment_ptr_from_data_novalidate(data[destination_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, destination_idx);
       set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
-      set_chksum(fragment_ptr, chksum);
+      if (use_inline_chksum(pyeclib_handle)) {
+        int chksum = crc32(0, data[destination_idx], blocksize);
+        set_chksum(fragment_ptr, chksum);
+      }
     } else {
-      int chksum = crc32(0, parity[destination_idx - pyeclib_handle->k], blocksize);
       fragment_ptr = get_fragment_ptr_from_data_novalidate(parity[destination_idx - pyeclib_handle->k]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, destination_idx);
       set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
-      set_chksum(fragment_ptr, chksum);
+      if (use_inline_chksum(pyeclib_handle)) {
+        int chksum = crc32(0, parity[destination_idx - pyeclib_handle->k], blocksize);
+        set_chksum(fragment_ptr, chksum);
+      }
     }
 
     reconstructed = Py_BuildValue("s#", fragment_ptr, fragment_size);
@@ -1631,22 +1653,26 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   while (missing_idxs[j] >= 0) {
     int missing_idx = missing_idxs[j];
     if (missing_idx < pyeclib_handle->k) {
-      int chksum = crc32(0, data[missing_idx], blocksize);
       char *fragment_ptr = get_fragment_ptr_from_data_novalidate(data[missing_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, missing_idx);
       set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
-      set_chksum(fragment_ptr, chksum);
+      if (use_inline_chksum(pyeclib_handle)) {
+        int chksum = crc32(0, data[missing_idx], blocksize);
+        set_chksum(fragment_ptr, chksum);
+      }
     } else if (missing_idx >= pyeclib_handle->k) {
       int parity_idx = missing_idx - pyeclib_handle->k;
-      int chksum = crc32(0, parity[parity_idx], blocksize);
       char *fragment_ptr = get_fragment_ptr_from_data_novalidate(parity[parity_idx]);
       init_fragment_header(fragment_ptr);
       set_fragment_idx(fragment_ptr, missing_idx);
       set_orig_data_size(fragment_ptr, orig_data_size);
       set_fragment_size(fragment_ptr, blocksize);
-      set_chksum(fragment_ptr, chksum);
+      if (use_inline_chksum(pyeclib_handle)) {
+        int chksum = crc32(0, parity[parity_idx], blocksize);
+        set_chksum(fragment_ptr, chksum);
+      }
     } 
     j++;
   }
@@ -1809,7 +1835,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
       free(c_fragment_signatures[i]);
     }
     free(c_fragment_signatures);
-  } else {
+  } else if (use_inline_chksum(pyeclib_handle)) {
     for (i=0; i < num_fragments; i++) {
       if (c_fragment_metadata_list[i]->chksum_mismatch == 1) {
         ret = i;

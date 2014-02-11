@@ -35,12 +35,16 @@ class ECPyECLibException(Exception):
     return self.error_str
 
 class ECPyECLibDriver(object):
-  def __init__(self, k, m, type):
+  def __init__(self, k, m, type, chksum_type="none"):
     self.ec_rs_vand = "rs_vand"
     self.ec_rs_cauchy_orig = "rs_cauchy_orig"
     self.ec_flat_xor_3 = "flat_xor_3"
     self.ec_flat_xor_4 = "flat_xor_4"
+    self.chksum_none = "none"
+    self.chksum_inline = "inline"
+    self.chksum_algsig = "algsig"
     self.ec_types = [self.ec_rs_vand, self.ec_rs_cauchy_orig, self.ec_flat_xor_3, self.ec_flat_xor_4]
+    self.chksum_types = [self.chksum_none, self.chksum_inline, self.chksum_algsig]
     self.ec_rs_vand_best_w = 16
     self.ec_default_w = 32
     self.ec_rs_cauchy_best_w = 4
@@ -72,6 +76,11 @@ class ECPyECLibDriver(object):
     else:
       raise ECPyECLibException("%s is not a valid EC type for PyECLib!")
 
+    if chksum_type in self.chksum_types:
+      self.chksum_type = chksum_type
+    else:
+      raise ECPyECLibException("%s is not a valid checksum type for PyECLib!")
+
     if self.type == self.ec_rs_vand:
       self.w = self.ec_rs_vand_best_w
       self.hd = self.m + 1
@@ -86,8 +95,17 @@ class ECPyECLibDriver(object):
       self.hd = 4
     else:
       self.w = self.ec_default_w
+      
+    self.inline_chksum = 0
+    self.algsig_chksum = 0
+    if self.chksum_type == self.chksum_inline:
+      self.inline_chksum = 1
+      self.algsig_chksum = 0
+    elif self.chksum_type == self.chksum_algsig:
+      self.inline_chksum = 0
+      self.algsig_chksum = 1
 
-    self.handle = pyeclib_c.init(self.k, self.m, self.w, self.type)
+    self.handle = pyeclib_c.init(self.k, self.m, self.w, self.type, self.inline_chksum, self.algsig_chksum)
 
   def encode(self, bytes):
     return pyeclib_c.encode(self.handle, bytes) 

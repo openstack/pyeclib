@@ -76,6 +76,8 @@ typedef struct pyeclib_s
   xor_code_t *xor_code_desc;
   alg_sig_t  *alg_sig_desc;
   pyeclib_type_t type;
+  int inline_chksum;
+  int algsig_chksum;
 } pyeclib_t;
 
 #define FRAGSIZE_2_BLOCKSIZE(fragment_size) (fragment_size - sizeof(fragment_header_t))

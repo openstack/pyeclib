@@ -102,10 +102,56 @@ class TestPyECLibDriver(unittest.TestCase):
           
           self.assertTrue(decoded_str == encode_str)
   
-  def test_verify_fragment_metadata_fail(self):
-    pyeclib_drivers = []
-    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))
+#  def test_verify_fragment_algsig_chksum_fail(self):
+#    pyeclib_drivers = []
+#    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand", chksum_type="algsig"))
+#
+#    filesize = 1024*1024*3
+#
+#    file_str = ''.join(random.choice(string.letters) for i in range(filesize))
+#    fragment_to_corrupt = random.randint(0, 12)
+#
+#    for pyeclib_driver in pyeclib_drivers:
+#      fragments = pyeclib_driver.encode(file_str) 
+#
+#      fragment_metadata_list = []
+#
+#      i = 0
+#      for fragment in fragments:
+#        if i == fragment_to_corrupt:
+#          corrupted_fragment = fragment[:100] + chr(ord(fragment[100]) + 1) + fragment[101:]
+#          fragment_metadata_list.append(pyeclib_driver.get_metadata(corrupted_fragment))
+#        else:
+#          fragment_metadata_list.append(pyeclib_driver.get_metadata(fragment))
+#        i += 1
+#
+#      self.assertTrue(pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) != -1)
+#
+#  def test_verify_fragment_inline_succeed(self):
+#    pyeclib_drivers = []
+#    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand", chksum_type="algsig"))
+#    
+#    filesize = 1024*1024*3
+#
+#    file_str = ''.join(random.choice(string.letters) for i in range(filesize))
+#
+#    for pyeclib_driver in pyeclib_drivers:
+#      fragments = pyeclib_driver.encode(file_str) 
+#
+#      fragment_metadata_list = []
+#
+#      for fragment in fragments:
+#        fragment_metadata_list.append(pyeclib_driver.get_metadata(fragment))
+#
+#      self.assertTrue(pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == -1)
 
+  def test_verify_fragment_inline_chksum_fail(self):
+    pyeclib_drivers = []
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand", chksum_type="inline"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=3, type="rs_vand", chksum_type="inline"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=4, type="rs_vand", chksum_type="inline"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_cauchy_orig", chksum_type="inline"))
+    
     filesize = 1024*1024*3
 
     file_str = ''.join(random.choice(string.letters) for i in range(filesize))
@@ -127,10 +173,13 @@ class TestPyECLibDriver(unittest.TestCase):
 
       self.assertTrue(pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == fragment_to_corrupt)
 
-  def test_verify_fragment_metadata_succeed(self):
+  def test_verify_fragment_inline_chksum_succeed(self):
     pyeclib_drivers = []
-    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand"))
-
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_vand", chksum_type="inline"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=3, type="rs_vand", chksum_type="inline"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=4, type="rs_vand", chksum_type="inline"))
+    pyeclib_drivers.append(ECDriver("pyeclib.core.ECPyECLibDriver", k=12, m=2, type="rs_cauchy_orig", chksum_type="inline"))
+    
     filesize = 1024*1024*3
 
     file_str = ''.join(random.choice(string.letters) for i in range(filesize))
@@ -144,7 +193,6 @@ class TestPyECLibDriver(unittest.TestCase):
         fragment_metadata_list.append(pyeclib_driver.get_metadata(fragment))
 
       self.assertTrue(pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == -1)
-
     
   def test_get_segment_info(self):
     pyeclib_drivers = []
