@@ -407,7 +407,7 @@ int get_fragment_metadata(pyeclib_t *pyeclib_handle, char *fragment_buf, fragmen
   if (supports_alg_sig(pyeclib_handle)) {
     // Compute algebraic signature
     compute_alg_sig(pyeclib_handle->alg_sig_desc, fragment_data, fragment_size, fragment_metadata->signature);
-  } else {
+  } else if (use_inline_chksum(pyeclib_handle)) {
     int stored_chksum = get_chksum(fragment_buf);
     int computed_chksum = crc32(0, fragment_data, fragment_size); 
 
@@ -1798,8 +1798,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
    * Ensure all fragments are here and check integrity using alg signatures 
    */
   if (supports_alg_sig(pyeclib_handle)) {
-    char **parity_sigs = (char**)malloc(pyeclib_handle->m);
-    int i;
+    char **parity_sigs = (char**)malloc(sizeof(char**)*pyeclib_handle->m);
     
     for (i=0; i < pyeclib_handle->m; i++) {
       parity_sigs[i] = (char*)get_aligned_buffer16(PYCC_MAX_SIG_LEN);
@@ -1834,7 +1833,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     for (i=0; i < pyeclib_handle->k; i++) {
       free(c_fragment_signatures[i]);
     }
-    free(c_fragment_signatures);
+    free(parity_sigs);
   } else if (use_inline_chksum(pyeclib_handle)) {
     for (i=0; i < num_fragments; i++) {
       if (c_fragment_metadata_list[i]->chksum_mismatch == 1) {
@@ -1843,6 +1842,9 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
       }
     }
   }
+    
+  free(c_fragment_signatures);
+  free(c_fragment_metadata_list);
 
   // TODO: Return a list containing tuples (index, problem).  An empty list means everything is OK.
   return PyLong_FromLong((long)ret);
