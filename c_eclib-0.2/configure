@@ -634,8 +634,6 @@ ac_includes_default="\
 
 ac_unique_file="xor_codes"
 ac_unique_file="alg_sig"
-ac_unique_file="gf-complete"
-ac_unique_file="jerasure"
 ac_subst_vars='SHELL
 PATH_SEPARATOR
 PACKAGE_NAME
@@ -10878,8 +10876,6 @@ CC="$lt_save_CC"
 
 
 
-
-
 ac_config_headers="$ac_config_headers include/config.h"
 
 
@@ -12931,7 +12927,7 @@ echo "$as_me: WARNING: Your processor supports avx instructions but not your com
 
 
 
-ac_config_files="$ac_config_files Makefile xor_codes/Makefile alg_sig/Makefile gf-complete/Makefile jerasure/Makefile"
+ac_config_files="$ac_config_files Makefile xor_codes/Makefile alg_sig/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -13767,8 +13763,6 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "xor_codes/Makefile") CONFIG_FILES="$CONFIG_FILES xor_codes/Makefile" ;;
     "alg_sig/Makefile") CONFIG_FILES="$CONFIG_FILES alg_sig/Makefile" ;;
-    "gf-complete/Makefile") CONFIG_FILES="$CONFIG_FILES gf-complete/Makefile" ;;
-    "jerasure/Makefile") CONFIG_FILES="$CONFIG_FILES jerasure/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

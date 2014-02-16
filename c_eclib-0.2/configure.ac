@@ -10,8 +10,6 @@ LT_INIT # libtool
 
 AC_CONFIG_SRCDIR(xor_codes)
 AC_CONFIG_SRCDIR(alg_sig)
-AC_CONFIG_SRCDIR(gf-complete)
-AC_CONFIG_SRCDIR(jerasure)
 AC_CONFIG_HEADER(include/config.h)
 
 dnl Needed when reconfiguring with 'autoreconf -i -s'
@@ -41,4 +39,4 @@ AC_CHECK_HEADERS(jerasure.h cauchy.h galois.h liberation.h reed_sol.h gf_complet
 
 AX_EXT()
 
-AC_OUTPUT(Makefile xor_codes/Makefile alg_sig/Makefile gf-complete/Makefile jerasure/Makefile)
+AC_OUTPUT(Makefile xor_codes/Makefile alg_sig/Makefile)

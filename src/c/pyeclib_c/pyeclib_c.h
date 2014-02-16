@@ -29,13 +29,16 @@ typedef enum { PYECC_RS_VAND, PYECC_RS_CAUCHY_ORIG, PYECC_XOR_HD_4, PYECC_XOR_HD
 
 const char *pyeclib_type_str[] = { "rs_vand", "rs_cauchy_orig", "flat_xor_4", "flat_xor_3" };
 const int pyeclib_type_word_size_bytes[] = { sizeof(long), sizeof(long), sizeof(long), sizeof(long) };
-const int pyeclib_type_needs_addr_align[] = { 0, 0, 1, 1 };
+
+// Unconditionally enforce alignment for now...  This is needed for the SIMD extentions.
+// TODO (kmg): Parse cpuinfo and determine if it is necessary...
+const int pyeclib_type_needs_addr_align[] = { 1, 1, 1, 1 };
 
 #define PYECC_FLAGS_MASK          0x1
 #define PYECC_FLAGS_READ_VERIFY   0x1
 #define PYECC_HANDLE_NAME "pyeclib_handle"
 #define PYECC_HEADER_MAGIC  0xb0c5ecc
-#define PYECC_CAUCHY_PACKETSIZE sizeof(long) * 16
+#define PYECC_CAUCHY_PACKETSIZE sizeof(long) * 128
 #define PYECC_MAX_DATA 32
 #define PYECC_MAX_PARITY 32
 

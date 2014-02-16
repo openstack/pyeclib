@@ -158,6 +158,7 @@ void fast_memcpy(char *dst, char *src, int size)
  */
 void xor_bufs_and_store(char *buf1, char *buf2, int blocksize)
 {
+#ifdef INTEL_SSE2
   int residual_bytes = num_unaligned_end(blocksize);
   int fast_blocksize = blocksize > residual_bytes ? (blocksize - residual_bytes) : 0;
   int fast_int_blocksize = fast_blocksize / sizeof(__m128i);
@@ -171,6 +172,19 @@ void xor_bufs_and_store(char *buf1, char *buf2, int blocksize)
   for (i=0; i < fast_int_blocksize; i++) {
     _buf2[i] = _mm_xor_si128(_buf1[i], _buf2[i]);
   }
+#else
+  int residual_bytes = num_unaligned_end(blocksize);
+  int fast_blocksize = blocksize > residual_bytes ? (blocksize - residual_bytes) : 0;
+  int fast_int_blocksize = fast_blocksize / sizeof(unsigned long);
+  int i;
+
+  unsigned long*_buf1 = (unsigned long*)buf1; 
+  unsigned long*_buf2 = (unsigned long*)buf2; 
+  
+  for (i=0; i < fast_int_blocksize; i++) {
+    _buf2[i] = _buf1[i] ^ _buf2[i];
+  }
+#endif
 
   /*
    * XOR unaligned end of region
