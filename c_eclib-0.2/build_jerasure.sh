@@ -39,21 +39,19 @@ fi
 
 tar xvf jerasure.tar.gz
 
-cd gf-complete
+cd gf-complete && ./configure && make && make install
 
-./configure
+if [[ $? != 0 ]]; then
+  cd ..
+  exit 2
+fi
 
-make
+cd ../jerasure && ./configure && make && make install
 
-make install
-
-cd ../jerasure
-
-./configure
-
-make
-
-make install
+if [[ $? != 0 ]]; then
+  cd ..
+  exit 2
+fi
 
 cd ..
 
