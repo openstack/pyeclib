@@ -29,7 +29,7 @@ except:
 # umask set to 022 or something?
 #
 def _pre_build(dir):
-  ret = os.system('(cd c_eclib-0.2 && ./build_jerasure.sh && chmod 755 ./configure && chmod 755 ./install-sh && ./configure %s && make install)' % autoconf_arguments)
+  ret = os.system('(cd c_eclib-0.2 && chmod 755 ./build_jerasure.sh && ./build_jerasure.sh && chmod 755 ./configure && chmod 755 ./install-sh && ./configure %s && make install)' % autoconf_arguments)
   if ret != 0:
     sys.exit(2)
 
