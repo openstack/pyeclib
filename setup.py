@@ -54,11 +54,11 @@ module = Extension('pyeclib_c',
                    sources = ['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup (name = 'PyECLib',
-       version = '0.1.18',
+       version = '0.2.1',
        author = 'Kevin Greenan',
        author_email = 'kmgreen2@gmail.com',
        maintainer = 'Kevin Greenan and Tushar Gohad',
-       maintainer_email = 'kmgreen2@gmail.com',
+       maintainer_email = 'kmgreen2@gmail.com, tusharsg@gmail.com',
        url = 'https://bitbucket.org/kmgreen2/pyeclib',
        description = 'This library provides a simple Python interface for \
                       implementing erasure codes.  To obtain the best possible performance, the \
