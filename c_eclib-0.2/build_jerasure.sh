@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 CURR_DIR=${PWD}
 TMP_BUILD_DIR=${CURR_DIR}/tmp_build
@@ -6,54 +6,48 @@ TMP_BUILD_DIR=${CURR_DIR}/tmp_build
 OS_NAME=`uname`
 SUPPORTED_OS=`echo "Darwin Linux" | grep ${OS_NAME}`
 
-if [[ -z ${SUPPORTED_OS} ]]; then
+if [ -z ${SUPPORTED_OS} ]; then
   echo "${OS_NAME} is not supported!!!"
   exit 2
 fi
 
-HAS_WGET=`which wget`
-HAS_CURL=`which curl`
+WGET_PROG=`which wget`
+CURL_PROG=`which curl`
 
-if [[ -z ${HAS_WGET} && -z ${HAS_CURL} ]]; then
+if [[ -z ${WGET_PROG} && -z ${CURL_PROG} ]]; then
   echo "Please install wget or curl!!!"
   exit 2
 fi
 
-mkdir ${TMP_BUILD_DIR}
+mkdir ${TMP_BUILD_DIR} || exit 3
 
-cd ${TMP_BUILD_DIR}
+GF_COMPLETE_SOURCE="http://www.kaymgee.com/Kevin_Greenan/Software_files/gf-complete.tar.gz"
+JERASURE_SOURCE="http://www.kaymgee.com/Kevin_Greenan/Software_files/jerasure.tar.gz"
 
-if [[ -n ${HAS_WGET} ]]; then
-  wget http://www.kaymgee.com/Kevin_Greenan/Software_files/gf-complete.tar.gz
+pushd ${TMP_BUILD_DIR}
+
+if [ -n ${WGET_PROG} ]; then
+  ${WGET_PROG} ${GF_COMPLETE_SOURCE}
+  ${WGET_PROG} ${JERASURE_SOURCE}
 else
-  curl -O http://www.kaymgee.com/Kevin_Greenan/Software_files/gf-complete.tar.gz
+  ${CURL_PROG} -O ${GF_COMPLETE_SOURCE}
+  ${CURL_PROG} -O ${JERASURE_SOURCE}
 fi
 
-tar xvf gf-complete.tar.gz
+# Build JErasure and GF-Complete
+LIB_DEPS="gf-complete jerasure"
 
-if [[ -n ${HAS_WGET} ]]; then
-  wget http://www.kaymgee.com/Kevin_Greenan/Software_files/jerasure.tar.gz
-else
-  curl -O http://www.kaymgee.com/Kevin_Greenan/Software_files/jerasure.tar.gz
-fi
+for lib in ${LIB_DEPS}; do
+  tar xf ${lib}.tar.gz
+  pushd ${lib}
+    chmod 0755 configure
+    ./configure
+    make
+    [ $? -ne 0 ] && popd && exit 4
+  popd
+done
 
-tar xvf jerasure.tar.gz
-
-cd gf-complete && ./configure && make && make install
-
-if [[ $? != 0 ]]; then
-  cd ..
-  exit 2
-fi
-
-cd ../jerasure && ./configure && make && make install
-
-if [[ $? != 0 ]]; then
-  cd ..
-  exit 2
-fi
-
-cd ..
+popd
 
 #GF_COMPLETE_LIBS=${TMP_BUILD_DIR}/gf-complete/src/.libs
 #GF_COMPLETE_INCL=${TMP_BUILD_DIR}/gf-complete/include
