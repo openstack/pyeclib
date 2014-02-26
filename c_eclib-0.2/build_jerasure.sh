@@ -71,13 +71,15 @@ for lib in ${LIB_DEPS}; do
   srcfile=`basename ${url}`
 
   download ${url}
-  srcdir=$(tar tf ${srcfile} | sed -e 's,/.*,,' | uniq)
+  srcdir=`pwd`/$(tar tf ${srcfile} | sed -e 's,/.*,,' | uniq)
 
   # Extract and Build
   tar xf ${srcfile}
   pushd ${srcdir}
     chmod 0755 configure
-    ./configure
+    CPPFLAGS="${CPPFLAGS}" \
+      LIBS=${LIBS} LDFLAGS=${LDFLAGS} \
+      ./configure
     make
     [ $? -ne 0 ] && popd && popd && exit 4
   popd
@@ -86,6 +88,10 @@ for lib in ${LIB_DEPS}; do
   LIBDIR=$(find ${TMP_BUILD_DIR} -type f -name "lib${lib}.so.*" -printf '%h\n' | sort -u | head -1)
   LDFLAGS=" ${LDFLAGS} -L${LIBDIR} "
   LIBS=" ${LIBS} -l${lib} "
+
+  # Generate INCLUDE lines for c_eclib
+  INCLUDEDIR=$(find ${srcdir} -type f -name "*.h" -printf '%h\n' | grep include | sort -u | head -1)
+  CPPFLAGS=" ${CPPFLAGS} -I${INCLUDEDIR}"
 done
 
 popd
@@ -95,3 +101,6 @@ echo ${LDFLAGS} > ${CURR_DIR}/.ldflags
 
 echo "LIBS=${LIBS}"
 echo ${LIBS} > ${CURR_DIR}/.libs
+
+echo "CPPFLAGS=${CPPFLAGS}"
+echo ${CPPFLAGS} > ${CURR_DIR}/.cppflags
