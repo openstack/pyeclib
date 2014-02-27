@@ -97,10 +97,10 @@ done
 popd
 
 echo "LDFLAGS=${LDFLAGS}"
-echo ${LDFLAGS} > ${CURR_DIR}/.ldflags
+echo ${LDFLAGS} > ${CURR_DIR}/._ldflags
 
 echo "LIBS=${LIBS}"
-echo ${LIBS} > ${CURR_DIR}/.libs
+echo ${LIBS} > ${CURR_DIR}/._libs
 
 echo "CPPFLAGS=${CPPFLAGS}"
-echo ${CPPFLAGS} > ${CURR_DIR}/.cppflags
+echo ${CPPFLAGS} > ${CURR_DIR}/._cppflags
