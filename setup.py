@@ -5,18 +5,18 @@ import sys
 import os
 import platform
 
-possible_include_dirs = ["/usr/local/include", "/usr/include"]
+# possible_include_dirs = ["/usr/local/include", "/usr/include"]
 
 autoconf_arguments=""
 
 #
 # Fuck Apple and their universal binaries!
-# I am not supporting powerpc, so ignoring 
+# I am not supporting powerpc, so ignoring
 # it
 #
 platform_str = platform.platform()
 if platform_str.find("Darwin") > -1:
-  if platform_str.find("x86_64") > -1 and platform_str.find("i386") > -1: 
+  if platform_str.find("x86_64") > -1 and platform_str.find("i386") > -1:
     autoconf_arguments='CC="gcc -arch i386 -arch x86_64" CPP="gcc -E"'
 
 try:
@@ -24,21 +24,47 @@ try:
 except:
   python_library_name = "python%d.%d" % (sys.version_info[0], sys.version_info[1])
 
+def _read_file_as_str(name):
+  with open(name,'r') as f:
+    s = f.readline().strip()
+  return s
+
+c_eclib_dir = "c_eclib-0.2"
+
+# Build CPPFLAGS, LDFLAGS, LIBS
+def _construct_jerasure_buildenv():
+  _cppflags = _read_file_as_str("%s/._cppflags" % c_eclib_dir)
+  _ldflags = _read_file_as_str("%s/._ldflags" % c_eclib_dir)
+  _libs = _read_file_as_str("%s/._libs" % c_eclib_dir)
+  return _cppflags, _ldflags, _libs
+
 #
 # TODO: Figure out why Pypi is chaning the perms of the files when unpacking...  Is the
 # umask set to 022 or something?
 #
+global cppflags
+global ldflags
+global libs
+
 def _pre_build(dir):
-  ret = os.system('(cd c_eclib-0.2 && \
-                    chmod 755 build_jerasure.sh && ./build_jerasure.sh && \
+  # ret = os.system('(cd %s && chmod 755 build_jerasure.sh && \
+  #                  ./build_jerasure.sh)' % c_eclib_dir)
+  # if ret != 0:
+  #   sys.exit(2)
+
+  cppflags, ldflags, libs = _construct_jerasure_buildenv()
+  os.environ['CPPFLAGS'] = cppflags
+  os.environ['LDFLAGS'] = ldflags
+  os.environ['LIBS'] = libs
+  ret = os.system('(cd %s && \
                     chmod 755 configure && chmod 755 install-sh && \
-                    LDFLAGS="`cat ._ldflags`" \
-                    LIBS="`cat ._libs`" \
-                    CPPFLAGS="`cat ._cppflags`" \
+                    CPPFLAGS="%s" LDFLAGS="%s" LIBS="%s" \
                       ./configure %s && \
-                    make)' % autoconf_arguments)
+                    make)' % (c_eclib_dir,
+                    cppflags, ldflags, libs,
+                    autoconf_arguments))
   if ret != 0:
-    sys.exit(2)
+    sys.exit(3)
 
 class build(_build):
     def run(self):
@@ -46,13 +72,14 @@ class build(_build):
                      msg="Running pre build task(s)")
         _build.run(self)
 
-
 module = Extension('pyeclib_c',
                    define_macros = [('MAJOR VERSION', '0'),
                                     ('MINOR VERSION', '1')],
                    include_dirs = ['/usr/include/%s' % python_library_name,
+                                   '/usr/local/include',
+                                   '/usr/include',
                                    'src/c/pyeclib_c',
-                                   'c_eclib-0.2/include',
+                                   '%s/include' % c_eclib_dir,
                                    '/usr/local/include'],
                    library_dirs = ['/usr/lib', '/usr/local/lib'],
                    libraries = ['Jerasure', 'Xorcode', 'alg_sig'],
@@ -77,4 +104,3 @@ setup (name = 'PyECLib',
        package_dir={'pyeclib': 'src/python/pyeclib'},
        cmdclass={'build': build},
        py_modules = ['pyeclib.ec_iface', 'pyeclib.core'])
-
