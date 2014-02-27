@@ -39,9 +39,36 @@ download() {
   fi
 }
 
+realpath() {
+  _dir="$1"
+  case "$_dir" in
+    /*)
+      echo "$1"
+      ;;
+    *)
+      echo "$PWD/${1#./}"
+      ;;
+  esac
+}
+
+find_includedir() {
+  _searchdir="$1"
+  _include="$2"
+  i=$(find ${_searchdir} -type f -name "${_include}*.h" -printf '%h\n' | grep include | sort -u | head -1)
+  echo $(realpath "$i")
+}
+
+find_libdir() {
+  _searchdir="$1"
+  _lib="$2"
+
+  d=$(find ${_searchdir} -type f -name "lib${_lib}.so.*" -printf '%h\n' | sort -u | head -1)
+  echo $(realpath "$d")
+}
+
 # Checks
-CURR_DIR=${PWD}
-TMP_BUILD_DIR=${CURR_DIR}/tmp_build
+C_ECLIB_TOPDIR=${PWD}
+TMP_BUILD_DIR=${C_ECLIB_TOPDIR}/tmp_build
 
 OS_NAME=`uname`
 SUPPORTED_OS=`echo "Darwin Linux" | grep ${OS_NAME}`
@@ -59,48 +86,80 @@ gf_complete_SOURCE="http://www.kaymgee.com/Kevin_Greenan/Software_files/gf-compl
 Jerasure_SOURCE="http://www.kaymgee.com/Kevin_Greenan/Software_files/jerasure.tar.gz"
 
 # Build JErasure and GF-Complete
-LIB_DEPS="gf_complete Jerasure"
+LIB_ORDER="gf_complete Jerasure"
+CPPFLAGS=""
 LDFLAGS=""
 LIBS=""
 
-for lib in ${LIB_DEPS}; do
+for lib in ${LIB_ORDER}; do
 
   # Download and extract
   src="${lib}_SOURCE"
   url=$(eval echo \$${src})
   srcfile=`basename ${url}`
 
-  download ${url}
+  if [ ! -f ._${lib}_downloaded ]; then
+    download ${url}
+    touch ._${lib}_downloaded
+  fi
   srcdir=`pwd`/$(tar tf ${srcfile} | sed -e 's,/.*,,' | uniq)
 
   # Extract and Build
   tar xf ${srcfile}
   pushd ${srcdir}
+  if [ ! -f ._configured ]; then
     chmod 0755 configure
     CPPFLAGS="${CPPFLAGS}" \
       LIBS=${LIBS} LDFLAGS=${LDFLAGS} \
       ./configure
-    make
     [ $? -ne 0 ] && popd && popd && exit 4
+    touch ._configured
+  fi
+  make
+  [ $? -ne 0 ] && popd && popd && exit 4
   popd
 
   # Generate LDADD lines for c_eclib
-  LIBDIR=$(find ${TMP_BUILD_DIR} -type f -name "lib${lib}.so.*" -printf '%h\n' | sort -u | head -1)
+  LIBDIR=$(find_libdir ${srcdir} ${lib})
   LDFLAGS=" ${LDFLAGS} -L${LIBDIR} "
   LIBS=" ${LIBS} -l${lib} "
 
   # Generate INCLUDE lines for c_eclib
-  INCLUDEDIR=$(find ${srcdir} -type f -name "*.h" -printf '%h\n' | grep include | sort -u | head -1)
+  INCLUDEDIR=$(find_includedir ${srcdir})
   CPPFLAGS=" ${CPPFLAGS} -I${INCLUDEDIR}"
 done
 
 popd
 
+# Build c_eclib
+srcdir=${C_ECLIB_TOPDIR}
+pushd ${srcdir}
+if [ ! -f ._configured ]; then
+  chmod 0755 configure
+  CPPFLAGS="${CPPFLAGS}" LIBS=${LIBS} LDFLAGS=${LDFLAGS} ./configure
+  [ $? -ne 0 ] && popd && exit 4
+  touch ._configured
+fi
+make
+[ $? -ne 0 ] && popd && exit 4
+
+# Update CPPFLAGS/LDFLAGS/LIBS
+C_ECLIB_LIBS="Xorcode alg_sig"
+for lib in ${C_ECLIB_LIBS}; do
+  LIBDIR=$(find_libdir ${srcdir} ${lib})
+  LDFLAGS=" ${LDFLAGS} -L${LIBDIR} "
+  LIBS=" ${LIBS} -l${lib}"
+done
+
+INCLUDEDIR="${srcdir}/include"
+CPPFLAGS=" ${CPPFLAGS} -I${INCLUDEDIR}"
+popd
+
 echo "LDFLAGS=${LDFLAGS}"
-echo ${LDFLAGS} > ${CURR_DIR}/._ldflags
+echo ${LDFLAGS} > ${C_ECLIB_TOPDIR}/._ldflags
 
 echo "LIBS=${LIBS}"
-echo ${LIBS} > ${CURR_DIR}/._libs
+echo ${LIBS} > ${C_ECLIB_TOPDIR}/._libs
 
 echo "CPPFLAGS=${CPPFLAGS}"
-echo ${CPPFLAGS} > ${CURR_DIR}/._cppflags
+echo ${CPPFLAGS} > ${C_ECLIB_TOPDIR}/._cppflags

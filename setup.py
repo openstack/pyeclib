@@ -5,10 +5,6 @@ import sys
 import os
 import platform
 
-# possible_include_dirs = ["/usr/local/include", "/usr/include"]
-
-autoconf_arguments=""
-
 #
 # Fuck Apple and their universal binaries!
 # I am not supporting powerpc, so ignoring
@@ -47,24 +43,15 @@ global ldflags
 global libs
 
 def _pre_build(dir):
-  # ret = os.system('(cd %s && chmod 755 build_jerasure.sh && \
-  #                  ./build_jerasure.sh)' % c_eclib_dir)
-  # if ret != 0:
-  #   sys.exit(2)
+  ret = os.system('(cd %s && chmod 755 build.sh && \
+                    ./build.sh)' % c_eclib_dir)
+  if ret != 0:
+    sys.exit(2)
 
   cppflags, ldflags, libs = _construct_jerasure_buildenv()
   os.environ['CPPFLAGS'] = cppflags
   os.environ['LDFLAGS'] = ldflags
   os.environ['LIBS'] = libs
-  ret = os.system('(cd %s && \
-                    chmod 755 configure && chmod 755 install-sh && \
-                    CPPFLAGS="%s" LDFLAGS="%s" LIBS="%s" \
-                      ./configure %s && \
-                    make)' % (c_eclib_dir,
-                    cppflags, ldflags, libs,
-                    autoconf_arguments))
-  if ret != 0:
-    sys.exit(3)
 
 class build(_build):
     def run(self):
