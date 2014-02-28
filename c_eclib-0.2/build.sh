@@ -103,20 +103,22 @@ for lib in ${LIB_ORDER}; do
     touch ._${lib}_downloaded
   fi
   srcdir=`pwd`/$(tar tf ${srcfile} | sed -e 's,/.*,,' | uniq)
+  echo ${srcdir} > ._${lib}_srcdir
 
   # Extract and Build
   tar xf ${srcfile}
   pushd ${srcdir}
-  if [ ! -f ._configured ]; then
+  if [ ! -f ._${lib}_configured ]; then
     chmod 0755 configure
     CPPFLAGS="${CPPFLAGS}" \
       LIBS=${LIBS} LDFLAGS=${LDFLAGS} \
       ./configure
     [ $? -ne 0 ] && popd && popd && exit 4
-    touch ._configured
+    touch ._${lib}_configured
   fi
   make
-  [ $? -ne 0 ] && popd && popd && exit 4
+  [ $? -ne 0 ] && popd && popd && exit 5
+  touch ._${lib}_built
   popd
 
   # Generate LDADD lines for c_eclib
@@ -141,7 +143,7 @@ if [ ! -f ._configured ]; then
   touch ._configured
 fi
 make
-[ $? -ne 0 ] && popd && exit 4
+[ $? -ne 0 ] && popd && exit 5
 
 # Update CPPFLAGS/LDFLAGS/LIBS
 C_ECLIB_LIBS="Xorcode alg_sig"

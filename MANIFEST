@@ -11,13 +11,14 @@ c_eclib-0.2/NEWS
 c_eclib-0.2/README
 c_eclib-0.2/aclocal.m4
 c_eclib-0.2/autogen.sh
-c_eclib-0.2/build_jerasure.sh
+c_eclib-0.2/build.sh
 c_eclib-0.2/config.guess
 c_eclib-0.2/config.sub
 c_eclib-0.2/configure
 c_eclib-0.2/configure.ac
 c_eclib-0.2/depcomp
 c_eclib-0.2/install-sh
+c_eclib-0.2/install.sh
 c_eclib-0.2/ltmain.sh
 c_eclib-0.2/missing
 c_eclib-0.2/alg_sig/Makefile.am

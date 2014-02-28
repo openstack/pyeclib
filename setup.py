@@ -1,3 +1,26 @@
+#!/usr/bin/env python
+
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+#
+# Redistributions in binary form must reproduce the above copyright notice, this
+# list of conditions and the following disclaimer in the documentation and/or
+# other materials provided with the distribution.  THIS SOFTWARE IS PROVIDED BY
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+# EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 from distutils.core import setup, Extension
 from distutils.command.install import install as _install
 from distutils.command.build import build as _build
@@ -59,6 +82,18 @@ class build(_build):
                      msg="Running pre build task(s)")
         _build.run(self)
 
+def _pre_install(dir):
+  ret = os.system('(cd %s && chmod 755 install.sh && \
+                    ./install.sh)' % c_eclib_dir)
+  if ret != 0:
+    sys.exit(3)
+
+class install(_install):
+    def run(self):
+        self.execute(_pre_install, (self.build_lib,),
+                     msg="Running pre install task(s)")
+        _install.run(self)
+
 module = Extension('pyeclib_c',
                    define_macros = [('MAJOR VERSION', '0'),
                                     ('MINOR VERSION', '1')],
@@ -89,5 +124,5 @@ setup (name = 'PyECLib',
        ext_modules = [module],
        packages=['pyeclib'],
        package_dir={'pyeclib': 'src/python/pyeclib'},
-       cmdclass={'build': build},
+       cmdclass={'build': build, 'install': install},
        py_modules = ['pyeclib.ec_iface', 'pyeclib.core'])
