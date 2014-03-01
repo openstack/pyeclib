@@ -32,6 +32,7 @@ except ImportError:
     from setuptools import setup
 
 from distutils.command.build import build as _build
+from distutils.command.clean import clean as _clean
 from setuptools.command.install import install as _install
 
 import os
@@ -103,6 +104,15 @@ class build(_build):
         _build.run(self)
 
 
+class clean(_clean):
+    def run(self):
+        ret = os.system('(cd %s && chmod 755 clean.sh && \
+                          ./clean.sh)' % c_eclib_dir)
+        if ret != 0:
+            sys.exit(2)
+        _clean.run(self)
+
+
 def _pre_install(dir):
     ret = os.system('(cd %s && chmod 755 install.sh && \
                       ./install.sh)' % c_eclib_dir)
@@ -148,5 +158,5 @@ setup(name='PyECLib',
       ext_modules=[module],
       packages=['pyeclib'],
       package_dir={'pyeclib': 'src/python/pyeclib'},
-      cmdclass={'build': build, 'install': install},
+      cmdclass={'build': build, 'install': install, 'clean': clean},
       py_modules=['pyeclib.ec_iface', 'pyeclib.core'])
