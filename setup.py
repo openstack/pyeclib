@@ -43,8 +43,7 @@ from setuptools import Extension
 
 #
 # Fuck Apple and their universal binaries!
-# I am not supporting powerpc, so ignoring
-# it
+# I am not supporting powerpc, so ignoring it
 #
 autoconf_arguments = ""
 
@@ -89,7 +88,7 @@ def _pre_build(dir):
     ret = os.system('(cd %s && chmod 755 build.sh && \
                       ./build.sh)' % c_eclib_dir)
     if ret != 0:
-        sys.exit(2)
+        sys.exit(ret)
 
     cppflags, ldflags, libs = _construct_jerasure_buildenv()
     os.environ['CPPFLAGS'] = cppflags
@@ -106,24 +105,32 @@ class build(_build):
 
 class clean(_clean):
     def run(self):
-        ret = os.system('(cd %s && chmod 755 clean.sh && \
-                          ./clean.sh)' % c_eclib_dir)
-        if ret != 0:
-            sys.exit(2)
+        os.system('(cd %s && chmod 755 clean.sh && \
+                   ./clean.sh)' % c_eclib_dir)
         _clean.run(self)
-
-
-def _pre_install(dir):
-    ret = os.system('(cd %s && chmod 755 install.sh && \
-                      ./install.sh)' % c_eclib_dir)
-    if ret != 0:
-        sys.exit(3)
 
 
 class install(_install):
     def run(self):
-        self.execute(_pre_install, (self.build_lib,),
-                     msg="Running pre install task(s)")
+        install_lib = self.distribution.get_command_obj('install_lib')
+        install_scripts = self.distribution.get_command_obj('install_scripts')
+        install_cmd = self.distribution.get_command_obj('install')
+        for cmd in (install_lib, install_scripts, install_cmd):
+            cmd.ensure_finalized()
+
+        # ensure that the paths are absolute so we don't get lost
+        opts = {'prefix': install_cmd.prefix,
+                'install-dir': install_lib.install_dir}
+        for optname, value in opts.items():
+            if value is not None:
+                opts[optname] = os.path.abspath(value)
+
+        ret = os.system('(cd %s && chmod 755 install.sh && \
+                          ./install.sh %s)' %
+                        (c_eclib_dir, opts['prefix']))
+        if ret != 0:
+            sys.exit(ret)
+
         _install.run(self)
 
 
