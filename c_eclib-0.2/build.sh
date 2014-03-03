@@ -23,8 +23,8 @@ popd() {
 download() {
   pkgurl="$1"
 
-  WGET_PROG=`which wget`
-  CURL_PROG=`which curl`
+  WGET_PROG=`command -v wget`
+  CURL_PROG=`command -v curl`
 
   if [ -z "${WGET_PROG}" ] && [ -z "${CURL_PROG}" ]; then
     echo "Please install wget or curl!!!"
@@ -32,7 +32,7 @@ download() {
   fi
 
   rm -f `basename ${pkgurl}`
-  if [ -n ${WGET_PROG} ]; then
+  if [ "x" != "x${WGET_PROG}" ]; then
     ${WGET_PROG} ${pkgurl}
   else
     ${CURL_PROG} -O ${pkgurl}
