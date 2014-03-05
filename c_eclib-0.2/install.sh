@@ -51,14 +51,6 @@ realpath() {
   esac
 }
 
-# Determine install prefix
-if [ "x$1" != "x" ]; then
-  prefix="$1"
-else
-  prefix="/usr/local"
-fi
-prefix=$(realpath ${prefix})
-
 # Checks
 C_ECLIB_TOPDIR=${PWD}
 TMP_BUILD_DIR=${C_ECLIB_TOPDIR}/tmp_build
@@ -86,7 +78,7 @@ for lib in ${LIB_ORDER}; do
   srcdir=`cat ._${lib}_srcdir`
   # Install
   pushd ${srcdir}
-  make DESTDIR=${prefix} install
+  sudo make install
   [ $? -ne 0 ] && popd && popd && exit 4
   popd
 done
@@ -96,6 +88,6 @@ popd
 # Build c_eclib
 srcdir=${C_ECLIB_TOPDIR}
 pushd ${srcdir}
-make DESTDIR=${prefix} install
+sudo make install
 popd
 
