@@ -33,6 +33,9 @@
 #include<math.h>
 #include<pyeclib_c.h>
 
+/* Compat layer for python <= 2.6 */
+#include "pycompat.h"
+
 /*
  * TODO (kmg): Cauchy restriction (k*w*PACKETSIZE)  < data_len / k, otherwise you could
  * end up with full-blocks of padding
