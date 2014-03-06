@@ -614,7 +614,14 @@ pyeclib_c_init(PyObject *self, PyObject *args)
       break;
   }
 
-  pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME, pyeclib_c_destructor);
+#ifdef Py_CAPSULE_H
+  pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME,
+                                     pyeclib_c_destructor);
+#else
+  pyeclib_obj_handle = PyCObject_FromVoidPtrAndDesc(pyeclib_handle,
+		                     (void *) PYECC_HANDLE_NAME,
+				     pyeclib_c_destructor);
+#endif /* Py_CAPSULE_H */
 
   if (pyeclib_obj_handle == NULL) {
     PyErr_SetString(PyECLibError, "Could not encapsulate pyeclib_handle into Python object in pyeclib.init");

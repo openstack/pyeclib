@@ -15,8 +15,7 @@
 #ifndef PyCapsule_New
 #define PyCapsule_New PyCObject_FromVoidPtrAndDesc
 #define PyCapsule_CheckExact PyCObject_Check
-#define PyCapsule_GetPointer(o, n) PyCObject_GetDesc((o))
+#define PyCapsule_GetPointer(o, n) PyCObject_AsVoidPtr((o))
 #endif
 #endif
-
 
