@@ -66,6 +66,12 @@ find_libdir() {
   echo $(realpath "$d")
 }
 
+# autoconf args passed down
+configure_args=""
+if [ "x$1" != "x" ]; then
+  configure_args="$1"
+fi
+
 # Checks
 C_ECLIB_TOPDIR=${PWD}
 TMP_BUILD_DIR=${C_ECLIB_TOPDIR}/tmp_build
@@ -138,7 +144,8 @@ srcdir=${C_ECLIB_TOPDIR}
 pushd ${srcdir}
 if [ ! -f ._configured ]; then
   chmod 0755 configure
-  CPPFLAGS="${CPPFLAGS}" LIBS=${LIBS} LDFLAGS=${LDFLAGS} ./configure
+  CPPFLAGS="${CPPFLAGS}" LIBS=${LIBS} LDFLAGS=${LDFLAGS} \
+	  ./configure ${configure_args}
   [ $? -ne 0 ] && popd && exit 4
   touch ._configured
 fi

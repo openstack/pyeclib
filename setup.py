@@ -87,9 +87,11 @@ global libs
 
 def _pre_build(dir):
     ret = os.system('(cd %s && chmod 755 build.sh && \
-                      ./build.sh)' % c_eclib_dir)
+                      ./build.sh %s)' %
+                    (c_eclib_dir, autoconf_arguments))
+
     if ret != 0:
-        sys.exit(2)
+        sys.exit(ret)
 
     cppflags, ldflags, libs = _construct_jerasure_buildenv()
     os.environ['CPPFLAGS'] = cppflags
