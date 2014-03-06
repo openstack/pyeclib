@@ -23,6 +23,10 @@
  */
 
 #include<Python.h>
+
+/* Compat layer for python <= 2.6 */
+#include "capsulethunk.h"
+
 #include<xor_code.h>
 #include<reed_sol.h>
 #include<alg_sig.h>
@@ -33,8 +37,6 @@
 #include<math.h>
 #include<pyeclib_c.h>
 
-/* Compat layer for python <= 2.6 */
-#include "pycompat.h"
 
 /*
  * TODO (kmg): Cauchy restriction (k*w*PACKETSIZE)  < data_len / k, otherwise you could
