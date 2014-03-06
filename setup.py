@@ -60,13 +60,13 @@ except Exception:
     python_library_name = "python%d.%d" % (sys.version_info[0],
                                            sys.version_info[1])
 
+default_library_paths = ['/lib', '/usr/lib', '/usr/local/lib']
+
 
 def _read_file_as_str(name):
     with open(name, 'r') as f:
         s = f.readline().strip()
     return s
-
-c_eclib_dir = "c_eclib-0.2"
 
 
 # Build CPPFLAGS, LDFLAGS, LIBS
@@ -83,6 +83,8 @@ def _construct_jerasure_buildenv():
 global cppflags
 global ldflags
 global libs
+
+c_eclib_dir = "c_eclib-0.2"
 
 
 def _pre_build(dir):
@@ -138,10 +140,13 @@ module = Extension('pyeclib_c',
                                  'src/c/pyeclib_c',
                                  '%s/include' % c_eclib_dir,
                                  '/usr/local/include'],
-                   library_dirs=['/usr/lib', '/usr/local/lib'],
+                   library_dirs=default_library_paths,
+                   runtime_library_dirs=default_library_paths,
                    libraries=['Jerasure', 'Xorcode', 'alg_sig'],
                    # The extra arguments are for debugging
                    # extra_compile_args=['-g', '-O0'],
+                   extra_link_args=['-Wl,-rpath,%s' %
+                                    l for l in default_library_paths],
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
