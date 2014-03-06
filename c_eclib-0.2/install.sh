@@ -78,7 +78,7 @@ for lib in ${LIB_ORDER}; do
   srcdir=`cat ._${lib}_srcdir`
   # Install
   pushd ${srcdir}
-  sudo make install
+  make install
   [ $? -ne 0 ] && popd && popd && exit 4
   popd
 done
@@ -88,6 +88,6 @@ popd
 # Build c_eclib
 srcdir=${C_ECLIB_TOPDIR}
 pushd ${srcdir}
-sudo make install
+make install
 popd
 
