@@ -51,6 +51,12 @@ realpath() {
   esac
 }
 
+# Determine install root
+if [ "x$1" != "x" ]; then
+  installroot="$1"
+fi
+installroot=$(realpath ${installroot})
+
 # Checks
 C_ECLIB_TOPDIR=${PWD}
 TMP_BUILD_DIR=${C_ECLIB_TOPDIR}/tmp_build
@@ -78,7 +84,7 @@ for lib in ${LIB_ORDER}; do
   srcdir=`cat ._${lib}_srcdir`
   # Install
   pushd ${srcdir}
-  make install
+  make DESTDIR=${installroot} install
   [ $? -ne 0 ] && popd && popd && exit 4
   popd
 done
@@ -88,6 +94,6 @@ popd
 # Build c_eclib
 srcdir=${C_ECLIB_TOPDIR}
 pushd ${srcdir}
-make install
+make DESTDIR=${installroot} install
 popd
 

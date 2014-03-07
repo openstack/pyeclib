@@ -117,17 +117,41 @@ class clean(_clean):
         _clean.run(self)
 
 
-def _pre_install(dir):
-    ret = os.system('(cd %s && chmod 755 install.sh && \
-                      ./install.sh)' % c_eclib_dir)
-    if ret != 0:
-        sys.exit(3)
-
-
 class install(_install):
     def run(self):
-        self.execute(_pre_install, (self.build_lib,),
-                     msg="Running pre install task(s)")
+        install_cmd = self.distribution.get_command_obj('install')
+        install_lib = self.distribution.get_command_obj('install_lib')
+        for cmd in (install_lib, install_cmd):
+            cmd.ensure_finalized()
+
+        # ensure that the paths are absolute so we don't get lost
+        opts = {'prefix': install_cmd.prefix,
+                'root': install_cmd.root}
+        for optname, value in opts.items():
+            if value is not None:
+                opts[optname] = os.path.abspath(value)
+
+        root = opts['root']
+        prefix = opts['prefix']
+
+        # prefer root for installdir
+        if root is not None:
+            installroot = root
+        elif prefix is not None:
+            installroot = prefix
+        else:
+            installroot = "/"
+
+        # exception is "/usr"
+        if installroot.startswith("/usr"):
+            installroot = "/"
+
+        ret = os.system('(cd %s && chmod 755 install.sh && \
+                        ./install.sh %s)' %
+                        (c_eclib_dir, installroot))
+        if ret != 0:
+            sys.exit(ret)
+
         _install.run(self)
 
 
