@@ -59,7 +59,7 @@ The main Python interface only contains 6 functions:
 
 Quick Start:
 
-  Standard stuff to install: Python 2.7 (including devel) and argparse.
+  Standard stuff to install: Python >=2.6 (including devel) and argparse.
 
   This package includes c_eclib, which contains a few C libraries used by
   PyECLib.  These will be built when running the PyECLib install (see below).
