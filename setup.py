@@ -23,6 +23,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+import platform
+import sys
+
+from distutils.command.build import build as _build
+from distutils.command.clean import clean as _clean
+from distutils.sysconfig import EXEC_PREFIX as _exec_prefix
+from distutils.sysconfig import get_python_lib
+from distutils.sysconfig import get_python_inc
 
 try:
     from setuptools import setup
@@ -31,55 +40,28 @@ except ImportError:
     use_setuptools()
     from setuptools import setup
 
-from distutils.command.build import build as _build
-from distutils.command.clean import clean as _clean
-from setuptools.command.install import install as _install
-
-import os
-import platform
-import sys
-
 from setuptools import Extension
+from setuptools.command.install import install as _install
 
 #
 # Fuck Apple and their universal binaries!
 # I am not supporting powerpc, so ignoring
 # it
 #
-autoconf_arguments = ""
+autoconf_arguments = "ac_none"
 
 platform_str = platform.platform()
 if platform_str.find("Darwin") > -1:
     if platform_str.find("x86_64") > -1 and platform_str.find("i386") > -1:
         autoconf_arguments = 'CC="gcc -arch i386 -arch x86_64" CPP="gcc -E"'
 
-try:
-    python_library_name = "python%d.%d" % (sys.version_info.major,
-                                           sys.version_info.minor)
-except Exception:
-    python_library_name = "python%d.%d" % (sys.version_info[0],
-                                           sys.version_info[1])
+default_python_incdir = get_python_inc()
+default_python_libdir = get_python_lib()
+default_library_paths = [default_python_libdir,
+                         ('%s/usr/local/lib' % _exec_prefix),
+                         '/lib', '/usr/lib', '/usr/local/lib']
 
-default_library_paths = ['/lib', '/usr/lib', '/usr/local/lib']
-
-
-def _read_file_as_str(name):
-    with open(name, 'r') as f:
-        s = f.readline().strip()
-    return s
-
-
-# Build CPPFLAGS, LDFLAGS, LIBS
-def _construct_jerasure_buildenv():
-    _cppflags = _read_file_as_str("%s/._cppflags" % c_eclib_dir)
-    _ldflags = _read_file_as_str("%s/._ldflags" % c_eclib_dir)
-    _libs = _read_file_as_str("%s/._libs" % c_eclib_dir)
-    return _cppflags, _ldflags, _libs
-
-#
-# TODO(packaging): Figure out why Pypi is chaning the perms of the files when
-# unpacking...  Is the umask set to 022 or something?
-#
+# build CPPFLAGS, LDFLAGS, LIBS
 global cppflags
 global ldflags
 global libs
@@ -87,24 +69,33 @@ global libs
 c_eclib_dir = "c_eclib-0.2"
 
 
-def _pre_build(dir):
-    ret = os.system('(cd %s && chmod 755 build.sh && \
-                      ./build.sh %s)' %
-                    (c_eclib_dir, autoconf_arguments))
+def _construct_jerasure_buildenv():
+    _cppflags = _read_file_as_str("%s/._cppflags" % c_eclib_dir)
+    _ldflags = _read_file_as_str("%s/._ldflags" % c_eclib_dir)
+    _libs = _read_file_as_str("%s/._libs" % c_eclib_dir)
+    return _cppflags, _ldflags, _libs
 
-    if ret != 0:
-        sys.exit(ret)
 
-    cppflags, ldflags, libs = _construct_jerasure_buildenv()
-    os.environ['CPPFLAGS'] = cppflags
-    os.environ['LDFLAGS'] = ldflags
-    os.environ['LIBS'] = libs
+# utility routine
+def _read_file_as_str(name):
+    with open(name, 'r') as f:
+        s = f.readline().strip()
+    return s
 
 
 class build(_build):
     def run(self):
-        self.execute(_pre_build, (self.build_lib,),
-                     msg="Running pre build task(s)")
+        ret = os.system('(cd %s && chmod 755 build.sh && \
+                         ./build.sh %s %s)' %
+                        (c_eclib_dir, autoconf_arguments, _exec_prefix))
+        if ret != 0:
+            sys.exit(ret)
+
+        cppflags, ldflags, libs = _construct_jerasure_buildenv()
+        os.environ['CPPFLAGS'] = cppflags
+        os.environ['LDFLAGS'] = ldflags
+        os.environ['LIBS'] = libs
+
         _build.run(self)
 
 
@@ -125,14 +116,14 @@ class install(_install):
             cmd.ensure_finalized()
 
         # ensure that the paths are absolute so we don't get lost
-        opts = {'prefix': install_cmd.prefix,
+        opts = {'exec_prefix': install_cmd.exec_prefix,
                 'root': install_cmd.root}
         for optname, value in opts.items():
             if value is not None:
                 opts[optname] = os.path.abspath(value)
 
+        prefix = opts['exec_prefix']
         root = opts['root']
-        prefix = opts['prefix']
 
         # prefer root for installdir
         if root is not None:
@@ -152,13 +143,14 @@ class install(_install):
         if ret != 0:
             sys.exit(ret)
 
+        default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
         _install.run(self)
 
 
 module = Extension('pyeclib_c',
                    define_macros=[('MAJOR VERSION', '0'),
                                   ('MINOR VERSION', '2')],
-                   include_dirs=['/usr/include/%s' % python_library_name,
+                   include_dirs=[default_python_incdir,
                                  '/usr/local/include',
                                  '/usr/include',
                                  'src/c/pyeclib_c',

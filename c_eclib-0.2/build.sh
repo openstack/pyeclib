@@ -69,7 +69,15 @@ find_libdir() {
 # autoconf args passed down
 configure_args=""
 if [ "x$1" != "x" ]; then
-  configure_args="$1"
+  if [ "x$1" != "xac_none" ]; then
+    configure_args="$1"
+  fi
+fi
+
+# rpath argument
+rpath=""
+if [ "x$2" != "x" ]; then
+  rpath="-Wl,-rpath,$2/usr/local/lib"
 fi
 
 # Checks
@@ -94,7 +102,7 @@ Jerasure_SOURCE="http://www.kaymgee.com/Kevin_Greenan/Software_files/jerasure.ta
 # Build JErasure and GF-Complete
 LIB_ORDER="gf_complete Jerasure"
 CPPFLAGS=""
-LDFLAGS=""
+LDFLAGS=" ${rpath} "
 LIBS=""
 
 for lib in ${LIB_ORDER}; do
