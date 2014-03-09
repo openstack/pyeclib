@@ -54,15 +54,20 @@ realpath() {
 find_includedir() {
   _searchdir="$1"
   _include="$2"
-  i=$(find ${_searchdir} -type f -name "${_include}*.h" -printf '%h\n' | grep include | sort -u | head -1)
+  i=`dirname $(find ${_searchdir} -type f -name "${_include}*.h" | grep include | sort -u | head -1)`
   echo $(realpath "$i")
 }
 
 find_libdir() {
   _searchdir="$1"
   _lib="$2"
-
-  d=$(find ${_searchdir} -type f -name "lib${_lib}.so.*" -printf '%h\n' | sort -u | head -1)
+  _osname="$3"
+  
+  if [ ${_osname} == "Darwin" ]; then
+    d=`dirname $(find ${_searchdir} -type f -name "lib${_lib}.*.dylib" | sort -u | head -1)`
+  else
+    d=`dirname $(find ${_searchdir} -type f -name "lib${_lib}.so.*" | sort -u | head -1)`
+  fi
   echo $(realpath "$d")
 }
 
@@ -136,9 +141,17 @@ for lib in ${LIB_ORDER}; do
   popd
 
   # Generate LDADD lines for c_eclib
-  LIBDIR=$(find_libdir ${srcdir} ${lib})
+  LIBDIR=$(find_libdir ${srcdir} ${lib} ${OS_NAME})
   LDFLAGS=" ${LDFLAGS} -L${LIBDIR} "
   LIBS=" ${LIBS} -l${lib} "
+
+  if [ ${OS_NAME} == "Darwin" ]; then
+    if [ -z ${DYLD_LIBRARY_PATH} ]; then
+      export DYLD_LIBRARY_PATH=${LIBDIR}
+    else
+      export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}":"${LIBDIR}
+    fi
+  fi
 
   # Generate INCLUDE lines for c_eclib
   INCLUDEDIR=$(find_includedir ${srcdir})
@@ -163,7 +176,7 @@ make
 # Update CPPFLAGS/LDFLAGS/LIBS
 C_ECLIB_LIBS="Xorcode alg_sig"
 for lib in ${C_ECLIB_LIBS}; do
-  LIBDIR=$(find_libdir ${srcdir} ${lib})
+  LIBDIR=$(find_libdir ${srcdir} ${lib} ${OS_NAME})
   LDFLAGS=" ${LDFLAGS} -L${LIBDIR} "
   LIBS=" ${LIBS} -l${lib}"
 done

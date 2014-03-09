@@ -86,7 +86,7 @@ def _read_file_as_str(name):
 class build(_build):
     def run(self):
         ret = os.system('(cd %s && chmod 755 build.sh && \
-                         ./build.sh %s %s)' %
+                         ./build.sh "%s" %s)' %
                         (c_eclib_dir, autoconf_arguments, _exec_prefix))
         if ret != 0:
             sys.exit(ret)
@@ -145,6 +145,25 @@ class install(_install):
 
         default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
         _install.run(self)
+
+        #
+        # Another Mac-ism...  If the libraries are installed
+        # in a strange place, DYLD_LIRBARY_PATH needs to be
+        # updated.
+        #
+        if platform_str.find("Darwin") > -1:
+          print "***************************************************"
+          print "**                                             "
+          print "** You are running on a Mac!  This means that  "
+          print "** any user using this library must update:    "
+          print "**   DYLD_LIBRARY_PATH                         "
+          print "** The best way to do this is to put this line:"
+          print "**                                             "
+          print "** export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib" % installroot)
+          print "**                                             "
+          print "** into .bashrc, .profile, or the appropriate" 
+          print "** shell start-up script!"
+          print "***************************************************"
 
 
 module = Extension('pyeclib_c',
