@@ -213,7 +213,7 @@ MB = 1024 * 1024
 
 # Generate a buffer of size 's'
 if args.s > 10 * MB:
-    print "s must be smaller than 10 MB."
+    print("s must be smaller than 10 MB.")
     sys.exit(1)
 
 # Instantiate the timer
@@ -230,7 +230,7 @@ results = []
 num_iterations = 10
 
 for scheme in schemes:
-    print scheme
+    print(scheme)
 
     # Generate a new string for each test
     file_str = ''.join(
@@ -246,7 +246,7 @@ for scheme in schemes:
             m=scheme.m,
             type=scheme.type)
     except Exception as e:
-        print "Scheme %s is not defined (%s)." % (scheme, e)
+        print("Scheme %s is not defined (%s)." % (scheme, e))
         continue
 
     timer.start()
@@ -266,15 +266,15 @@ for i in range(len(results)):
     if i > return_limit:
         break
 
-    print ("\n\nPerf Rank #%d:" % i)
-    print ("  ======== To Use this Policy, Copy and Paste Text (not including "
-           "this header and footer) to Swift Conf ========")
-    print ("  type = erasure_coding")
-    print ("  name = %s_%d_%d" % (results[i][0].type,
-                                  results[i][0].k, results[i][0].m))
-    print ("  ec_type = %s" % results[i][0].type)
-    print ("  ec_k = %s" % results[i][0].k)
-    print ("  ec_m = %s" % results[i][0].m)
-    print ("  ================================================================"
-           "==============================================")
+    print("\n\nPerf Rank #%d:" % i)
+    print("  ======== To Use this Policy, Copy and Paste Text (not including "
+          "this header and footer) to Swift Conf ========")
+    print("  type = erasure_coding")
+    print("  name = %s_%d_%d" % (results[i][0].type,
+                                 results[i][0].k, results[i][0].m))
+    print("  ec_type = %s" % results[i][0].type)
+    print("  ec_k = %s" % results[i][0].k)
+    print("  ec_m = %s" % results[i][0].m)
+    print("  ================================================================"
+          "==============================================")
     results[i]

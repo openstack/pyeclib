@@ -218,10 +218,8 @@ def test_get_fragment_partition(
             missing_fragment_idxs.append(fragments.index(missing_frag))
             avail_fragments.remove(missing_frag)
 
-        (data_frags,
-         parity_frags,
-         missing_idxs) = pyeclib_c.get_fragment_partition(handle,
-                                                          avail_fragments)
+        (data_frags, parity_frags, missing_idxs) =\
+            pyeclib_c.get_fragment_partition(handle, avail_fragments)
 
         missing_fragment_idxs.sort()
         missing_idxs.sort()
@@ -289,9 +287,11 @@ def get_throughput(avg_time, size_str):
     size = float(size_desc[0])
 
     if (size_desc[1] == 'M'):
-        return size / avg_time
+        throughput = size / avg_time
     elif (size_desc[1] == 'K'):
-        return (size / 1000.0) / avg_time
+        throughput = (size / 1000.0) / avg_time
+
+    return (format(throughput, '.10g'))
 
 num_datas = [12, 12, 12]
 num_parities = [2, 3, 4]
@@ -312,18 +312,18 @@ for (type, k, m, hd) in xor_types:
 
     for size_str in sizes:
         avg_time = time_encode(k, m, 32, type_str, size_str, iterations)
-        print(("Encode (%s): %.2f" %
-              (size_str, get_throughput(avg_time, size_str))))
+        print("Encode (%s): %s" %
+              (size_str, get_throughput(avg_time, size_str)))
 
     for size_str in sizes:
         avg_time = time_decode(k, m, 32, type_str, size_str, iterations, 3)
-        print(("Decode (%s): %.2f" %
-              (size_str, get_throughput(avg_time, size_str))))
+        print("Decode (%s): %s" %
+              (size_str, get_throughput(avg_time, size_str)))
 
     for size_str in sizes:
         avg_time = test_reconstruct(k, m, 32, type_str, size_str, iterations)
-        print(("Reconstruct (%s): %.2f" %
-              (size_str, get_throughput(avg_time, size_str))))
+        print("Reconstruct (%s): %s" %
+              (size_str, get_throughput(avg_time, size_str)))
 
 for (type, w) in rs_types:
     print(("\nRunning tests for %s w=%d\n" % (type, w)))
@@ -331,21 +331,12 @@ for (type, w) in rs_types:
     for i in range(len(num_datas)):
         for size_str in sizes:
             test_get_fragment_partition(
-                num_datas[i],
-                num_parities[i],
-                w,
-                type,
-                size_str,
-                iterations)
+                num_datas[i], num_parities[i], w, type, size_str, iterations)
 
     for i in range(len(num_datas)):
         for size_str in sizes:
             test_fragments_to_string(
-                num_datas[i],
-                num_parities[i],
-                w,
-                type,
-                size_str)
+                num_datas[i], num_parities[i], w, type, size_str)
 
     for i in range(len(num_datas)):
         test_get_required_fragments(num_datas[i], num_parities[i], w, type)
@@ -353,39 +344,23 @@ for (type, w) in rs_types:
     for i in range(len(num_datas)):
         for size_str in sizes:
             avg_time = time_encode(
-                num_datas[i],
-                num_parities[i],
-                w,
-                type,
-                size_str,
-                iterations)
-            print(("Encode (%s): %.2f" %
+                num_datas[i], num_parities[i], w, type, size_str, iterations)
+            print(("Encode (%s): %s" %
                   (size_str, get_throughput(avg_time, size_str))))
 
     for i in range(len(num_datas)):
         for size_str in sizes:
             avg_time = time_decode(
-                num_datas[i],
-                num_parities[i],
-                w,
-                type,
-                size_str,
-                iterations,
-                num_parities[i] +
-                1)
-            print(("Decode (%s): %.2f" %
+                num_datas[i], num_parities[i], w, type, size_str, iterations,
+                num_parities[i] + 1)
+            print(("Decode (%s): %s" %
                   (size_str, get_throughput(avg_time, size_str))))
 
     for i in range(len(num_datas)):
         for size_str in sizes:
             avg_time = test_reconstruct(
-                num_datas[i],
-                num_parities[i],
-                w,
-                type,
-                size_str,
-                iterations)
-            print(("Reconstruct (%s): %.2f" %
+                num_datas[i], num_parities[i], w, type, size_str, iterations)
+            print(("Reconstruct (%s): %s" %
                   (size_str, get_throughput(avg_time, size_str))))
 
 

@@ -48,4 +48,4 @@ ec_driver = ECDriver(
 
 fragments_needed = ec_driver.fragments_needed(args.missing_fragments)
 
-print fragments_needed
+print(fragments_needed)
