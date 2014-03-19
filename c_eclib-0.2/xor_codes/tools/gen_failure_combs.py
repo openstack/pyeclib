@@ -32,14 +32,14 @@ def get_combinations(list, k):
     return itertools.combinations(list, k)
 
 if len(sys.argv) != 3:
-    print "Usage: %s <num_fragments> <num_combs>"
+    print("Usage: %s <num_fragments> <num_combs>")
     sys.exit(1)
 
 n = int(sys.argv[1])
 k = int(sys.argv[2])
 
 if n is None or k is None:
-    print "Usage: %s <num_fragments> <num_combs>"
+    print("Usage: %s <num_fragments> <num_combs>")
     sys.exit(1)
 
 fragments = [i for i in range(n)]
@@ -59,7 +59,7 @@ failure_comb_format_str = \
 fragment_combination_str = (
     "%s" % fragment_combinations).replace("[", "{").replace("]", "}")
 
-print ("#define NUM_%d_%d_COMBS %d" %
-       (n, k + 1, len(fragment_combinations)))
-print (failure_comb_format_str %
-       (n, k + 1, n, k + 1, 4, fragment_combination_str))
+print("#define NUM_%d_%d_COMBS %d" %
+      (n, k + 1, len(fragment_combinations)))
+print(failure_comb_format_str %
+      (n, k + 1, n, k + 1, 4, fragment_combination_str))

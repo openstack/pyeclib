@@ -81,7 +81,7 @@ class ECDriver(object):
         self.m = -1
         self.w = -1
         self.library_import_str = -1
-        for (key, value) in kwargs.iteritems():
+        for (key, value) in kwargs.items():
             if key == "k":
                 self.k = int(value)
             if key == "m":
@@ -131,7 +131,7 @@ class ECDriver(object):
                 required_methods[attr] = 1
 
         not_implemented_str = ""
-        for (method, is_implemented) in required_methods.iteritems():
+        for (method, is_implemented) in required_methods.items():
             if is_implemented == 0:
                 not_implemented_str += method + " "
 

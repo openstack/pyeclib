@@ -57,7 +57,7 @@ def pyeclib_core_test():
         os.chdir(dir)
         ret = os.system("python %s" % test)
         if ret != 0:
-            print ("Building %s failed!!!" % (dir))
+            print("Building %s failed!!!" % (dir))
             sys.exit(1)
         os.system("rm -f *.pyc")
         os.chdir(cur_dir)
@@ -71,7 +71,7 @@ def pyeclib_core_valgrind():
             "valgrind --leak-check=full python %s >%s/valgrind.%s.out 2>&1" %
             (test, cur_dir, test))
         if ret != 0:
-            print ("Building %s failed!!!" % (dir))
+            print("Building %s failed!!!" % (dir))
             sys.exit(1)
         os.system("rm -f *.pyc")
         os.chdir(cur_dir)

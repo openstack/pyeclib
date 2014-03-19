@@ -149,14 +149,14 @@ def get_parity_eqns(bm_parity_combinations):
     return parity_bms
 
 if len(sys.argv) != 3:
-    print "Usage: %s <num_parities> <num_bits = 2|3>"
+    print("Usage: %s <num_parities> <num_bits = 2|3>")
     sys.exit(1)
 
 m = int(sys.argv[1])
 num_bits = int(sys.argv[2])
 
 if m is None or num_bits not in [2, 3]:
-    print "Usage: %s <num_parities> <num_bits = 2|3>"
+    print("Usage: %s <num_parities> <num_bits = 2|3>")
     sys.exit(1)
 
 parity_list = [i for i in range(m)]
@@ -208,23 +208,23 @@ for parity_bm in used_parities:
     parity_eqns = get_parity_eqns(bm_parity_combinations)
     # print "(%d, %d) : %s : %s : %s" % (k, m, bm_parity_combinations,
     # parity_eqns, num_data_in_parity)
-    print (parity_bms_template %
-           (k, m, num_bits + 1,
-            ("%s" % parity_eqns).replace("[", "").replace("]", "")))
-    print (data_bms_template %
-           (k, m, num_bits + 1,
-            ("%s" % bm_parity_combinations).replace("[", "").replace("]", "")))
+    print(parity_bms_template %
+          (k, m, num_bits + 1,
+           ("%s" % parity_eqns).replace("[", "").replace("]", "")))
+    print(data_bms_template %
+          (k, m, num_bits + 1,
+           ("%s" % bm_parity_combinations).replace("[", "").replace("]", "")))
 
     bm_parity_combinations.append(parity_bm)
     k += 1
 
 num_data_in_parity = get_num_data_in_parity(bm_parity_combinations)
 parity_eqns = get_parity_eqns(bm_parity_combinations)
-# print "(%d, %d) : %s : %s" % (k, m, bm_parity_combinations,
+# print"(%d, %d) : %s : %s" % (k, m, bm_parity_combinations,
 # num_data_in_parity)
-print (parity_bms_template %
-       (k, m, num_bits + 1,
-        ("%s" % parity_eqns).replace("[", "").replace("]", "")))
-print (data_bms_template %
-       (k, m, num_bits + 1,
-        ("%s" % bm_parity_combinations).replace("[", "").replace("]", "")))
+print(parity_bms_template %
+      (k, m, num_bits + 1,
+       ("%s" % parity_eqns).replace("[", "").replace("]", "")))
+print(data_bms_template %
+      (k, m, num_bits + 1,
+       ("%s" % bm_parity_combinations).replace("[", "").replace("]", "")))

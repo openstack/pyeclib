@@ -139,7 +139,7 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
 
                 fd_orig.close()
                 fd_decoded.close()
-                print "Fragment %d was not reconstructed!!!" % j
+                print(("Fragment %d was not reconstructed!!!" % j))
                 sys.exit(2)
 
         decoded_fragments = None
@@ -194,7 +194,7 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
             fd_decoded.write(reconstructed_fragment)
             fd_orig.close()
             fd_decoded.close()
-            print "Fragment %d was not reconstructed!!!" % missing_idxs[0]
+            print(("Fragment %d was not reconstructed!!!" % missing_idxs[0]))
             sys.exit(2)
 
     return sum / iterations
@@ -227,8 +227,8 @@ def test_get_fragment_partition(
         missing_idxs.sort()
 
         if missing_fragment_idxs != missing_idxs:
-            print ("Missing idx mismatch in test_get_fragment_partition: "
-                   "%s != %s\n" % (missing_fragment_idxs, missing_idxs))
+            print(("Missing idx mismatch in test_get_fragment_partition: "
+                   "%s != %s\n" % (missing_fragment_idxs, missing_idxs)))
             sys.exit()
 
         decoded_fragments = pyeclib_c.decode(
@@ -248,9 +248,9 @@ def test_fragments_to_string(num_data, num_parity, w, type, file_size):
     concat_str = pyeclib_c.fragments_to_string(handle, fragments[:num_data])
 
     if concat_str != whole_file_str:
-        print ("String does not equal the original string "
+        print(("String does not equal the original string "
                "(len(orig) = %d, len(new) = %d\n" %
-               (len(whole_file_str), len(concat_str)))
+               (len(whole_file_str), len(concat_str))))
 
 
 def test_get_required_fragments(num_data, num_parity, w, type):
@@ -277,9 +277,9 @@ def test_get_required_fragments(num_data, num_parity, w, type):
             missing_fragments)
 
         if expected_fragments != required_fragments:
-            print ("Unexpected required fragments list "
+            print(("Unexpected required fragments list "
                    "(exp != req): %s != %s" %
-                   (expected_fragments, required_fragments))
+                   (expected_fragments, required_fragments)))
             sys.exit(2)
 
 
@@ -306,27 +306,27 @@ sizes = ["101-K", "202-K", "303-K"]
 setup(sizes)
 
 for (type, k, m, hd) in xor_types:
-    print("Running tests for %s k=%d, m=%d\n" % (type, k, m))
+    print(("\nRunning tests for %s k=%d, m=%d\n" % (type, k, m)))
 
     type_str = "%s" % (type)
 
     for size_str in sizes:
         avg_time = time_encode(k, m, 32, type_str, size_str, iterations)
-        print("Encode (%s): " %
-              size_str, get_throughput(avg_time, size_str))
+        print(("Encode (%s): %.2f" %
+              (size_str, get_throughput(avg_time, size_str))))
 
     for size_str in sizes:
         avg_time = time_decode(k, m, 32, type_str, size_str, iterations, 3)
-        print("Decode (%s): " %
-              size_str, get_throughput(avg_time, size_str))
+        print(("Decode (%s): %.2f" %
+              (size_str, get_throughput(avg_time, size_str))))
 
     for size_str in sizes:
         avg_time = test_reconstruct(k, m, 32, type_str, size_str, iterations)
-        print("Reconstruct (%s): " %
-              size_str, get_throughput(avg_time, size_str))
+        print(("Reconstruct (%s): %.2f" %
+              (size_str, get_throughput(avg_time, size_str))))
 
 for (type, w) in rs_types:
-    print("Running tests for %s w=%d\n" % (type, w))
+    print(("\nRunning tests for %s w=%d\n" % (type, w)))
 
     for i in range(len(num_datas)):
         for size_str in sizes:
@@ -359,8 +359,8 @@ for (type, w) in rs_types:
                 type,
                 size_str,
                 iterations)
-            print("Encode (%s): " %
-                  size_str, get_throughput(avg_time, size_str))
+            print(("Encode (%s): %.2f" %
+                  (size_str, get_throughput(avg_time, size_str))))
 
     for i in range(len(num_datas)):
         for size_str in sizes:
@@ -373,8 +373,8 @@ for (type, w) in rs_types:
                 iterations,
                 num_parities[i] +
                 1)
-            print("Decode (%s): " %
-                  size_str, get_throughput(avg_time, size_str))
+            print(("Decode (%s): %.2f" %
+                  (size_str, get_throughput(avg_time, size_str))))
 
     for i in range(len(num_datas)):
         for size_str in sizes:
@@ -385,8 +385,8 @@ for (type, w) in rs_types:
                 type,
                 size_str,
                 iterations)
-            print("Reconstruct (%s): " %
-                  size_str, get_throughput(avg_time, size_str))
+            print(("Reconstruct (%s): %.2f" %
+                  (size_str, get_throughput(avg_time, size_str))))
 
 
 cleanup(sizes)

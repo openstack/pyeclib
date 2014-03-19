@@ -121,7 +121,7 @@ class install(_install):
         # ensure that the paths are absolute so we don't get lost
         opts = {'exec_prefix': install_cmd.exec_prefix,
                 'root': install_cmd.root}
-        for optname, value in opts.items():
+        for optname, value in list(opts.items()):
             if value is not None:
                 opts[optname] = os.path.abspath(value)
 
@@ -155,19 +155,19 @@ class install(_install):
         # updated.
         #
         if platform_str.find("Darwin") > -1:
-            print "***************************************************"
-            print "**                                             "
-            print "** You are running on a Mac!  This means that  "
-            print "** any user using this library must update:    "
-            print "**   DYLD_LIBRARY_PATH                         "
-            print "** The best way to do this is to put this line:"
-            print "**                                             "
-            print "** export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
-                                                      % installroot)
-            print "**                                             "
-            print "** into .bashrc, .profile, or the appropriate"
-            print "** shell start-up script!"
-            print "***************************************************"
+            print("***************************************************")
+            print("**                                             ")
+            print("** You are running on a Mac!  This means that  ")
+            print("** any user using this library must update:    ")
+            print("**   DYLD_LIBRARY_PATH                         ")
+            print("** The best way to do this is to put this line:")
+            print("**                                             ")
+            print("** export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
+                                                      % installroot))
+            print("**                                             ")
+            print("** into .bashrc, .profile, or the appropriate")
+            print("** shell start-up script!")
+            print("***************************************************")
 
 
 module = Extension('pyeclib_c',
