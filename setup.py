@@ -84,6 +84,7 @@ def _read_file_as_str(name):
 
 
 class build(_build):
+
     def run(self):
         ret = os.system('(cd %s && chmod 755 build.sh && \
                          ./build.sh "%s" %s)' %
@@ -100,6 +101,7 @@ class build(_build):
 
 
 class clean(_clean):
+
     def run(self):
         ret = os.system('(cd %s && chmod 755 clean.sh && \
                           ./clean.sh)' % c_eclib_dir)
@@ -109,6 +111,7 @@ class clean(_clean):
 
 
 class install(_install):
+
     def run(self):
         install_cmd = self.distribution.get_command_obj('install')
         install_lib = self.distribution.get_command_obj('install_lib')
@@ -152,18 +155,19 @@ class install(_install):
         # updated.
         #
         if platform_str.find("Darwin") > -1:
-          print "***************************************************"
-          print "**                                             "
-          print "** You are running on a Mac!  This means that  "
-          print "** any user using this library must update:    "
-          print "**   DYLD_LIBRARY_PATH                         "
-          print "** The best way to do this is to put this line:"
-          print "**                                             "
-          print "** export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib" % installroot)
-          print "**                                             "
-          print "** into .bashrc, .profile, or the appropriate" 
-          print "** shell start-up script!"
-          print "***************************************************"
+            print "***************************************************"
+            print "**                                             "
+            print "** You are running on a Mac!  This means that  "
+            print "** any user using this library must update:    "
+            print "**   DYLD_LIBRARY_PATH                         "
+            print "** The best way to do this is to put this line:"
+            print "**                                             "
+            print "** export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
+                                                      % installroot)
+            print "**                                             "
+            print "** into .bashrc, .profile, or the appropriate"
+            print "** shell start-up script!"
+            print "***************************************************"
 
 
 module = Extension('pyeclib_c',
