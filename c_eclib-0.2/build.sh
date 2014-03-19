@@ -63,7 +63,7 @@ find_libdir() {
   _lib="$2"
   _osname="$3"
   
-  if [ ${_osname} == "Darwin" ]; then
+  if [ "x${_osname}" = "xDarwin" ]; then
     d=`dirname $(find ${_searchdir} -type f -name "lib${_lib}.*.dylib" | sort -u | head -1)`
   else
     d=`dirname $(find ${_searchdir} -type f -name "lib${_lib}.so.*" | sort -u | head -1)`
@@ -145,7 +145,7 @@ for lib in ${LIB_ORDER}; do
   LDFLAGS=" ${LDFLAGS} -L${LIBDIR} "
   LIBS=" ${LIBS} -l${lib} "
 
-  if [ ${OS_NAME} == "Darwin" ]; then
+  if [ "x${OS_NAME}" = "xDarwin" ]; then
     if [ -z ${DYLD_LIBRARY_PATH} ]; then
       export DYLD_LIBRARY_PATH=${LIBDIR}
     else
