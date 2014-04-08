@@ -235,16 +235,12 @@ for scheme in schemes:
     # Generate a new string for each test
     file_str = ''.join(
         random.choice(
-            string.ascii_uppercase +
-            string.digits) for x in range(
-            args.s))
+            string.ascii_uppercase + string.digits) for x in range(args.s))
 
     try:
         ec_driver = ECDriver(
             "pyeclib.core.ECPyECLibDriver",
-            k=scheme.k,
-            m=scheme.m,
-            type=scheme.type)
+            k=scheme.k, m=scheme.m, type=scheme.type)
     except Exception as e:
         print("Scheme %s is not defined (%s)." % (scheme, e))
         continue

@@ -42,9 +42,7 @@ args = parser.parse_args()
 
 ec_driver = ECDriver(
     "pyeclib.core.ECPyECLibDriver",
-    k=args.k,
-    m=args.m,
-    type=args.type)
+    k=args.k, m=args.m, type=args.type)
 
 fragments_needed = ec_driver.fragments_needed(args.missing_fragments)
 

@@ -46,25 +46,18 @@ print args.fragments
 print args.filename
 
 ec_driver = ECDriver(
-    "pyeclib.core.ECPyECLibDriver",
-    k=args.k,
-    m=args.m,
-    type=args.type)
+    "pyeclib.core.ECPyECLibDriver", k=args.k, m=args.m, type=args.type)
 
 fragment_list = []
 
+# read fragments
 for fragment in args.fragments:
-    fp = open("%s" % fragment, "r")
+    with open(("%s" % fragment), "rb") as fp:
+        fragment_list.append(fp.read())
 
-    fragment_list.append(fp.read())
-
-    fp.close()
-
-
-fp = open("%s.decoded" % args.filename, "w")
-
+# decode
 decoded_file = ec_driver.decode(fragment_list)
 
-fp.write(decoded_file)
-
-fp.close()
+# write
+with open("%s.decoded" % args.filename, "wb") as fp:
+    fp.write(decoded_file)

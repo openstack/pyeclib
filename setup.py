@@ -78,7 +78,7 @@ def _construct_jerasure_buildenv():
 
 # utility routine
 def _read_file_as_str(name):
-    with open(name, 'r') as f:
+    with open(name, "rt") as f:
         s = f.readline().strip()
     return s
 

@@ -69,8 +69,6 @@ class TestPyECLibDriver(unittest.TestCase):
             os.mkdir("./test_files")
 
         for size_str in self.file_sizes:
-            filename = "test_file.%s" % size_str
-            fp = open("test_files/%s" % filename, "w")
 
             size_desc = size_str.split("-")
 
@@ -84,8 +82,9 @@ class TestPyECLibDriver(unittest.TestCase):
             buffer = ''.join(random.choice(string.letters)
                              for i in range(size))
 
-            fp.write(buffer)
-            fp.close()
+            filename = "test_file.%s" % size_str
+            with open("test_files/%s" % filename, "wb") as fp:
+                fp.write(buffer)
 
     def tearDown(self):
         for size_str in self.file_sizes:
@@ -425,10 +424,10 @@ class TestPyECLibDriver(unittest.TestCase):
 
         for pyeclib_driver in pyeclib_drivers:
             for file_size in self.file_sizes:
-                filename = "test_file.%s" % file_size
-                fp = open("test_files/%s" % filename, "r")
 
-                whole_file_str = fp.read()
+                filename = "test_file.%s" % file_size
+                with open("test_files/%s" % filename, "r") as fp:
+                    whole_file_str = fp.read()
 
                 orig_fragments = pyeclib_driver.encode(whole_file_str)
 

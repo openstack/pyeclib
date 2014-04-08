@@ -46,21 +46,18 @@ print args.filename
 
 ec_driver = ECDriver(
     "pyeclib.core.ECPyECLibDriver",
-    k=args.k,
-    m=args.m,
-    type=args.type)
+    k=args.k, m=args.m, type=args.type)
 
-fp = open("%s/%s" % (args.file_dir, args.filename), "r")
+# read
+with open(("%s/%s" % (args.file_dir, args.filename)), "rb") as fp:
+    whole_file_str = fp.read()
 
-whole_file_str = fp.read()
-
+# encode
 fragments = ec_driver.encode(whole_file_str)
 
-fp.close()
-
+# store
 i = 0
 for fragment in fragments:
-    fp = open("%s/%s.%d" % (args.fragment_dir, args.filename, i), "w")
-    fp.write(fragment)
-    fp.close()
+    with open("%s/%s.%d" % (args.fragment_dir, args.filename, i), "wb") as fp:
+        fp.write(fragment)
     i += 1

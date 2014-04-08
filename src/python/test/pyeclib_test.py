@@ -54,8 +54,6 @@ def setup(file_sizes):
         os.mkdir("./test_files")
 
     for size_str in file_sizes:
-        filename = "test_file.%s" % size_str
-        fp = open("test_files/%s" % filename, "w")
 
         size_desc = size_str.split("-")
 
@@ -68,8 +66,9 @@ def setup(file_sizes):
 
         buffer = ''.join(random.choice(string.letters) for i in range(size))
 
-        fp.write(buffer)
-        fp.close()
+        filename = "test_file.%s" % size_str
+        with open(("test_files/%s" % filename), "wb") as fp:
+            fp.write(buffer)
 
 
 def cleanup(file_sizes):
@@ -80,13 +79,13 @@ def cleanup(file_sizes):
 
 
 def time_encode(num_data, num_parity, w, type, file_size, iterations):
-    filename = "test_file.%s" % file_size
-    fp = open("test_files/%s" % filename, "r")
     timer = Timer()
     sum = 0
     handle = pyeclib_c.init(num_data, num_parity, w, type)
 
-    whole_file_str = fp.read()
+    filename = "test_file.%s" % file_size
+    with open("test_files/%s" % filename, "rb") as fp:
+        whole_file_str = fp.read()
 
     timer.start()
     for i in range(iterations):
@@ -97,13 +96,13 @@ def time_encode(num_data, num_parity, w, type, file_size, iterations):
 
 
 def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
-    filename = "test_file.%s" % file_size
-    fp = open("test_files/%s" % filename, "r")
     timer = Timer()
     sum = 0
     handle = pyeclib_c.init(num_data, num_parity, w, type)
 
-    whole_file_str = fp.read()
+    filename = "test_file.%s" % file_size
+    with open("test_files/%s" % filename, "rb") as fp:
+        whole_file_str = fp.read()
 
     fragments = pyeclib_c.encode(handle, whole_file_str)
 
@@ -131,14 +130,12 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
 
         for j in range(num_data + num_parity):
             if orig_fragments[j] != decoded_fragments[j]:
-                fd_orig = open("orig_fragments", "w")
-                fd_decoded = open("decoded_fragments", "w")
+                with open("orig_fragments", "wb") as fd_orig:
+                    fd_orig.write(orig_fragments[j])
 
-                fd_orig.write(orig_fragments[j])
-                fd_decoded.write(decoded_fragments[j])
+                with open("decoded_fragments", "wb") as fd_decoded:
+                    fd_decoded.write(decoded_fragments[j])
 
-                fd_orig.close()
-                fd_decoded.close()
                 print(("Fragment %d was not reconstructed!!!" % j))
                 sys.exit(2)
 
@@ -148,13 +145,13 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
 
 
 def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
-    filename = "test_file.%s" % file_size
-    fp = open("test_files/%s" % filename, "r")
     timer = Timer()
     sum = 0
     handle = pyeclib_c.init(num_data, num_parity, w, type)
 
-    whole_file_str = fp.read()
+    filename = "test_file.%s" % file_size
+    with open("test_files/%s" % filename, "rb") as fp:
+        whole_file_str = fp.read()
 
     orig_fragments = pyeclib_c.encode(handle, whole_file_str)
 
@@ -187,13 +184,10 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
         fragments = decoded_fragments
 
         if orig_fragments[missing_idxs[0]] != reconstructed_fragment:
-            fd_orig = open("orig_fragments", "w")
-            fd_decoded = open("decoded_fragments", "w")
-
-            fd_orig.write(orig_fragments[missing_idxs[0]])
-            fd_decoded.write(reconstructed_fragment)
-            fd_orig.close()
-            fd_decoded.close()
+            with open("orig_fragments", "wb") as fd_orig:
+                fd_orig.write(orig_fragments[missing_idxs[0]])
+            with open("decoded_fragments", "wb") as fd_decoded:
+                fd_decoded.write(reconstructed_fragment)
             print(("Fragment %d was not reconstructed!!!" % missing_idxs[0]))
             sys.exit(2)
 
@@ -202,11 +196,11 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
 
 def test_get_fragment_partition(
         num_data, num_parity, w, type, file_size, iterations):
-    filename = "test_file.%s" % file_size
-    fp = open("test_files/%s" % filename, "r")
     handle = pyeclib_c.init(num_data, num_parity, w, type)
 
-    whole_file_str = fp.read()
+    filename = "test_file.%s" % file_size
+    with open("test_files/%s" % filename, "rb") as fp:
+        whole_file_str = fp.read()
 
     fragments = pyeclib_c.encode(handle, whole_file_str)
 
@@ -235,11 +229,11 @@ def test_get_fragment_partition(
 
 
 def test_fragments_to_string(num_data, num_parity, w, type, file_size):
-    filename = "test_file.%s" % file_size
-    fp = open("test_files/%s" % filename, "r")
     handle = pyeclib_c.init(num_data, num_parity, w, type)
 
-    whole_file_str = fp.read()
+    filename = "test_file.%s" % file_size
+    with open(("test_files/%s" % filename), "rb") as fp:
+        whole_file_str = fp.read()
 
     fragments = pyeclib_c.encode(handle, whole_file_str)
 
