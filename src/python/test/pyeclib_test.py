@@ -64,7 +64,7 @@ def setup(file_sizes):
         elif (size_desc[1] == 'K'):
             size *= 1000
 
-        buffer = ''.join(random.choice(string.letters) for i in range(size))
+        buffer = ''.join(random.choice(string.ascii_letters) for i in range(size))
 
         filename = "test_file.%s" % size_str
         with open(("test_files/%s" % filename), "wb") as fp:
