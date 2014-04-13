@@ -64,11 +64,11 @@ def setup(file_sizes):
         elif (size_desc[1] == 'K'):
             size *= 1000
 
-        buffer = ''.join(random.choice(string.ascii_letters) for i in range(size))
+        testdata = ''.join(random.choice(string.ascii_letters) for i in range(size))
 
         filename = "test_file.%s" % size_str
-        with open(("test_files/%s" % filename), "wb") as fp:
-            fp.write(buffer)
+        with open(("test_files/%s" % filename), "w") as fp:
+            fp.write(testdata)
 
 
 def cleanup(file_sizes):
