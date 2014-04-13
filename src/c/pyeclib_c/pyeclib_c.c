@@ -27,6 +27,10 @@
 /* Compat layer for python <= 2.6 */
 #include "capsulethunk.h"
 
+/* Compat headers for python >= 3.0 */
+#include <bytesobject.h>
+#include "py3compat.h"
+
 #include<xor_code.h>
 #include<reed_sol.h>
 #include<alg_sig.h>
@@ -1876,17 +1880,31 @@ static PyMethodDef PyECLibMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC
-initpyeclib_c(void)
+/* Python 3 compatibility macros */
+#if PY_MAJOR_VERSION >= 3
+  #define MOD_ERROR_VAL NULL
+  #define MOD_SUCCESS_VAL(val) val
+  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          static struct PyModuleDef moduledef = { \
+              PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+          ob = PyModule_Create(&moduledef);
+#else
+  #define MOD_ERROR_VAL
+  #define MOD_SUCCESS_VAL(val)
+  #define MOD_INIT(name) void init##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          ob = Py_InitModule3(name, methods, doc);
+#endif
+
+MOD_INIT(pyeclib_c)
 {
     PyObject *m;
 
-    Py_Initialize();
+    MOD_DEF(m, "pyeclib_c", NULL, PyECLibMethods);
 
-    m = Py_InitModule("pyeclib_c", PyECLibMethods);
-    if (m == NULL) {
-      return;
-    }
+    if (m == NULL)
+      return MOD_ERROR_VAL;
 
     PyECLibError = PyErr_NewException("pyeclib.Error", NULL, NULL);
     if (PyECLibError == NULL) {
@@ -1895,5 +1913,7 @@ initpyeclib_c(void)
     }
     Py_INCREF(PyECLibError);
     PyModule_AddObject(m, "error", PyECLibError);
+
+    return MOD_SUCCESS_VAL(m);
 }
 
