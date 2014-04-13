@@ -141,7 +141,7 @@ class ECPyECLibDriver(object):
             ret_string = pyeclib_c.fragments_to_string(
                 self.handle,
                 fragment_payloads)
-        except:
+        except Exception as e:
             raise ECPyECLibException("Error in ECPyECLibDriver.decode")
 
         if ret_string is None:

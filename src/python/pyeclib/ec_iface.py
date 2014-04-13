@@ -50,7 +50,7 @@ def import_class(import_str):
     try:
         __import__(mod_str)
         return getattr(sys.modules[mod_str], class_str)
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError) as e:
         raise ImportError('Class %s cannot be found (%)' %
                           (class_str,
                            traceback.format_exception(*sys.exc_info())))
@@ -67,7 +67,7 @@ def create_instance(import_str, *args, **kwargs):
     """
     try:
         object_class = import_class(import_str)
-    except:
+    except Exception as e:
         raise
     instance = object_class(*args, **kwargs)
 
