@@ -24,9 +24,11 @@
 import pyeclib_c
 import time
 import random
-import string
 import sys
 import os
+import codecs
+
+from string import ascii_letters
 
 
 class Timer:
@@ -64,10 +66,10 @@ def setup(file_sizes):
         elif (size_desc[1] == 'K'):
             size *= 1000
 
-        testdata = ''.join(random.choice(string.ascii_letters) for i in range(size))
+        testdata = ''.join(random.choice(ascii_letters) for i in range(size))
 
         filename = "test_file.%s" % size_str
-        with open(("test_files/%s" % filename), "w") as fp:
+        with open(("test_files/%s" % filename), "wb") as fp:
             fp.write(testdata)
 
 
@@ -78,27 +80,27 @@ def cleanup(file_sizes):
     os.rmdir("./test_files")
 
 
-def time_encode(num_data, num_parity, w, type, file_size, iterations):
+def time_encode(num_data, num_parity, w, ec_type, file_size, iterations):
     timer = Timer()
-    sum = 0
-    handle = pyeclib_c.init(num_data, num_parity, w, type)
+    tsum = 0
+    handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
 
     filename = "test_file.%s" % file_size
     with open("test_files/%s" % filename, "rb") as fp:
         whole_file_str = fp.read()
 
     timer.start()
-    for i in range(iterations):
+    for l in range(iterations):
         fragments = pyeclib_c.encode(handle, whole_file_str)
-    sum = timer.stop_and_return()
+    tsum = timer.stop_and_return()
 
-    return sum / iterations
+    return tsum / iterations
 
 
-def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
+def time_decode(num_data, num_parity, w, ec_type, file_size, iterations, hd):
     timer = Timer()
-    sum = 0
-    handle = pyeclib_c.init(num_data, num_parity, w, type)
+    tsum = 0
+    handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
 
     filename = "test_file.%s" % file_size
     with open("test_files/%s" % filename, "rb") as fp:
@@ -124,7 +126,7 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
                 :num_data], fragments[
                 num_data:], missing_idxs, len(
                 fragments[0]))
-        sum += timer.stop_and_return()
+        tsum += timer.stop_and_return()
 
         fragments = decoded_fragments
 
@@ -141,13 +143,13 @@ def time_decode(num_data, num_parity, w, type, file_size, iterations, hd):
 
         decoded_fragments = None
 
-    return sum / iterations
+    return tsum / iterations
 
 
-def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
+def test_reconstruct(num_data, num_parity, w, ec_type, file_size, iterations):
     timer = Timer()
-    sum = 0
-    handle = pyeclib_c.init(num_data, num_parity, w, type)
+    tsum = 0
+    handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
 
     filename = "test_file.%s" % file_size
     with open("test_files/%s" % filename, "rb") as fp:
@@ -174,7 +176,7 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
                 num_data:], missing_idxs, missing_idxs[0], len(
                 fragments[0]))
 
-        sum += timer.stop_and_return()
+        tsum += timer.stop_and_return()
 
         decoded_fragments = pyeclib_c.decode(
             handle, fragments[
@@ -191,12 +193,12 @@ def test_reconstruct(num_data, num_parity, w, type, file_size, iterations):
             print(("Fragment %d was not reconstructed!!!" % missing_idxs[0]))
             sys.exit(2)
 
-    return sum / iterations
+    return tsum / iterations
 
 
 def test_get_fragment_partition(
-        num_data, num_parity, w, type, file_size, iterations):
-    handle = pyeclib_c.init(num_data, num_parity, w, type)
+        num_data, num_parity, w, ec_type, file_size, iterations):
+    handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
 
     filename = "test_file.%s" % file_size
     with open("test_files/%s" % filename, "rb") as fp:
@@ -228,8 +230,8 @@ def test_get_fragment_partition(
                 data_frags[0]))
 
 
-def test_fragments_to_string(num_data, num_parity, w, type, file_size):
-    handle = pyeclib_c.init(num_data, num_parity, w, type)
+def test_fragments_to_string(num_data, num_parity, w, ec_type, file_size):
+    handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
 
     filename = "test_file.%s" % file_size
     with open(("test_files/%s" % filename), "rb") as fp:
@@ -245,13 +247,13 @@ def test_fragments_to_string(num_data, num_parity, w, type, file_size):
                (len(whole_file_str), len(concat_str))))
 
 
-def test_get_required_fragments(num_data, num_parity, w, type):
-    handle = pyeclib_c.init(num_data, num_parity, w, type)
+def test_get_required_fragments(num_data, num_parity, w, ec_type):
+    handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
 
     #
     # MDS codes need any k fragments
     #
-    if type in ["rs_vand", "rs_cauchy_orig"]:
+    if ec_type in ["rs_vand", "rs_cauchy_orig"]:
         expected_fragments = [i for i in range(num_data + num_parity)]
         missing_fragments = []
 
@@ -299,15 +301,15 @@ sizes = ["101-K", "202-K", "303-K"]
 
 setup(sizes)
 
-for (type, k, m, hd) in xor_types:
-    print(("\nRunning tests for %s k=%d, m=%d\n" % (type, k, m)))
+for (ec_type, k, m, hd) in xor_types:
+    print(("\nRunning tests for %s k=%d, m=%d\n" % (ec_type, k, m)))
 
-    type_str = "%s" % (type)
+    type_str = "%s" % (ec_type)
 
     for size_str in sizes:
         avg_time = time_encode(k, m, 32, type_str, size_str, iterations)
         print("Encode (%s): %s" %
-              (size_str, get_throughput(avg_time, size_str)))
+             (size_str, get_throughput(avg_time, size_str)))
 
     for size_str in sizes:
         avg_time = time_decode(k, m, 32, type_str, size_str, iterations, 3)
@@ -319,33 +321,33 @@ for (type, k, m, hd) in xor_types:
         print("Reconstruct (%s): %s" %
               (size_str, get_throughput(avg_time, size_str)))
 
-for (type, w) in rs_types:
-    print(("\nRunning tests for %s w=%d\n" % (type, w)))
+for (ec_type, w) in rs_types:
+    print(("\nRunning tests for %s w=%d\n" % (ec_type, w)))
 
     for i in range(len(num_datas)):
         for size_str in sizes:
             test_get_fragment_partition(
-                num_datas[i], num_parities[i], w, type, size_str, iterations)
+                num_datas[i], num_parities[i], w, ec_type, size_str, iterations)
 
     for i in range(len(num_datas)):
         for size_str in sizes:
             test_fragments_to_string(
-                num_datas[i], num_parities[i], w, type, size_str)
+                num_datas[i], num_parities[i], w, ec_type, size_str)
 
     for i in range(len(num_datas)):
-        test_get_required_fragments(num_datas[i], num_parities[i], w, type)
+        test_get_required_fragments(num_datas[i], num_parities[i], w, ec_type)
 
     for i in range(len(num_datas)):
         for size_str in sizes:
             avg_time = time_encode(
-                num_datas[i], num_parities[i], w, type, size_str, iterations)
+                num_datas[i], num_parities[i], w, ec_type, size_str, iterations)
             print(("Encode (%s): %s" %
                   (size_str, get_throughput(avg_time, size_str))))
 
     for i in range(len(num_datas)):
         for size_str in sizes:
             avg_time = time_decode(
-                num_datas[i], num_parities[i], w, type, size_str, iterations,
+                num_datas[i], num_parities[i], w, ec_type, size_str, iterations,
                 num_parities[i] + 1)
             print(("Decode (%s): %s" %
                   (size_str, get_throughput(avg_time, size_str))))
@@ -353,7 +355,7 @@ for (type, w) in rs_types:
     for i in range(len(num_datas)):
         for size_str in sizes:
             avg_time = test_reconstruct(
-                num_datas[i], num_parities[i], w, type, size_str, iterations)
+                num_datas[i], num_parities[i], w, ec_type, size_str, iterations)
             print(("Reconstruct (%s): %s" %
                   (size_str, get_throughput(avg_time, size_str))))
 
