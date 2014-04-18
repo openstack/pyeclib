@@ -133,8 +133,8 @@ class ECPyECLibDriver(object):
             self.inline_chksum,
             self.algsig_chksum)
 
-    def encode(self, bytes):
-        return pyeclib_c.encode(self.handle, bytes)
+    def encode(self, data):
+        return pyeclib_c.encode(self.handle, data)
 
     def decode(self, fragment_payloads):
         try:
@@ -159,7 +159,7 @@ class ECPyECLibDriver(object):
         return ret_string
 
     def reconstruct(self, fragment_payloads, indexes_to_reconstruct):
-        reconstructed_bytes = []
+        reconstructed_data = []
 
         # Reconstruct the data, then the parity
         # The parity cannot be reconstructed until
@@ -176,9 +176,9 @@ class ECPyECLibDriver(object):
             reconstructed = pyeclib_c.reconstruct(
                 self.handle, data_frags, parity_frags, missing_idxs,
                 index, len(data_frags[0]))
-            reconstructed_bytes.append(reconstructed)
+            reconstructed_data.append(reconstructed)
 
-        return reconstructed_bytes
+        return reconstructed_data
 
     def fragments_needed(self, missing_fragment_indexes):
         return pyeclib_c.get_required_fragments(
@@ -200,7 +200,7 @@ class ECNullDriver(object):
         self.k = k
         self.m = m
 
-    def encode(self, bytes):
+    def encode(self, data):
         pass
 
     def decode(self, fragment_payloads):
@@ -243,26 +243,26 @@ class ECStripingDriver(object):
 
         self.m = m
 
-    def encode(self, bytes):
+    def encode(self, data):
         """
         Stripe an arbitrary-sized string into k fragments
-        :param bytes: the buffer to encode
+        :param data: the buffer to encode
         :returns: a list of k buffers (data only)
         :raises: ECPyECLibException if there is an error during encoding
         """
         # Main fragment size
-        fragment_size = math.ceil(len(bytes) / float(self.k))
+        fragment_size = math.ceil(len(data) / float(self.k))
 
         # Size of last fragment
-        last_fragment_size = len(bytes) - (fragment_size * self.k - 1)
+        last_fragment_size = len(data) - (fragment_size * self.k - 1)
 
         fragments = []
         offset = 0
         for i in range(self.k - 1):
-            fragments.append(bytes[offset:fragment_size])
+            fragments.append(data[offset:fragment_size])
             offset += fragment_size
 
-        fragments.append(bytes[offset:last_fragment_size])
+        fragments.append(data[offset:last_fragment_size])
 
         return fragments
 

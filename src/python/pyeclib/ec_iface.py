@@ -140,15 +140,15 @@ class ECDriver(object):
                 "The following required methods are not implemented "
                 "in %s: %s" % (library_import_str, not_implemented_str))
 
-    def encode(self, bytes):
+    def encode(self, data):
         """
         Encode an arbitrary-sized string
-        :param bytes: the buffer to encode
+        :param data: the buffer to encode
         :returns: a list of buffers (first k entries are data and
                   the last m are parity)
         :raises: ECDriverError if there is an error during encoding
         """
-        return self.ec_lib_reference.encode(bytes)
+        return self.ec_lib_reference.encode(data)
 
     def decode(self, fragment_payloads):
         """
