@@ -830,7 +830,8 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   int i;
   PyObject *list_of_strips;
 
-  if (!PyArg_ParseTuple(args, "Os#", &pyeclib_obj_handle, &data, &data_len)) {
+  /* Assume binary data (force "byte array" input) */
+  if (!PyArg_ParseTuple(args, "Oy#", &pyeclib_obj_handle, &data, &data_len)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
     return NULL;
   }

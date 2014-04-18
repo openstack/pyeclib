@@ -70,7 +70,7 @@ def setup(file_sizes):
 
         filename = "test_file.%s" % size_str
         with open(("test_files/%s" % filename), "wb") as fp:
-            fp.write(testdata)
+            fp.write(testdata.encode('utf-8'))
 
 
 def cleanup(file_sizes):
