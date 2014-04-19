@@ -22,24 +22,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include<Python.h>
+#include <Python.h>
 
 /* Compat layer for python <= 2.6 */
 #include "capsulethunk.h"
 
-/* Compat headers for python >= 3.0 */
+#include <xor_code.h>
+#include <reed_sol.h>
+#include <alg_sig.h>
+#include <cauchy.h>
+#include <jerasure.h>
+#include <liberation.h>
+#include <galois.h>
+#include <math.h>
+#include <pyeclib_c.h>
 #include <bytesobject.h>
-#include "py3compat.h"
 
-#include<xor_code.h>
-#include<reed_sol.h>
-#include<alg_sig.h>
-#include<cauchy.h>
-#include<jerasure.h>
-#include<liberation.h>
-#include<galois.h>
-#include<math.h>
-#include<pyeclib_c.h>
 
 /* Python 3 compatibility macros */
 #if PY_MAJOR_VERSION >= 3
@@ -51,7 +49,8 @@
               PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
           ob = PyModule_Create(&moduledef);
   #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
-	  Py_BuildValue("y#", obj, objlen)
+          Py_BuildValue("y#", obj, objlen)
+  #define PyInt_FromLong PyLong_FromLong
 #else
   #define MOD_ERROR_VAL
   #define MOD_SUCCESS_VAL(val)
@@ -59,7 +58,7 @@
   #define MOD_DEF(ob, name, doc, methods) \
           ob = Py_InitModule3(name, methods, doc);
   #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
-	  Py_BuildValue("s#", obj, objlen)
+          Py_BuildValue("s#", obj, objlen)
 #endif
 
 
@@ -504,7 +503,7 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
   for (i=0; i < pyeclib_handle->k; i++) {
     PyObject *tmp_data = PyList_GetItem(data_list, i);
     Py_ssize_t len = 0;
-    PyString_AsStringAndSize(tmp_data, &(data[i]), &len);
+    PyBytes_AsStringAndSize(tmp_data, &(data[i]), &len);
     
     /*
      * Replace with aligned buffer, if the buffer was not 
@@ -542,7 +541,7 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
   for (i=0; i < pyeclib_handle->m; i++) {
     PyObject *tmp_parity = PyList_GetItem(parity_list, i);
     Py_ssize_t len = 0;
-    PyString_AsStringAndSize(tmp_parity, &(parity[i]), &len);
+    PyBytes_AsStringAndSize(tmp_parity, &(parity[i]), &len);
     
     /*
      * Replace with aligned buffer, if the buffer was not 
@@ -827,11 +826,11 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 
   ret_dict = PyDict_New();
 
-  PyDict_SetItem(ret_dict, PyString_FromString("segment_size\0"), PyInt_FromLong(segment_size));
-  PyDict_SetItem(ret_dict, PyString_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
-  PyDict_SetItem(ret_dict, PyString_FromString("fragment_size\0"), PyInt_FromLong(fragment_size));
-  PyDict_SetItem(ret_dict, PyString_FromString("last_fragment_size\0"), PyInt_FromLong(last_fragment_size));
-  PyDict_SetItem(ret_dict, PyString_FromString("num_segments\0"), PyInt_FromLong(num_segments));
+  PyDict_SetItem(ret_dict, PyBytes_FromString("segment_size\0"), PyInt_FromLong(segment_size));
+  PyDict_SetItem(ret_dict, PyBytes_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
+  PyDict_SetItem(ret_dict, PyBytes_FromString("fragment_size\0"), PyInt_FromLong(fragment_size));
+  PyDict_SetItem(ret_dict, PyBytes_FromString("last_fragment_size\0"), PyInt_FromLong(last_fragment_size));
+  PyDict_SetItem(ret_dict, PyBytes_FromString("num_segments\0"), PyInt_FromLong(num_segments));
 
   return ret_dict;
 }
@@ -1046,7 +1045,7 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
     int data_size;
     Py_ssize_t len;
 
-    PyString_AsStringAndSize(tmp_data, &tmp_buf, &len);
+    PyBytes_AsStringAndSize(tmp_data, &tmp_buf, &len);
     
     /*
      * Get fragment index and size
@@ -1195,7 +1194,7 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
     int index;
     Py_ssize_t len;
 
-    PyString_AsStringAndSize(tmp_data, &c_buf, &len);
+    PyBytes_AsStringAndSize(tmp_data, &c_buf, &len);
 
     /*
      * Assume the fragment_size is the max of
@@ -1819,7 +1818,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     Py_ssize_t len = 0;
     char *c_buf = NULL;
     fragment_metadata_t *fragment_metadata;
-    PyString_AsStringAndSize(tmp_data, &(c_buf), &len);
+    PyBytes_AsStringAndSize(tmp_data, &(c_buf), &len);
 
     fragment_metadata = (fragment_metadata_t*)c_buf;
     c_fragment_metadata_list[fragment_metadata->idx] = fragment_metadata;
