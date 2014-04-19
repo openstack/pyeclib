@@ -210,7 +210,7 @@ char *alloc_fragment_buffer(int size)
 }
 
 static
-char* get_fragment_data(char *buf)
+char* get_data_ptr_from_fragment(char *buf)
 {
   buf += sizeof(fragment_header_t);
   
@@ -420,7 +420,7 @@ static void pyeclib_c_destructor(PyObject *obj)
 static
 int get_fragment_metadata(pyeclib_t *pyeclib_handle, char *fragment_buf, fragment_metadata_t *fragment_metadata)
 {
-  char *fragment_data = get_fragment_data(fragment_buf);
+  char *fragment_data = get_data_ptr_from_fragment(fragment_buf);
   int fragment_size = get_fragment_size(fragment_buf);
   int fragment_idx = get_fragment_idx(fragment_buf);
 
@@ -532,7 +532,7 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
       }
     }
 
-    data[i] = get_fragment_data(data[i]);
+    data[i] = get_data_ptr_from_fragment(data[i]);
     if (data[i] == NULL) {
       return -1;
     }
@@ -559,7 +559,7 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
       *realloc_bm = *realloc_bm | (1 << (pyeclib_handle->k + i));
     } 
     
-    parity[i] = get_fragment_data(parity[i]);
+    parity[i] = get_data_ptr_from_fragment(parity[i]);
     if (parity[i] == NULL) {
       return -1;
     }
@@ -887,7 +887,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   for (i=0; i < pyeclib_handle->k; i++) {
     char *fragment = alloc_fragment_buffer(blocksize);
     int payload_size = data_len > blocksize ? blocksize : data_len;
-    data_to_encode[i] = get_fragment_data(fragment);
+    data_to_encode[i] = get_data_ptr_from_fragment(fragment);
     if (data_to_encode[i] == NULL) {
       PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib.encode");
       return NULL;
@@ -921,7 +921,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
 
   for (i=0; i < pyeclib_handle->m; i++) {
     char *fragment = alloc_fragment_buffer(blocksize);
-    encoded_parity[i] = get_fragment_data(fragment);
+    encoded_parity[i] = get_data_ptr_from_fragment(fragment);
     if (encoded_parity[i] == NULL) {
       PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib.encode");
       return NULL;
@@ -1107,7 +1107,7 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
    * fragments should be ordered by index in data.
    */
   for (i=0; i < num_data && orig_data_size > 0; i++) {
-    char* fragment_data = get_fragment_data(data[i]);
+    char* fragment_data = get_data_ptr_from_fragment(data[i]);
     int fragment_size = get_fragment_size(data[i]);
     int payload_size = orig_data_size > fragment_size ? fragment_size : orig_data_size;
 
