@@ -70,7 +70,7 @@ def setup(file_sizes):
 
         filename = "test_file.%s" % size_str
         with open(("test_files/%s" % filename), "wb") as fp:
-            fp.write(testdata.encode('utf-8'))
+            fp.write(testdata.encode("utf-8"))
 
 
 def cleanup(file_sizes):
@@ -118,7 +118,7 @@ def time_decode(num_data, num_parity, w, ec_type, file_size, iterations, hd):
             while idx in missing_idxs:
                 idx = random.randint(0, (num_data + num_parity) - 1)
             missing_idxs.append(idx)
-            fragments[idx] = '\0' * len(fragments[0])
+            fragments[idx] = b'\0' * len(fragments[0])
 
         timer.start()
         decoded_fragments = pyeclib_c.decode(
@@ -129,7 +129,7 @@ def time_decode(num_data, num_parity, w, ec_type, file_size, iterations, hd):
         tsum += timer.stop_and_return()
 
         fragments = decoded_fragments
-
+    
         for j in range(num_data + num_parity):
             if orig_fragments[j] != decoded_fragments[j]:
                 with open("orig_fragments", "wb") as fd_orig:
@@ -157,9 +157,8 @@ def test_reconstruct(num_data, num_parity, w, ec_type, file_size, iterations):
 
     orig_fragments = pyeclib_c.encode(handle, whole_file_str)
 
-    fragments = orig_fragments[:]
-
     for i in range(iterations):
+        fragments = orig_fragments[:]
         num_missing = 1
         missing_idxs = []
         for j in range(num_missing):
@@ -167,7 +166,7 @@ def test_reconstruct(num_data, num_parity, w, ec_type, file_size, iterations):
             while idx in missing_idxs:
                 idx = random.randint(0, (num_data + num_parity) - 1)
             missing_idxs.append(idx)
-            fragments[idx] = '\0' * len(fragments[0])
+            fragments[idx] = b'\0' * len(fragments[0])
 
         timer.start()
         reconstructed_fragment = pyeclib_c.reconstruct(
@@ -177,13 +176,6 @@ def test_reconstruct(num_data, num_parity, w, ec_type, file_size, iterations):
                 fragments[0]))
 
         tsum += timer.stop_and_return()
-
-        decoded_fragments = pyeclib_c.decode(
-            handle, fragments[
-                :num_data], fragments[
-                num_data:], missing_idxs, len(
-                fragments[0]))
-        fragments = decoded_fragments
 
         if orig_fragments[missing_idxs[0]] != reconstructed_fragment:
             with open("orig_fragments", "wb") as fd_orig:
