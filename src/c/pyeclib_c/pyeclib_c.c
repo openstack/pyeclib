@@ -51,6 +51,8 @@
   #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
           Py_BuildValue("y#", obj, objlen)
   #define PyInt_FromLong PyLong_FromLong
+  #define ENCODE_ARGS "Oy#"
+  #define GET_METADATA_ARGS "Oy#"
 #else
   #define MOD_ERROR_VAL
   #define MOD_SUCCESS_VAL(val)
@@ -59,6 +61,8 @@
           ob = Py_InitModule3(name, methods, doc);
   #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
           Py_BuildValue("s#", obj, objlen)
+  #define ENCODE_ARGS "Os#"
+  #define GET_METADATA_ARGS "Os#"
 #endif
 
 
@@ -851,7 +855,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   PyObject *list_of_strips;
 
   /* Assume binary data (force "byte array" input) */
-  if (!PyArg_ParseTuple(args, "Oy#", &pyeclib_obj_handle, &data, &data_len)) {
+  if (!PyArg_ParseTuple(args, ENCODE_ARGS, &pyeclib_obj_handle, &data, &data_len)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
     return NULL;
   }
@@ -1752,7 +1756,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
   fragment_metadata_t *fragment_metadata;
   PyObject *ret_fragment_metadata;
 
-  if (!PyArg_ParseTuple(args, "Oy#", &pyeclib_obj_handle, &data, &data_len)) {
+  if (!PyArg_ParseTuple(args, GET_METADATA_ARGS, &pyeclib_obj_handle, &data, &data_len)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_metadata");
     return NULL;
   }
