@@ -41,6 +41,27 @@
 #include<math.h>
 #include<pyeclib_c.h>
 
+/* Python 3 compatibility macros */
+#if PY_MAJOR_VERSION >= 3
+  #define MOD_ERROR_VAL NULL
+  #define MOD_SUCCESS_VAL(val) val
+  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          static struct PyModuleDef moduledef = { \
+              PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+          ob = PyModule_Create(&moduledef);
+  #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
+	  Py_BuildValue("y#", obj, objlen)
+#else
+  #define MOD_ERROR_VAL
+  #define MOD_SUCCESS_VAL(val)
+  #define MOD_INIT(name) void init##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          ob = Py_InitModule3(name, methods, doc);
+  #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
+	  Py_BuildValue("s#", obj, objlen)
+#endif
+
 
 /*
  * TODO (kmg): Cauchy restriction (k*w*PACKETSIZE)  < data_len / k, otherwise you could
@@ -934,7 +955,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
       int chksum = crc32(0, data_to_encode[i], blocksize);
       set_chksum(fragment_ptr, chksum);
     }
-    PyList_SET_ITEM(list_of_strips, i, Py_BuildValue("s#", fragment_ptr, fragment_size));
+    PyList_SET_ITEM(list_of_strips, i, PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
     free_fragment_buffer(data_to_encode[i]);
   }
   free(data_to_encode);
@@ -948,7 +969,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
       int chksum = crc32(0, encoded_parity[i], blocksize);
       set_chksum(fragment_ptr, chksum);
     }
-    PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, Py_BuildValue("s#", fragment_ptr, fragment_size));
+    PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
     free_fragment_buffer(encoded_parity[i]);
   }
   free(encoded_parity);
@@ -1097,7 +1118,7 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
     string_off += payload_size;
   }
 
-  ret_string = Py_BuildValue("s#", ret_cstring, ret_data_size);
+  ret_string = PY_BUILDVALUE_OBJ_LEN(ret_cstring, ret_data_size);
   free(ret_cstring);
 
 out:
@@ -1236,7 +1257,7 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
       char *tmp_data = (char*)malloc(fragment_size);
       PyObject *zero_string;
       memset(tmp_data, 0, fragment_size);
-      zero_string = Py_BuildValue("s#", tmp_data, fragment_size);
+      zero_string = PY_BUILDVALUE_OBJ_LEN(tmp_data, fragment_size);
       //Py_INCREF(zero_string);
       PyList_SET_ITEM(data_list, i, zero_string);
       free(tmp_data);
@@ -1258,7 +1279,7 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
       char *tmp_parity = (char*)malloc(fragment_size);
       PyObject *zero_string;
       memset(tmp_parity, 0, fragment_size);
-      zero_string = Py_BuildValue("s#", tmp_parity, fragment_size);
+      zero_string = PY_BUILDVALUE_OBJ_LEN(tmp_parity, fragment_size);
       //Py_INCREF(zero_string);
       PyList_SET_ITEM(parity_list, i, zero_string);
       free(tmp_parity);
@@ -1548,7 +1569,7 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
       }
     }
 
-    reconstructed = Py_BuildValue("s#", fragment_ptr, fragment_size);
+    reconstructed = PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size);
 
   } else {
     reconstructed = NULL;
@@ -1699,7 +1720,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
    */
   for (i=0; i < pyeclib_handle->k; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(data[i]);
-    PyList_SET_ITEM(list_of_strips, i, Py_BuildValue("s#", fragment_ptr, fragment_size));
+    PyList_SET_ITEM(list_of_strips, i, PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
     if (realloc_bm & (1 << i)) {
       free(fragment_ptr);
     }
@@ -1709,7 +1730,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
    */
   for (i=0; i < pyeclib_handle->m; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(parity[i]);
-    PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, Py_BuildValue("s#", fragment_ptr, fragment_size));
+    PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
     if (realloc_bm & (1 << (i + pyeclib_handle->k))) {
       free(fragment_ptr);
     }
@@ -1732,7 +1753,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
   fragment_metadata_t *fragment_metadata;
   PyObject *ret_fragment_metadata;
 
-  if (!PyArg_ParseTuple(args, "Os#", &pyeclib_obj_handle, &data, &data_len)) {
+  if (!PyArg_ParseTuple(args, "Oy#", &pyeclib_obj_handle, &data, &data_len)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_metadata");
     return NULL;
   }
@@ -1747,7 +1768,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
 
   get_fragment_metadata(pyeclib_handle, data, fragment_metadata);
 
-  ret_fragment_metadata = Py_BuildValue("s#", (char*)fragment_metadata, sizeof(fragment_metadata_t));
+  ret_fragment_metadata = PY_BUILDVALUE_OBJ_LEN((char*)fragment_metadata, sizeof(fragment_metadata_t));
 
   free(fragment_metadata);
 
@@ -1880,23 +1901,6 @@ static PyMethodDef PyECLibMethods[] = {
     {"check_metadata", pyeclib_c_check_metadata, METH_VARARGS, "Check the integrity checking metadata for a set of fragments"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
-
-/* Python 3 compatibility macros */
-#if PY_MAJOR_VERSION >= 3
-  #define MOD_ERROR_VAL NULL
-  #define MOD_SUCCESS_VAL(val) val
-  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
-  #define MOD_DEF(ob, name, doc, methods) \
-          static struct PyModuleDef moduledef = { \
-              PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
-          ob = PyModule_Create(&moduledef);
-#else
-  #define MOD_ERROR_VAL
-  #define MOD_SUCCESS_VAL(val)
-  #define MOD_INIT(name) void init##name(void)
-  #define MOD_DEF(ob, name, doc, methods) \
-          ob = Py_InitModule3(name, methods, doc);
-#endif
 
 MOD_INIT(pyeclib_c)
 {
