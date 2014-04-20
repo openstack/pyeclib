@@ -152,7 +152,7 @@ class TestPyECLibDriver(unittest.TestCase):
         fragment_to_corrupt = random.randint(0, 12)
 
         for pyeclib_driver in pyeclib_drivers:
-            fragments = pyeclib_driver.encode(file_str)
+            fragments = pyeclib_driver.encode(file_str.encode('utf-8'))
 
             fragment_metadata_list = []
 
@@ -206,7 +206,7 @@ class TestPyECLibDriver(unittest.TestCase):
                            for i in range(filesize))
 
         for pyeclib_driver in pyeclib_drivers:
-            fragments = pyeclib_driver.encode(file_str)
+            fragments = pyeclib_driver.encode(file_str.encode('utf-8'))
 
             fragment_metadata_list = []
 
@@ -248,7 +248,7 @@ class TestPyECLibDriver(unittest.TestCase):
         fragment_to_corrupt = random.randint(0, 12)
 
         for pyeclib_driver in pyeclib_drivers:
-            fragments = pyeclib_driver.encode(file_str)
+            fragments = pyeclib_driver.encode(file_str.encode('utf-8'))
 
             fragment_metadata_list = []
 
@@ -296,7 +296,7 @@ class TestPyECLibDriver(unittest.TestCase):
                            for i in range(filesize))
 
         for pyeclib_driver in pyeclib_drivers:
-            fragments = pyeclib_driver.encode(file_str)
+            fragments = pyeclib_driver.encode(file_str.encode('utf-8'))
 
             fragment_metadata_list = []
 
@@ -368,8 +368,8 @@ class TestPyECLibDriver(unittest.TestCase):
                     self.assertTrue(computed_file_size == file_size)
 
                     encoded_fragments = pyeclib_driver.encode(
-                        segment_strings[segment_size][
-                            :segment_size])
+                        (segment_strings[segment_size][
+                            :segment_size]).encode('utf-8'))
 
                     #
                     # Verify the fragment size
@@ -430,7 +430,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 with open("test_files/%s" % filename, "r") as fp:
                     whole_file_str = fp.read()
 
-                orig_fragments = pyeclib_driver.encode(whole_file_str)
+                orig_fragments = pyeclib_driver.encode(whole_file_str.encode('utf-8'))
 
                 for iter in range(self.num_iterations):
                     num_missing = 2
