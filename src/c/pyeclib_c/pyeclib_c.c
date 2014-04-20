@@ -51,6 +51,7 @@
   #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
           Py_BuildValue("y#", obj, objlen)
   #define PyInt_FromLong PyLong_FromLong
+  #define PyString_FromString PyUnicode_FromString
   #define ENCODE_ARGS "Oy#"
   #define GET_METADATA_ARGS "Oy#"
 #else
@@ -830,11 +831,11 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 
   ret_dict = PyDict_New();
 
-  PyDict_SetItem(ret_dict, PyBytes_FromString("segment_size\0"), PyInt_FromLong(segment_size));
-  PyDict_SetItem(ret_dict, PyBytes_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
-  PyDict_SetItem(ret_dict, PyBytes_FromString("fragment_size\0"), PyInt_FromLong(fragment_size));
-  PyDict_SetItem(ret_dict, PyBytes_FromString("last_fragment_size\0"), PyInt_FromLong(last_fragment_size));
-  PyDict_SetItem(ret_dict, PyBytes_FromString("num_segments\0"), PyInt_FromLong(num_segments));
+  PyDict_SetItem(ret_dict, PyString_FromString("segment_size\0"), PyInt_FromLong(segment_size));
+  PyDict_SetItem(ret_dict, PyString_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
+  PyDict_SetItem(ret_dict, PyString_FromString("fragment_size\0"), PyInt_FromLong(fragment_size));
+  PyDict_SetItem(ret_dict, PyString_FromString("last_fragment_size\0"), PyInt_FromLong(last_fragment_size));
+  PyDict_SetItem(ret_dict, PyString_FromString("num_segments\0"), PyInt_FromLong(num_segments));
 
   return ret_dict;
 }
