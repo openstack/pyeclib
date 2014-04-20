@@ -29,6 +29,7 @@ import string
 import sys
 import os
 
+from string import ascii_letters
 
 class TestNullDriver(unittest.TestCase):
 
@@ -79,7 +80,7 @@ class TestPyECLibDriver(unittest.TestCase):
             elif (size_desc[1] == 'K'):
                 size *= 1000
 
-            buf = ''.join(random.choice(string.letters)
+            buf = ''.join(random.choice(string.ascii_letters)
                           for i in range(size))
 
             filename = "test_file.%s" % size_str
@@ -146,7 +147,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
         filesize = 1024 * 1024 * 3
 
-        file_str = ''.join(random.choice(string.letters)
+        file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
         fragment_to_corrupt = random.randint(0, 12)
 
@@ -201,7 +202,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
         filesize = 1024 * 1024 * 3
 
-        file_str = ''.join(random.choice(string.letters)
+        file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
 
         for pyeclib_driver in pyeclib_drivers:
@@ -242,7 +243,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
         filesize = 1024 * 1024 * 3
 
-        file_str = ''.join(random.choice(string.letters)
+        file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
         fragment_to_corrupt = random.randint(0, 12)
 
@@ -291,7 +292,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
         filesize = 1024 * 1024 * 3
 
-        file_str = ''.join(random.choice(string.letters)
+        file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
 
         for pyeclib_driver in pyeclib_drivers:
