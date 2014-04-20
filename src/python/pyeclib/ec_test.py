@@ -85,7 +85,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
             filename = "test_file.%s" % size_str
             with open("test_files/%s" % filename, "wb") as fp:
-                fp.write(buf)
+                fp.write(buf.encode('utf-8'))
 
     def tearDown(self):
         for size_str in self.file_sizes:
