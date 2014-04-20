@@ -441,8 +441,8 @@ class TestPyECLibDriver(unittest.TestCase):
                 with open("test_files/%s" % filename, "r") as fp:
                     whole_file_str = fp.read()
 
-                orig_fragments = pyeclib_driver.encode(
-                    whole_file_str.encode('utf-8'))
+                encode_input = whole_file_str.encode('utf-8')
+                orig_fragments = pyeclib_driver.encode(encode_input)
 
                 for iter in range(self.num_iterations):
                     num_missing = 2
@@ -465,7 +465,7 @@ class TestPyECLibDriver(unittest.TestCase):
                     #
                     decoded_string = pyeclib_driver.decode(fragments[:])
 
-                    self.assertTrue(whole_file_str == decoded_string)
+                    self.assertTrue(encode_input == decoded_string)
 
                     #
                     # Test reconstructor
