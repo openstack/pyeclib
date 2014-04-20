@@ -389,8 +389,8 @@ class TestPyECLibDriver(unittest.TestCase):
 
                     if last_segment_size > 0:
                         encoded_fragments = pyeclib_driver.encode(
-                            segment_strings[segment_size][
-                                :last_segment_size])
+                            (segment_strings[segment_size][
+                                :last_segment_size]).encode('utf-8'))
 
                         #
                         # Verify the last fragment size, if there is one
