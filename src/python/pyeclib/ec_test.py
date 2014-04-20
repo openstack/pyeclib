@@ -31,6 +31,15 @@ import os
 
 from string import ascii_letters
 
+
+if sys.version < '3':
+    def b2i(b):
+        return ord(b)
+else:
+    def b2i(b):
+        return b
+
+
 class TestNullDriver(unittest.TestCase):
 
     def setUp(self):
@@ -159,8 +168,9 @@ class TestPyECLibDriver(unittest.TestCase):
             i = 0
             for fragment in fragments:
                 if i == fragment_to_corrupt:
-                    corrupted_fragment = fragment[
-                        :100] + chr(ord(fragment[100]) + 1) + fragment[101:]
+                    corrupted_fragment = fragment[:100] +\
+                        (str(chr((b2i(fragment[100]) + 0x1)
+                                 % 0xff))).encode('utf-8') + fragment[101:]
                     fragment_metadata_list.append(
                         pyeclib_driver.get_metadata(corrupted_fragment))
                 else:
@@ -255,8 +265,9 @@ class TestPyECLibDriver(unittest.TestCase):
             i = 0
             for fragment in fragments:
                 if i == fragment_to_corrupt:
-                    corrupted_fragment = fragment[
-                        :100] + chr(ord(fragment[100]) + 1) + fragment[101:]
+                    corrupted_fragment = fragment[:100] +\
+                        (str(chr((b2i(fragment[100]) + 0x1)
+                                 % 0xff))).encode('utf-8') + fragment[101:]
                     fragment_metadata_list.append(
                         pyeclib_driver.get_metadata(corrupted_fragment))
                 else:
@@ -430,7 +441,8 @@ class TestPyECLibDriver(unittest.TestCase):
                 with open("test_files/%s" % filename, "r") as fp:
                     whole_file_str = fp.read()
 
-                orig_fragments = pyeclib_driver.encode(whole_file_str.encode('utf-8'))
+                orig_fragments = pyeclib_driver.encode(
+                    whole_file_str.encode('utf-8'))
 
                 for iter in range(self.num_iterations):
                     num_missing = 2
