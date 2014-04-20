@@ -443,7 +443,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
                     # Reverse sort the list, so we can always
                     # remove from the original index
-                    idxs_to_remove.sort(lambda x, y: y - x)
+                    idxs_to_remove.sort(key=int, reverse=True)
                     for idx in idxs_to_remove:
                         fragments.pop(idx)
 
