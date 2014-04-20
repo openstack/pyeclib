@@ -108,7 +108,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 "pyeclib.core.ECPyECLibDriver",
                 k=10, m=2, ec_type="rs_vand"))
 
-        encode_strs = ["a", "hello", "hellohyhi", "yo"]
+        encode_strs = [b"a", b"hello", b"hellohyhi", b"yo"]
 
         for pyeclib_driver in pyeclib_drivers:
             for encode_str in encode_strs:
