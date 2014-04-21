@@ -1,4 +1,4 @@
-This is v0.2 of PyECLib.  This library provides a simple Python interface for
+This is v0.9 of PyECLib.  This library provides a simple Python interface for
 implementing erasure codes.  To obtain the best possible performance, the
 underlying erasure code algorithms are written in C.  Please let us know if you
 have any other issues building/installing (email: kmgreen2@gmail.com or tusharsg@gmail.com).
@@ -21,66 +21,96 @@ USENIX FAST 2013).
 
 Examples of using this library are provided in ./tools:
 
-  Command-line encoder: ec_pyeclib_encode.py
+  Command-line encoder::
+  
+      tools/pyeclib_encode.py
 
-  Command-line decoder: ec_pyeclib_decode.py
+  Command-line decoder::
+  
+      tools/pyeclib_decode.py
 
-  Utility to determine what is needed to reconstruct missing fragments: pyeclib_fragments_needed.py
+  Utility to determine what is needed to reconstruct missing fragments::
+  
+      pyeclib_fragments_needed.py
 
-The main Python interface only contains 6 functions:
 
-  Encode N bytes into k+m fragments (returns list of fragments):
+PyEClib initialization::
 
-    def encode(self, bytes)
+  ec_driver = ECDriver("pyeclib.core.ECPyECLibDriver",
+                       k=<num_encoded_data_fragments>,
+                       m=<num_encoded_parity_fragments>,
+                       ec_type=<ec_scheme>))
 
-  Decode between k and k+m fragments into a string (returns a string):
+"ec_type"s supported:
+
+  * rs_vand => Vandermonde Reed-Solomon encoding
+  * flat_xor_3, flat_xor_4 => Flat-XOR based HD combination codes
+
+A configuration utility is provided to help compare available EC schemes in 
+terms of performance and redundancy:: tools/pyeclib_conf_tool.py
+
+
+The Python API supports the following functions:
+
+  Encode N bytes into k+m fragments (returns list of fragments)::
+
+    def encode(self, data_bytes)
+
+  Decode between k and k+m fragments into a string (returns a string)::
 
     def decode(self, fragment_payloads)
 
-  Reconstruct "missing_fragment_indexes" using "available_fragment_payloads":
+  Reconstruct "missing_fragment_indexes" using "available_fragment_payloads"::
 
     def reconstruct(self, available_fragment_payloads, missing_fragment_indexes)
 
-  Return the indexes of fragments needed to reconstruct "missing_fragment_indexes":
+  Return the indexes of fragments needed to reconstruct "missing_fragment_indexes"::
 
     def fragments_needed(self, missing_fragment_indexes)
 
-  Return an opaque buffer known by the underlying library:
+  Return an opaque buffer known by the underlying library::
 
     def get_metadata(self, fragment)
 
-  Use opaque buffers from get_metadata() to verify a the consistency of a stripe:
+  Use opaque buffers from get_metadata() to verify a the consistency of a stripe::
 
     def verify_stripe_metadata(self, fragment_metadata_list)
 
-  Return a dict with the keys - segment_size, last_segment_size, fragment_size, last_fragment_size and num_segments:
+  Return a dict with the keys - segment_size, last_segment_size, fragment_size, last_fragment_size and num_segments::
 
     def get_segment_info(self, data_len, segment_size)
 
+
 Quick Start:
 
-  Standard stuff to install: Python >=2.6 (including devel) and argparse.
+  Standard stuff to install:
+  
+    ``Python 2.6``, ``2.7`` or ``3.x`` (including development packages) and ``argparse``.
 
-  This package includes c_eclib, which contains a few C libraries used by
+  This package includes *c_eclib*, which contains a few C libraries used by
   PyECLib.  These will be built when running the PyECLib install (see below).
 
-  Install PyECLib:
+  Install PyECLib::
 
-  sudo python setup.py install
+    $ sudo python setup.py install
 
-  Run the test suite:
+  Run the test suite::
 
-  cd test; python run_tests.py; ./ec_pyeclib_file_test.sh; cd ..
+    $ (cd test && \
+       python run_tests.py && \
+       ./ec_pyeclib_file_test.sh)
 
-  If all of this works, then you should be good to go.  If not, send me an email!
+  If all of this works, then you should be good to go.  If not, send us an email!
 
   If the test suite fails because it cannot find any of the shared libraries,
   then you probably need to add /usr/local/lib to the path searched when loading
-  libraries.  The best way to do this (on Linux) is to add '/usr/local/lib' to
+  libraries.  The best way to do this (on Linux) is to add '/usr/local/lib' to::
 
-  /etc/ld.so.conf 
+    /etc/ld.so.conf 
 
-  and then run:
+  and then run::
 
-  ldconfig
+    $ ldconfig
 
+--
+0.9
