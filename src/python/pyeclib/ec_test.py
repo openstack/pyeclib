@@ -158,10 +158,12 @@ class TestPyECLibDriver(unittest.TestCase):
 
         file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
+        file_bytes = file_str.encode('utf-8')
+
         fragment_to_corrupt = random.randint(0, 12)
 
         for pyeclib_driver in pyeclib_drivers:
-            fragments = pyeclib_driver.encode(file_str.encode('utf-8'))
+            fragments = pyeclib_driver.encode(file_bytes)
 
             fragment_metadata_list = []
 
@@ -214,9 +216,10 @@ class TestPyECLibDriver(unittest.TestCase):
 
         file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
+        file_bytes = file_str.encode('utf-8')
 
         for pyeclib_driver in pyeclib_drivers:
-            fragments = pyeclib_driver.encode(file_str.encode('utf-8'))
+            fragments = pyeclib_driver.encode(file_bytes)
 
             fragment_metadata_list = []
 
@@ -255,10 +258,12 @@ class TestPyECLibDriver(unittest.TestCase):
 
         file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
+        file_bytes = file_str.encode('utf-8')
+
         fragment_to_corrupt = random.randint(0, 12)
 
         for pyeclib_driver in pyeclib_drivers:
-            fragments = pyeclib_driver.encode(file_str.encode('utf-8'))
+            fragments = pyeclib_driver.encode(file_bytes)
 
             fragment_metadata_list = []
 
@@ -305,9 +310,10 @@ class TestPyECLibDriver(unittest.TestCase):
 
         file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
+        file_bytes = file_str.encode('utf-8')
 
         for pyeclib_driver in pyeclib_drivers:
-            fragments = pyeclib_driver.encode(file_str.encode('utf-8'))
+            fragments = pyeclib_driver.encode(file_bytes)
 
             fragment_metadata_list = []
 
@@ -440,8 +446,9 @@ class TestPyECLibDriver(unittest.TestCase):
                 filename = "test_file.%s" % file_size
                 with open("test_files/%s" % filename, "r") as fp:
                     whole_file_str = fp.read()
+                whole_file_bytes = whole_file_str.encode('utf-8')
 
-                encode_input = whole_file_str.encode('utf-8')
+                encode_input = whole_file_bytes
                 orig_fragments = pyeclib_driver.encode(encode_input)
 
                 for iter in range(self.num_iterations):

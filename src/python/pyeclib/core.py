@@ -133,8 +133,8 @@ class ECPyECLibDriver(object):
             self.inline_chksum,
             self.algsig_chksum)
 
-    def encode(self, data):
-        return pyeclib_c.encode(self.handle, data)
+    def encode(self, data_bytes):
+        return pyeclib_c.encode(self.handle, data_bytes)
 
     def decode(self, fragment_payloads):
         try:
@@ -200,7 +200,7 @@ class ECNullDriver(object):
         self.k = k
         self.m = m
 
-    def encode(self, data):
+    def encode(self, data_bytes):
         pass
 
     def decode(self, fragment_payloads):
@@ -243,26 +243,26 @@ class ECStripingDriver(object):
 
         self.m = m
 
-    def encode(self, data):
+    def encode(self, data_bytes):
         """
         Stripe an arbitrary-sized string into k fragments
-        :param data: the buffer to encode
+        :param data_bytes: the buffer to encode
         :returns: a list of k buffers (data only)
         :raises: ECPyECLibException if there is an error during encoding
         """
         # Main fragment size
-        fragment_size = math.ceil(len(data) / float(self.k))
+        fragment_size = math.ceil(len(data_bytes) / float(self.k))
 
         # Size of last fragment
-        last_fragment_size = len(data) - (fragment_size * self.k - 1)
+        last_fragment_size = len(data_bytes) - (fragment_size * self.k - 1)
 
         fragments = []
         offset = 0
         for i in range(self.k - 1):
-            fragments.append(data[offset:fragment_size])
+            fragments.append(data_bytes[offset:fragment_size])
             offset += fragment_size
 
-        fragments.append(data[offset:last_fragment_size])
+        fragments.append(data_bytes[offset:last_fragment_size])
 
         return fragments
 

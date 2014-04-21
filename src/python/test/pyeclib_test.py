@@ -67,10 +67,11 @@ def setup(file_sizes):
             size *= 1000
 
         testdata = ''.join(random.choice(ascii_letters) for i in range(size))
+        testdata_bytes = testdata.encode('utf-8')
 
         filename = "test_file.%s" % size_str
         with open(("test_files/%s" % filename), "wb") as fp:
-            fp.write(testdata.encode("utf-8"))
+            fp.write(testdata_bytes)
 
 
 def cleanup(file_sizes):
@@ -87,11 +88,11 @@ def time_encode(num_data, num_parity, w, ec_type, file_size, iterations):
 
     filename = "test_file.%s" % file_size
     with open("test_files/%s" % filename, "rb") as fp:
-        whole_file_str = fp.read()
+        whole_file_bytes = fp.read()
 
     timer.start()
     for l in range(iterations):
-        fragments = pyeclib_c.encode(handle, whole_file_str)
+        fragments = pyeclib_c.encode(handle, whole_file_bytes)
     tsum = timer.stop_and_return()
 
     return tsum / iterations
@@ -104,9 +105,9 @@ def time_decode(num_data, num_parity, w, ec_type, file_size, iterations, hd):
 
     filename = "test_file.%s" % file_size
     with open("test_files/%s" % filename, "rb") as fp:
-        whole_file_str = fp.read()
+        whole_file_bytes = fp.read()
 
-    fragments = pyeclib_c.encode(handle, whole_file_str)
+    fragments = pyeclib_c.encode(handle, whole_file_bytes)
 
     orig_fragments = fragments[:]
 
@@ -153,9 +154,9 @@ def test_reconstruct(num_data, num_parity, w, ec_type, file_size, iterations):
 
     filename = "test_file.%s" % file_size
     with open("test_files/%s" % filename, "rb") as fp:
-        whole_file_str = fp.read()
+        whole_file_bytes = fp.read()
 
-    orig_fragments = pyeclib_c.encode(handle, whole_file_str)
+    orig_fragments = pyeclib_c.encode(handle, whole_file_bytes)
 
     for i in range(iterations):
         fragments = orig_fragments[:]
@@ -194,9 +195,9 @@ def test_get_fragment_partition(
 
     filename = "test_file.%s" % file_size
     with open("test_files/%s" % filename, "rb") as fp:
-        whole_file_str = fp.read()
+        whole_file_bytes = fp.read()
 
-    fragments = pyeclib_c.encode(handle, whole_file_str)
+    fragments = pyeclib_c.encode(handle, whole_file_bytes)
 
     for i in range(iterations):
         missing_fragments = random.sample(fragments, 3)
@@ -227,16 +228,16 @@ def test_fragments_to_string(num_data, num_parity, w, ec_type, file_size):
 
     filename = "test_file.%s" % file_size
     with open(("test_files/%s" % filename), "rb") as fp:
-        whole_file_str = fp.read()
+        whole_file_bytes = fp.read()
 
-    fragments = pyeclib_c.encode(handle, whole_file_str)
+    fragments = pyeclib_c.encode(handle, whole_file_bytes)
 
     concat_str = pyeclib_c.fragments_to_string(handle, fragments[:num_data])
 
-    if concat_str != whole_file_str:
+    if concat_str != whole_file_bytes:
         print(("String does not equal the original string "
                "(len(orig) = %d, len(new) = %d\n" %
-               (len(whole_file_str), len(concat_str))))
+               (len(whole_file_bytes), len(concat_str))))
 
 
 def test_get_required_fragments(num_data, num_parity, w, ec_type):
