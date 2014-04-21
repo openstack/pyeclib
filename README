@@ -1,7 +1,9 @@
 This is v0.9 of PyECLib.  This library provides a simple Python interface for
-implementing erasure codes.  To obtain the best possible performance, the
-underlying erasure code algorithms are written in C.  Please let us know if you
-have any other issues building/installing (email: kmgreen2@gmail.com or tusharsg@gmail.com).
+implementing erasure codes and is known to work with Python v2.6, 2.7 and 3.x.
+
+To obtain the best possible performance, the underlying erasure code algorithms 
+are written in C.  Please let us know if you have any other issues building or
+installing (email: kmgreen2@gmail.com or tusharsg@gmail.com).
 
 This library makes use of Jerasure for Reed-Solomon and provides its own flat
 XOR-based erasure code encoder and decoder.  Currently, it implements a

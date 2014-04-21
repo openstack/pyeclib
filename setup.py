@@ -66,7 +66,7 @@ global cppflags
 global ldflags
 global libs
 
-c_eclib_dir = "c_eclib-0.2"
+c_eclib_dir = "c_eclib-0.9"
 
 
 def _construct_jerasure_buildenv():
@@ -86,8 +86,8 @@ def _read_file_as_str(name):
 class build(_build):
 
     def run(self):
-        ret = os.system('(cd %s && chmod 755 build.sh && \
-                         ./build.sh "%s" %s)' %
+        ret = os.system('(cd %s && chmod 755 build-c_eclib.sh && \
+                         ./build-c_eclib.sh "%s" %s)' %
                         (c_eclib_dir, autoconf_arguments, _exec_prefix))
         if ret != 0:
             sys.exit(ret)
@@ -103,8 +103,8 @@ class build(_build):
 class clean(_clean):
 
     def run(self):
-        ret = os.system('(cd %s && chmod 755 clean.sh && \
-                          ./clean.sh)' % c_eclib_dir)
+        ret = os.system('(cd %s && chmod 755 clean-c_eclib.sh && \
+                          ./clean-c_eclib.sh)' % c_eclib_dir)
         if ret != 0:
             sys.exit(2)
         _clean.run(self)
@@ -140,8 +140,8 @@ class install(_install):
         if installroot.startswith("/usr"):
             installroot = "/"
 
-        ret = os.system('(cd %s && chmod 755 install.sh && \
-                        ./install.sh %s)' %
+        ret = os.system('(cd %s && chmod 755 install-c_eclib.sh && \
+                        ./install-c_eclib.sh %s)' %
                         (c_eclib_dir, installroot))
         if ret != 0:
             sys.exit(ret)
@@ -172,7 +172,7 @@ class install(_install):
 
 module = Extension('pyeclib_c',
                    define_macros=[('MAJOR VERSION', '0'),
-                                  ('MINOR VERSION', '2')],
+                                  ('MINOR VERSION', '9')],
                    include_dirs=[default_python_incdir,
                                  '/usr/local/include',
                                  '/usr/include',
@@ -189,7 +189,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='0.2.4',
+      version='0.9.1',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',

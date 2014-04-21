@@ -1,7 +1,7 @@
 # c_eclib autoconf template
 
 # FIXME - add project url as the last argument
-AC_INIT(c_eclib,0.2)
+AC_INIT(c_eclib,0.9)
 
 AC_PREREQ([2.61])
 

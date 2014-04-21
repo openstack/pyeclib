@@ -78,7 +78,7 @@ LIB_ORDER="gf_complete Jerasure"
 for lib in ${LIB_ORDER}; do
 
   if [ ! -f ._${lib}_built ]; then
-    (cd ${C_ECLIB_TOPDIR} && chmod 0755 build.sh && ./build.sh)
+    (cd ${C_ECLIB_TOPDIR} && chmod 0755 build-c_eclib.sh && ./build-c_eclib.sh)
   fi
 
   srcdir=`cat ._${lib}_srcdir`
