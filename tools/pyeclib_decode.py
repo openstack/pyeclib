@@ -32,21 +32,20 @@ import argparse
 parser = argparse.ArgumentParser(description='Decoder for PyECLib.')
 parser.add_argument('k', type=int, help='number of data elements')
 parser.add_argument('m', type=int, help='number of parity elements')
-parser.add_argument('type', help='EC algorithm used')
+parser.add_argument('ec_type', help='EC algorithm used')
 parser.add_argument('fragments', metavar='fragment', nargs='+',
                     help='fragments to decode')
 parser.add_argument('filename', help='output file')
 
 args = parser.parse_args()
 
-print args.k
-print args.m
-print args.type
-print args.fragments
-print args.filename
+print("k = %d, m = %d" % (args.k, args.m))
+print("ec_type = %s" % args.ec_type)
+print("fragments = %s" % args.fragments)
+print("filename = %s" % args.filename)
 
 ec_driver = ECDriver(
-    "pyeclib.core.ECPyECLibDriver", k=args.k, m=args.m, type=args.type)
+    "pyeclib.core.ECPyECLibDriver", k=args.k, m=args.m, ec_type=args.ec_type)
 
 fragment_list = []
 

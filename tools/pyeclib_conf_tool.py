@@ -100,14 +100,14 @@ def nCr(n, r):
 
 class ECScheme:
 
-    def __init__(self, k, m, w, type):
+    def __init__(self, k, m, w, ec_type):
         self.k = k
         self.m = m
         self.w = w
-        self.type = type
+        self.ec_type = ec_type
 
     def __str__(self):
-        return "k=%d m=%d w=%d type=%s" % (self.k, self.m, self.w, self.type)
+        return "k=%d m=%d w=%d ec_type=%s" % (self.k, self.m, self.w, self.ec_type)
 
 valid_flat_xor_3 = [(6, 6), (7, 6), (8, 6), (9, 6),
                     (10, 6), (11, 6), (12, 6), (13, 6),
@@ -223,7 +223,7 @@ return_limit = args.l
 
 schemes = get_viable_schemes(args.n, args.r, args.s, args.f)
 
-# Results will be List[(type, throughput)]
+# Results will be List[(ec_type, throughput)]
 results = []
 
 # Num iterations
@@ -240,7 +240,7 @@ for scheme in schemes:
     try:
         ec_driver = ECDriver(
             "pyeclib.core.ECPyECLibDriver",
-            k=scheme.k, m=scheme.m, type=scheme.type)
+            k=scheme.k, m=scheme.m, ec_type=scheme.ec_type)
     except Exception as e:
         print("Scheme %s is not defined (%s)." % (scheme, e))
         continue
@@ -266,9 +266,9 @@ for i in range(len(results)):
     print("  ======== To Use this Policy, Copy and Paste Text (not including "
           "this header and footer) to Swift Conf ========")
     print("  type = erasure_coding")
-    print("  name = %s_%d_%d" % (results[i][0].type,
+    print("  name = %s_%d_%d" % (results[i][0].ec_type,
                                  results[i][0].k, results[i][0].m))
-    print("  ec_type = %s" % results[i][0].type)
+    print("  ec_type = %s" % results[i][0].ec_type)
     print("  ec_k = %s" % results[i][0].k)
     print("  ec_m = %s" % results[i][0].m)
     print("  ================================================================"
