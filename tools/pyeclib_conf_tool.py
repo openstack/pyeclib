@@ -256,7 +256,7 @@ for scheme in schemes:
 
     timer.reset()
 
-results.sort(lambda x, y: (int)((1000 * x[1]) - (1000 * y[1])))
+results.sort(key=lambda x, y: (int)((1000 * x[1]) - (1000 * y[1])))
 
 for i in range(len(results)):
     if i > return_limit:
