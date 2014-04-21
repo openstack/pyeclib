@@ -1,4 +1,5 @@
-#
+#!/bin/bash
+
 # Copyright (c) 2013, Kevin Greenan (kmgreen2@gmail.com)
 # All rights reserved.
 #
@@ -52,7 +53,7 @@ for TYPE in ${TYPES}; do
     NUM_PARITIES=${RS_NUM_PARITIES}
     if [[ `echo flat_xor_4 flat_xor_3 | grep ${TYPE}` ]]; then
       NUM_PARITIES=${XOR_NUM_PARITIES}
-    fi 
+    fi
     for NUM_PARITY in ${NUM_PARITIES}; do
       let NUM_TOTAL=$(( NUM_DATA + NUM_PARITY))
       FAULT_TOL=${NUM_PARITY}
@@ -62,27 +63,27 @@ for TYPE in ${TYPES}; do
       if [[ ${TYPE} == "flat_xor_3" ]]; then
         FAULT_TOL="2"
       fi 
-			for file in `cd ${FILES}; echo *; cd ..`; do
-			  python ${TOOLS_DIR}/pyeclib_encode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${FILE_DIR} ${file} ${FRAGMENT_DIR}
-			done
-			
-			for file in `cd ${FILES}; echo *; cd ..`; do
-			  fragments=( `echo ${FRAGMENT_DIR}/${file}.*` )
-			  let i=0
-			  while (( $i < ${FAULT_TOL} )); do
-			    index=$(( RANDOM % NUM_TOTAL ))
-			    fragments[${index}]="" 
-			    let i=$i+1
-			  done
-			  python ${TOOLS_DIR}/pyeclib_decode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${fragments[*]} ${DECODED_DIR}/${file} 
-			  diff ${FILE_DIR}/${file} ${DECODED_DIR}/${file}.decoded
-			  if [[ $? != 0 ]]; then
-			    echo "${FILE_DIR}/${file} != ${DECODED_DIR}/${file}.decoded"
-			    exit 1
-			  fi
-			done
-		done
-	done
+      for file in `cd ${FILES}; echo *; cd ..`; do
+        python ${TOOLS_DIR}/pyeclib_encode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${FILE_DIR} ${file} ${FRAGMENT_DIR}
+      done
+
+      for file in `cd ${FILES}; echo *; cd ..`; do
+        fragments=( `echo ${FRAGMENT_DIR}/${file}.*` )
+        let i=0
+        while (( $i < ${FAULT_TOL} )); do
+          index=$(( RANDOM % NUM_TOTAL ))
+          fragments[${index}]="" 
+          let i=$i+1
+        done
+        python ${TOOLS_DIR}/pyeclib_decode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${fragments[*]} ${DECODED_DIR}/${file} 
+        diff ${FILE_DIR}/${file} ${DECODED_DIR}/${file}.decoded
+        if [[ $? != 0 ]]; then
+          echo "${FILE_DIR}/${file} != ${DECODED_DIR}/${file}.decoded"
+          exit 1
+        fi
+      done
+    done
+  done
 done
 
 rm ${DECODED_DIR}/*
