@@ -158,15 +158,33 @@ class install(_install):
             print("***************************************************")
             print("**                                             ")
             print("** You are running on a Mac!  This means that  ")
-            print("** any user using this library must update:    ")
-            print("**   DYLD_LIBRARY_PATH                         ")
-            print("** The best way to do this is to put this line:")
             print("**                                             ")
-            print("** export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
+            print("** Any user using this library must update:    ")
+            print("**   DYLD_LIBRARY_PATH                         ")
+            print("**                                             ")
+            print("** The best way to do this is to put this line:")
+            print("**   export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
                                                       % installroot))
             print("**                                             ")
             print("** into .bashrc, .profile, or the appropriate")
             print("** shell start-up script!")
+            print("***************************************************")
+        else:
+            print("***************************************************")
+            print("**                                             ")
+            print("** PyECLib libraries have been installed to:   ")
+            print("**   %s/usr/local/lib" % installroot)
+            print("**                                             ")
+            print("** Any user using this library must update:    ")
+            print("**   LD_LIBRARY_PATH                         ")
+            print("**                                             ")
+            print("** The best way to do this is to put this line:")
+            print("**   export LD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
+                                                      % installroot))
+            print("**                                             ")
+            print("** into .bashrc, .profile, or the appropriate shell")
+            print("** start-up script!  Also look at ldconfig(8) man")
+            print("** page for a more static LD configuration")
             print("***************************************************")
 
 
@@ -189,7 +207,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='0.9.1',
+      version='0.9.2',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
