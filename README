@@ -13,7 +13,7 @@ storage systems: Constructions, efficient recovery, and tradeoffs" in IEEE MSST
 construction and require a minimum number of participating disks during
 single-disk reconstruction (think XOR-based LRC code).
 
-Examples of using this library are provided in ./tools:
+Examples of using this library are provided in "tools" directory:
 
   Command-line encoder::
   
@@ -25,7 +25,7 @@ Examples of using this library are provided in ./tools:
 
   Utility to determine what is needed to reconstruct missing fragments::
   
-      pyeclib_fragments_needed.py
+      tools/pyeclib_fragments_needed.py
 
 
 PyEClib initialization::
@@ -35,10 +35,10 @@ PyEClib initialization::
                        m=<num_encoded_parity_fragments>,
                        ec_type=<ec_scheme>))
 
-"ec_type"s supported:
+Supported ``ec_type`` values:
 
-  * rs_vand => Vandermonde Reed-Solomon encoding
-  * flat_xor_3, flat_xor_4 => Flat-XOR based HD combination codes
+  * ``rs_vand`` => Vandermonde Reed-Solomon encoding
+  * ``flat_xor_3``, ``flat_xor_4`` => Flat-XOR based HD combination codes
 
 A configuration utility is provided to help compare available EC schemes in 
 terms of performance and redundancy:: tools/pyeclib_conf_tool.py
@@ -55,6 +55,7 @@ The Python API supports the following functions:
     input:   data_bytes - input data object (bytes)
     returns: list of fragments (bytes)
 
+
 - EC Decode
 
   Decode between k and k+m fragments into original object::
@@ -64,16 +65,19 @@ The Python API supports the following functions:
     input:   list of fragment_payloads (bytes)
     returns: decoded object (bytes)
 
+
 *Note*: ``bytes`` is a synonym to ``str`` in Python 2.6, 2.7.
 In Python 3.x, ``bytes`` and ``str`` types are non-interchangeable and care
 needs to be taken when handling input to and output from the ``encode()`` and
 ``decode()`` routines.
+
 
 - EC Reconstruct
 
   Reconstruct "missing_fragment_indexes" using "available_fragment_payloads"::
 
     def reconstruct(self, available_fragment_payloads, missing_fragment_indexes)
+    
 
 - Fragments needed for EC Reconstruct
 
@@ -81,17 +85,20 @@ needs to be taken when handling input to and output from the ``encode()`` and
 
     def fragments_needed(self, missing_fragment_indexes)
 
+
 - Get EC Metadata
 
   Return an opaque buffer known by the underlying library::
 
     def get_metadata(self, fragment)
 
+
 - Verify EC Stripe Consistency
 
   Use opaque buffers from get_metadata() to verify a the consistency of a stripe::
 
     def verify_stripe_metadata(self, fragment_metadata_list)
+
 
 - Get EC Segment Info
 
@@ -102,18 +109,19 @@ needs to be taken when handling input to and output from the ``encode()`` and
 
 Quick Start:
 
-  Standard stuff to install:
+  Standard stuff to install::
   
     ``Python 2.6``, ``2.7`` or ``3.x`` (including development packages) and ``argparse``.
 
   This package includes *c_eclib*, which contains a few C libraries used by
-  PyECLib.  These will be built when running the PyECLib install (see below).
+  PyECLib.  These are built when running the PyECLib install (see below).
+
 
   Install PyECLib::
 
     $ sudo python setup.py install
 
-  Run the test suite::
+  Run test suite included::
 
     $ (cd test && \
        python run_tests.py && \
