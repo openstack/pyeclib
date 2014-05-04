@@ -109,7 +109,7 @@ static PyObject * pyeclib_c_check_metadata(PyObject *self, PyObject *args);
 /*
  * Determine if an address is aligned to a particular boundary
  */
-static int is_addr_aligned(unsigned int addr, int align)
+static int is_addr_aligned(unsigned long addr, int align)
 {
   return (addr & (align-1)) == 0;
 }
