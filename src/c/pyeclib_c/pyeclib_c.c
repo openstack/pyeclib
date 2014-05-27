@@ -38,7 +38,6 @@
 #include <pyeclib_c.h>
 #include <bytesobject.h>
 
-
 /* Python 3 compatibility macros */
 #if PY_MAJOR_VERSION >= 3
   #define MOD_ERROR_VAL NULL
@@ -88,6 +87,14 @@
  */
 
 static PyObject *PyECLibError;
+
+
+/*
+ * Method Prototypes
+ */
+static PyObject * pyeclib_c_init(PyObject *self, PyObject *args);
+static void pyeclib_c_destructor(PyObject *obj);
+
 
 /*
  * Determine if an address is aligned to a particular boundary
@@ -189,6 +196,31 @@ void* get_aligned_buffer16(int size)
   
   return buf;
 }
+
+
+/**
+ * Allocate a zero-ed buffer of a specific size.  On error, return NULL and 
+ * call PyErr_NoMemory.
+ *
+ * @param size integer size in bytes of buffer to allocate
+ * @return pointer to start of allocated buffer or NULL on error
+ */
+static
+void * alloc_zeroed_buffer(int size)
+{
+  void * buffer = NULL;  /* buffer to allocate and return */
+  
+	/* Allocate and zero the buffer, or set the appropriate error */
+  buffer = malloc((size_t) size);
+  if (buffer) {
+	  buffer = memset(buffer, 0, (size_t) size);
+  } else {
+  	buffer = PyErr_NoMemory();
+  }
+
+  return buffer;
+}
+
 
 static
 char *alloc_fragment_buffer(int size)
@@ -405,54 +437,6 @@ int free_fragment_buffer(char *buf)
   return 0;
 }
 
-static void pyeclib_c_destructor(PyObject *obj)
-{
-  pyeclib_t *pyeclib_handle = NULL;
-
-  if (!PyCapsule_CheckExact(obj)) {
-    PyErr_SetString(PyECLibError, "Attempted to free a non-Capsule object in pyeclib");
-    return;
-  }
-
-  pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(obj, PYECC_HANDLE_NAME);
-  
-  if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Attempted to free an invalid reference to pyeclib_handle");
-    return;
-  }
-}
-
-static
-int get_fragment_metadata(pyeclib_t *pyeclib_handle, char *fragment_buf, fragment_metadata_t *fragment_metadata)
-{
-  char *fragment_data = get_data_ptr_from_fragment(fragment_buf);
-  int fragment_size = get_fragment_size(fragment_buf);
-  int fragment_idx = get_fragment_idx(fragment_buf);
-
-  memset(fragment_metadata, 0, sizeof(fragment_metadata_t));
-
-  fragment_metadata->size = fragment_size;
-  fragment_metadata->idx = fragment_idx;
-
-  /*
-   * If w \in [8, 16] and using RS_VAND or XOR_CODE, then use Alg_sig
-   * Else use CRC32
-   */
-  if (supports_alg_sig(pyeclib_handle)) {
-    // Compute algebraic signature
-    compute_alg_sig(pyeclib_handle->alg_sig_desc, fragment_data, fragment_size, fragment_metadata->signature);
-  } else if (use_inline_chksum(pyeclib_handle)) {
-    int stored_chksum = get_chksum(fragment_buf);
-    int computed_chksum = crc32(0, fragment_data, fragment_size); 
-
-    if (stored_chksum != computed_chksum) {
-      fragment_metadata->chksum_mismatch = 1;
-    }
-  }
-
-  return 0;
-}
-
 
 /*
  * Buffers for data, parity and missing_idxs
@@ -574,11 +558,75 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
   return 0; 
 }
 
+
+static int
+get_aligned_data_size(pyeclib_t* pyeclib_handle, int data_len)
+{
+  int word_size = pyeclib_handle->w / 8;
+  int alignment_multiple;
+  int aligned_size = 0;
+
+  /*
+   * For Cauchy reed-solomon align to k*word_size*packet_size
+   *
+   * For Vandermonde reed-solomon and flat-XOR, align to k*word_size
+   */
+  if (pyeclib_handle->type == PYECC_RS_CAUCHY_ORIG) {
+    alignment_multiple = pyeclib_handle->k * pyeclib_handle->w * PYECC_CAUCHY_PACKETSIZE;
+  } else {
+    alignment_multiple = pyeclib_handle->k * word_size;
+  }
+
+  aligned_size = (int)ceill((double)data_len / alignment_multiple) * alignment_multiple;
+
+  return aligned_size;
+}
+
+
+static
+int get_minimum_encode_size(pyeclib_t *pyeclib_handle)
+{
+  return get_aligned_data_size(pyeclib_handle, 1);
+}
+
+
+static
+int get_fragment_metadata(pyeclib_t *pyeclib_handle, char *fragment_buf, fragment_metadata_t *fragment_metadata)
+{
+  char *fragment_data = get_data_ptr_from_fragment(fragment_buf);
+  int fragment_size = get_fragment_size(fragment_buf);
+  int fragment_idx = get_fragment_idx(fragment_buf);
+
+  memset(fragment_metadata, 0, sizeof(fragment_metadata_t));
+
+  fragment_metadata->size = fragment_size;
+  fragment_metadata->idx = fragment_idx;
+
+  /*
+   * If w \in [8, 16] and using RS_VAND or XOR_CODE, then use Alg_sig
+   * Else use CRC32
+   */
+  if (supports_alg_sig(pyeclib_handle)) {
+    // Compute algebraic signature
+    compute_alg_sig(pyeclib_handle->alg_sig_desc, fragment_data, fragment_size, fragment_metadata->signature);
+  } else if (use_inline_chksum(pyeclib_handle)) {
+    int stored_chksum = get_chksum(fragment_buf);
+    int computed_chksum = crc32(0, fragment_data, fragment_size); 
+
+    if (stored_chksum != computed_chksum) {
+      fragment_metadata->chksum_mismatch = 1;
+    }
+  }
+
+  return 0;
+}
+
+
 static PyObject *
 pyeclib_c_init(PyObject *self, PyObject *args)
 {
-  pyeclib_t *pyeclib_handle;
-  PyObject* pyeclib_obj_handle;
+  pyeclib_t *pyeclib_handle = NULL;
+  PyObject *pyeclib_obj_handle = NULL;
   int k, m, w;
   int use_inline_chksum = 0, use_algsig_chksum = 0;
   const char *type_str;
@@ -589,26 +637,22 @@ pyeclib_c_init(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  // Validate the arguments
+  /* Validate the parsed arguments */
   type = get_ecc_type(type_str);
   if (type == PYECC_NOT_FOUND) {
     PyErr_SetString(PyECLibError, "Invalid type passed to pyeclib.init");
     return NULL;
   }
-
   if (!validate_args(k, m, w, type)) {
     PyErr_SetString(PyECLibError, "Invalid args passed to pyeclib.init");
     return NULL;
   }
-  
-  pyeclib_handle = (pyeclib_t*)malloc(sizeof(pyeclib_t));
-  if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "malloc() returned NULL in pyeclib.init");
-    return NULL;
-  }
 
-  memset(pyeclib_handle, 0, sizeof(pyeclib_t));
-  
+	/* Allocate and initialize the pyeclib object */
+	pyeclib_handle = (pyeclib_t *) alloc_zeroed_buffer(sizeof(pyeclib_t));
+	if (!pyeclib_handle) {
+		return NULL;
+	}
   pyeclib_handle->k = k;
   pyeclib_handle->m = m;
   pyeclib_handle->w = w;
@@ -645,6 +689,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
       break;
   }
 
+	/* Prepare the python object to return */
 #ifdef Py_CAPSULE_H
   pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME,
                                      pyeclib_c_destructor);
@@ -654,43 +699,33 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 				     pyeclib_c_destructor);
 #endif /* Py_CAPSULE_H */
 
+	/* Clean up the allocated memory on error, or update the ref count */
   if (pyeclib_obj_handle == NULL) {
     PyErr_SetString(PyECLibError, "Could not encapsulate pyeclib_handle into Python object in pyeclib.init");
-    return NULL;
+    free(pyeclib_handle);
+  } else {
+    Py_INCREF(pyeclib_obj_handle);
   }
-
-  Py_INCREF(pyeclib_obj_handle);
-
+  
   return pyeclib_obj_handle;
 }
 
-static int
-get_aligned_data_size(pyeclib_t* pyeclib_handle, int data_len)
-{
-  int word_size = pyeclib_handle->w / 8;
-  int alignment_multiple;
-  int aligned_size = 0;
 
-  /*
-   * For Cauchy reed-solomon align to k*word_size*packet_size
-   *
-   * For Vandermonde reed-solomon and flat-XOR, align to k*word_size
-   */
-  if (pyeclib_handle->type == PYECC_RS_CAUCHY_ORIG) {
-    alignment_multiple = pyeclib_handle->k * pyeclib_handle->w * PYECC_CAUCHY_PACKETSIZE;
-  } else {
-    alignment_multiple = pyeclib_handle->k * word_size;
+static void pyeclib_c_destructor(PyObject *obj)
+{
+  pyeclib_t *pyeclib_handle = NULL;
+
+  if (!PyCapsule_CheckExact(obj)) {
+    PyErr_SetString(PyECLibError, "Attempted to free a non-Capsule object in pyeclib");
+    return;
   }
 
-  aligned_size = (int)ceill((double)data_len / alignment_multiple) * alignment_multiple;
-
-  return aligned_size;
-}
-
-static
-int get_minimum_encode_size(pyeclib_t *pyeclib_handle)
-{
-  return get_aligned_data_size(pyeclib_handle, 1);
+  pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(obj, PYECC_HANDLE_NAME);
+  
+  if (pyeclib_handle == NULL) {
+    PyErr_SetString(PyECLibError, "Attempted to free an invalid reference to pyeclib_handle");
+    return;
+  }
 }
 
 
@@ -1891,6 +1926,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   // TODO: Return a list containing tuples (index, problem).  An empty list means everything is OK.
   return PyLong_FromLong((long)ret);
 }
+
 
 static PyMethodDef PyECLibMethods[] = {
     {"init",  pyeclib_c_init, METH_VARARGS, "Initialize a new erasure encoder/decoder"},
