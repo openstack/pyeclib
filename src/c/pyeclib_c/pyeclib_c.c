@@ -94,6 +94,7 @@ static PyObject *PyECLibError;
  */
 static PyObject * pyeclib_c_init(PyObject *self, PyObject *args);
 static void pyeclib_c_destructor(PyObject *obj);
+static PyObject * pyeclib_c_get_segment_info(PyObject *self, PyObject *args);
 
 
 /*
@@ -622,6 +623,15 @@ int get_fragment_metadata(pyeclib_t *pyeclib_handle, char *fragment_buf, fragmen
 }
 
 
+/**
+ * Constructor method for creating a new pyeclib object using the given parameters.
+ *
+ * @param k integer number of data elements
+ * @param m integer number of checksum elements
+ * @param w integer word size in bytes
+ * @param type_str string name of erasure coding algorithm
+ * @return pointer to PyObject or NULL on error
+ */
 static PyObject *
 pyeclib_c_init(PyObject *self, PyObject *args)
 {
@@ -711,9 +721,13 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 }
 
 
-static void pyeclib_c_destructor(PyObject *obj)
+/**
+ * Destructor method for cleaning up pyeclib object.
+ */
+static void 
+pyeclib_c_destructor(PyObject *obj)
 {
-  pyeclib_t *pyeclib_handle = NULL;
+  pyeclib_t *pyeclib_handle = NULL;  /* pyeclib object to destroy */
 
   if (!PyCapsule_CheckExact(obj)) {
     PyErr_SetString(PyECLibError, "Attempted to free a non-Capsule object in pyeclib");
@@ -721,18 +735,18 @@ static void pyeclib_c_destructor(PyObject *obj)
   }
 
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(obj, PYECC_HANDLE_NAME);
-  
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Attempted to free an invalid reference to pyeclib_handle");
-    return;
+  } else {
+  	free(pyeclib_handle);
   }
+  
+  return;
 }
 
 
 /**
- *
- * This function takes data length and 
- * a segment size and returns an object 
+ * This function takes data length and a segment size and returns an object 
  * containing:
  *
  * segment_size: size of the payload to give to encode()
@@ -741,28 +755,30 @@ static void pyeclib_c_destructor(PyObject *obj)
  * last_fragment_size: the fragment size returned by encode()
  * num_segments: number of segments 
  *
- * This allows the caller to prepare requests
- * when segmenting a data stream to be EC'd.
+ * This allows the caller to prepare requests when segmenting a data stream 
+ * to be EC'd.
  * 
- * Since the data length will rarely be aligned
- * to the segment size, the last segment will be
- * a different size than the others.  
+ * Since the data length will rarely be aligned to the segment size, the last 
+ * segment will be a different size than the others.  
  * 
- * There are restrictions on the length given to encode(),
- * so calling this before encode is highly recommended when
- * segmenting a data stream.
+ * There are restrictions on the length given to encode(), so calling this 
+ * before encode is highly recommended when segmenting a data stream.
  *
- * Minimum segment size depends on the underlying EC type 
- * (if it is less than this, then the last segment will be 
- * slightly larger than the others, otherwise it will be smaller).
+ * Minimum segment size depends on the underlying EC type (if it is less 
+ * than this, then the last segment will be slightly larger than the others, 
+ * otherwise it will be smaller).
+ *
+ * @param pyeclib_obj_handle
+ * @param data_len integer length of data in bytes
+ * @param segment_size integer length of segment in bytes
  * 
  */
 static PyObject *
 pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 {
-  PyObject *pyeclib_obj_handle;
-  PyObject *ret_dict;
-  pyeclib_t *pyeclib_handle;
+  PyObject *pyeclib_obj_handle = NULL;
+  PyObject *ret_dict = NULL;
+  pyeclib_t *pyeclib_handle = NULL;
   int data_len;
   int segment_size, last_segment_size;
   int num_segments;
@@ -864,16 +880,20 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   last_fragment_size += sizeof(fragment_header_t);
   fragment_size += sizeof(fragment_header_t);
 
+	/* Create and return the python dictionary of segment info */
   ret_dict = PyDict_New();
-
-  PyDict_SetItem(ret_dict, PyString_FromString("segment_size\0"), PyInt_FromLong(segment_size));
-  PyDict_SetItem(ret_dict, PyString_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
-  PyDict_SetItem(ret_dict, PyString_FromString("fragment_size\0"), PyInt_FromLong(fragment_size));
-  PyDict_SetItem(ret_dict, PyString_FromString("last_fragment_size\0"), PyInt_FromLong(last_fragment_size));
-  PyDict_SetItem(ret_dict, PyString_FromString("num_segments\0"), PyInt_FromLong(num_segments));
-
+  if (NULL == ret_dict) {
+    PyErr_SetString(PyECLibError, "Error allocating python dict in get_segment_info");
+  } else {
+		PyDict_SetItem(ret_dict, PyString_FromString("segment_size\0"), PyInt_FromLong(segment_size));
+		PyDict_SetItem(ret_dict, PyString_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
+		PyDict_SetItem(ret_dict, PyString_FromString("fragment_size\0"), PyInt_FromLong(fragment_size));
+		PyDict_SetItem(ret_dict, PyString_FromString("last_fragment_size\0"), PyInt_FromLong(last_fragment_size));
+		PyDict_SetItem(ret_dict, PyString_FromString("num_segments\0"), PyInt_FromLong(num_segments));
+  }
   return ret_dict;
 }
+
 
 static PyObject *
 pyeclib_c_encode(PyObject *self, PyObject *args)
