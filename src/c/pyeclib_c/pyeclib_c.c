@@ -95,6 +95,7 @@ static PyObject *PyECLibError;
 static PyObject * pyeclib_c_init(PyObject *self, PyObject *args);
 static void pyeclib_c_destructor(PyObject *obj);
 static PyObject * pyeclib_c_get_segment_info(PyObject *self, PyObject *args);
+static PyObject * pyeclib_c_encode(PyObject *self, PyObject *args);
 
 
 /*
@@ -209,40 +210,45 @@ void* get_aligned_buffer16(int size)
 static
 void * alloc_zeroed_buffer(int size)
 {
-  void * buffer = NULL;  /* buffer to allocate and return */
+  void * buf = NULL;  /* buffer to allocate and return */
   
 	/* Allocate and zero the buffer, or set the appropriate error */
-  buffer = malloc((size_t) size);
-  if (buffer) {
-	  buffer = memset(buffer, 0, (size_t) size);
+  buf = malloc((size_t) size);
+  if (buf) {
+	  buf = memset(buf, 0, (size_t) size);
   } else {
-  	buffer = PyErr_NoMemory();
+  	buf = (void *) PyErr_NoMemory();
   }
 
-  return buffer;
+  return buf;
 }
 
 
+/**
+ * Allocate an initialized fragment buffer.  On error, return NULL and 
+ * call PyErr_NoMemory.  Note, all allocated memory is aligned to 16-bytes
+ * boundaries in order to support 128-bit operations.
+ *
+ * @param size integer size in bytes of buffer to allocate
+ * @return pointer to start of allocated fragment or NULL on error
+ */
 static
 char *alloc_fragment_buffer(int size)
 {
-  char *buf;
-  fragment_header_t* header = NULL;
+  char *buf = NULL;
+  fragment_header_t *header = NULL;
 
+	/* Calculate size needed for fragment header + data */
   size += sizeof(fragment_header_t);
 
-  /*
-   * Ensure all memory is aligned to
-   * 16-byte boundaries to support 
-   * 128-bit operations
-   */
+  /* Allocate and init the aligned buffer, or set the appropriate error */
   if (posix_memalign((void**)&buf, 16, size) < 0) {
-    return NULL;
+    buf = (char *) PyErr_NoMemory();
+  } else {
+		memset(buf, 0, (size_t) size);
+		header = (fragment_header_t*)buf;
+		header->magic = PYECC_HEADER_MAGIC;
   }
-  bzero(buf, size);
-
-  header = (fragment_header_t*)buf;
-  header->magic = PYECC_HEADER_MAGIC;
 
   return buf;
 }
@@ -250,9 +256,13 @@ char *alloc_fragment_buffer(int size)
 static
 char* get_data_ptr_from_fragment(char *buf)
 {
-  buf += sizeof(fragment_header_t);
+  char * data_ptr = NULL;
+	
+	if (NULL != buf) {
+    data_ptr = buf + sizeof(fragment_header_t);
+	}
   
-  return buf;
+  return data_ptr;
 }
 
 static
@@ -895,20 +905,26 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 }
 
 
+/**
+ * Erasure encode a data buffer.
+ *
+ * @param pyeclib_obj_handle
+ * @param data to encode
+ * @return python list of encoded data and parity elements
+ */
 static PyObject *
 pyeclib_c_encode(PyObject *self, PyObject *args)
 {
-  PyObject *pyeclib_obj_handle;
-  pyeclib_t *pyeclib_handle;
+  PyObject *pyeclib_obj_handle = NULL;
+  pyeclib_t *pyeclib_handle= NULL;
   char *data;
   int data_len;
   int aligned_data_len;
   int orig_data_size;
   int blocksize;
-  char **data_to_encode;
-  char **encoded_parity;
-  int i;
-  PyObject *list_of_strips;
+  char **data_to_encode = NULL;
+  char **encoded_parity = NULL;
+  PyObject *list_of_strips = NULL;
 
   /* Assume binary data (force "byte array" input) */
   if (!PyArg_ParseTuple(args, ENCODE_ARGS, &pyeclib_obj_handle, &data, &data_len)) {
@@ -922,117 +938,137 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  /*
-   * Grab the original size to put in the headers
-   */
+  /* Grab the original size to put in the headers */
   orig_data_size = data_len;
   
   /*
-   * This will copmpute a size algined to the number of data 
+   * This will compute a size aligned to the number of data 
    * and the underlying wordsize of the EC algorithm.
    */
   aligned_data_len = get_aligned_data_size(pyeclib_handle, data_len);
 
-  /*
-   * aligned_data_len is guaranteed to be divisible by k
-   */
+  /* Calculate sizes.  aligned_data_len is guaranteed to be divisible by k */
   blocksize = aligned_data_len / pyeclib_handle->k;
 
-  data_to_encode = (char**)malloc(sizeof(char*)*pyeclib_handle->k);
-  if (data_to_encode == NULL) {
-    PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib.encode");
+	/* Allocate and initialize an array of zero'd out data buffers */
+  data_to_encode = (char**) alloc_zeroed_buffer(sizeof(char*) * pyeclib_handle->k);
+  if (NULL == data_to_encode) {
     return NULL;
   }
-
-  for (i=0; i < pyeclib_handle->k; i++) {
-    char *fragment = alloc_fragment_buffer(blocksize);
+  for (int i = 0; i < pyeclib_handle->k; i++) {
     int payload_size = data_len > blocksize ? blocksize : data_len;
-    data_to_encode[i] = get_data_ptr_from_fragment(fragment);
-    if (data_to_encode[i] == NULL) {
-      PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib.encode");
-      return NULL;
+    char *fragment = alloc_fragment_buffer(blocksize);    
+    if (NULL == fragment) {
+    	goto error;
     }
-
-    /*
-     * Only do the memcpy if there is data to copy
-     * 
-     * alloc_fragment_buffer() does a bzero(), so the padding
-     * will be all 0s.
-     */
+    
+    /* Copy existing data into clean, zero'd out buffer */
+    data_to_encode[i] = get_data_ptr_from_fragment(fragment);
     if (data_len > 0) {
       memcpy(data_to_encode[i], data, payload_size);
     }
 
-    /*
-     * Fragment size will always be the same (may be able to get rid of this)
-     */
+    /* Fragment size will always be the same (may be able to get rid of this) */
     set_fragment_size(fragment, blocksize);
-
 
     data += payload_size;
     data_len -= payload_size;
   }
 
-  encoded_parity = (char**)malloc(sizeof(char*)*pyeclib_handle->m);
-  if (encoded_parity == NULL) {
-    PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib.encode");
-    return NULL;
-  }
-
-  for (i=0; i < pyeclib_handle->m; i++) {
+	/* Allocate and initialize an array of zero'd out parity buffers */
+	encoded_parity = (char**) alloc_zeroed_buffer(sizeof(char*) * pyeclib_handle->m);
+	if (NULL == encoded_parity) {
+		goto error;
+	}
+  for (int i = 0; i < pyeclib_handle->m; i++) {
     char *fragment = alloc_fragment_buffer(blocksize);
-    encoded_parity[i] = get_data_ptr_from_fragment(fragment);
-    if (encoded_parity[i] == NULL) {
-      PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib.encode");
-      return NULL;
+    if (NULL == fragment) {
+      goto error;
     }
+    
+    encoded_parity[i] = get_data_ptr_from_fragment(fragment);
     set_fragment_size(fragment, blocksize);
   }
 
+	/* Run the erasure coding algorithm to generate the parity fragments */
   switch (pyeclib_handle->type) {
     case PYECC_RS_CAUCHY_ORIG:
-      jerasure_bitmatrix_encode(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->bitmatrix, data_to_encode, encoded_parity, blocksize, PYECC_CAUCHY_PACKETSIZE);
+      jerasure_bitmatrix_encode(pyeclib_handle->k, pyeclib_handle->m, 
+      													pyeclib_handle->w, pyeclib_handle->bitmatrix, 
+      													data_to_encode, encoded_parity, blocksize, 
+      													PYECC_CAUCHY_PACKETSIZE);
       break;
     case PYECC_XOR_HD_3:
     case PYECC_XOR_HD_4:
-      pyeclib_handle->xor_code_desc->encode(pyeclib_handle->xor_code_desc, data_to_encode, encoded_parity, blocksize);
+      pyeclib_handle->xor_code_desc->encode(pyeclib_handle->xor_code_desc, 
+      																			data_to_encode, encoded_parity, 
+      																			blocksize);
       break;
     case PYECC_RS_VAND:
     default:
-      jerasure_matrix_encode(pyeclib_handle->k, pyeclib_handle->m, pyeclib_handle->w, pyeclib_handle->matrix, data_to_encode, encoded_parity, blocksize);
+      jerasure_matrix_encode(pyeclib_handle->k, pyeclib_handle->m, 
+      											 pyeclib_handle->w, pyeclib_handle->matrix, 
+      											 data_to_encode, encoded_parity, blocksize);
       break;
   }
 
+	/* Create the python list of fragments to return */
   list_of_strips = PyList_New(pyeclib_handle->k + pyeclib_handle->m);
+  if (NULL == list_of_strips) {
+  	PyErr_SetString(PyECLibError, "Error allocating python list in encode");
+  	goto error;
+  }
   
-  for (i=0; i < pyeclib_handle->k; i++) {
+  /* Finalize data fragments and add them to the python list to return */
+  for (int i = 0; i < pyeclib_handle->k; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(data_to_encode[i]);
-    int fragment_size = blocksize+sizeof(fragment_header_t);
+    int fragment_size = blocksize + sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, i);
     set_orig_data_size(fragment_ptr, orig_data_size);
     if (use_inline_chksum(pyeclib_handle)) {
       int chksum = crc32(0, data_to_encode[i], blocksize);
       set_chksum(fragment_ptr, chksum);
     }
-    PyList_SET_ITEM(list_of_strips, i, PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
+    PyList_SET_ITEM(list_of_strips, i, 
+                    PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
     free_fragment_buffer(data_to_encode[i]);
   }
   free(data_to_encode);
   
-  for (i=0; i < pyeclib_handle->m; i++) {
+  /* Finalize parity fragments and add them to the python list to return */
+  for (int i = 0; i < pyeclib_handle->m; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(encoded_parity[i]);
-    int fragment_size = blocksize+sizeof(fragment_header_t);
+    int fragment_size = blocksize + sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, pyeclib_handle->k+i);
     set_orig_data_size(fragment_ptr, orig_data_size);
     if (use_inline_chksum(pyeclib_handle)) {
       int chksum = crc32(0, encoded_parity[i], blocksize);
       set_chksum(fragment_ptr, chksum);
     }
-    PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
+    PyList_SET_ITEM(list_of_strips, pyeclib_handle->k + i, 
+                    PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
     free_fragment_buffer(encoded_parity[i]);
   }
   free(encoded_parity);
+  
+  goto exit;
+  
+error:
+	if (data_to_encode) {
+		for (int i = 0; i < pyeclib_handle->k; i++) {
+			if (data_to_encode[i]) free_fragment_buffer(data_to_encode[i]);
+		}
+		free(data_to_encode);
+  }
+  if (encoded_parity) {
+  	for (int i = 0; i < pyeclib_handle->m; i++) {
+  	  if (encoded_parity[i]) free_fragment_buffer(encoded_parity[i]);
+  	}
+  	free(encoded_parity);
+  }
+  return NULL;
 
+exit:
   return list_of_strips;
 }
 
