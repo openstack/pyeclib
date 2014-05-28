@@ -570,6 +570,14 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
 }
 
 
+/**
+ * Compute a size aligned to the number of data and the underlying wordsize 
+ * of the EC algorithm.
+ * 
+ * @param pyeclib_handle eclib object with EC configurations
+ * @param data_len integer length of data in bytes
+ * @return integer data length aligned with wordsize of EC algorithm
+ */
 static int
 get_aligned_data_size(pyeclib_t* pyeclib_handle, int data_len)
 {
@@ -579,7 +587,6 @@ get_aligned_data_size(pyeclib_t* pyeclib_handle, int data_len)
 
   /*
    * For Cauchy reed-solomon align to k*word_size*packet_size
-   *
    * For Vandermonde reed-solomon and flat-XOR, align to k*word_size
    */
   if (pyeclib_handle->type == PYECC_RS_CAUCHY_ORIG) {
@@ -916,44 +923,36 @@ static PyObject *
 pyeclib_c_encode(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle = NULL;
-  pyeclib_t *pyeclib_handle= NULL;
-  char *data;
-  int data_len;
-  int aligned_data_len;
-  int orig_data_size;
-  int blocksize;
-  char **data_to_encode = NULL;
-  char **encoded_parity = NULL;
-  PyObject *list_of_strips = NULL;
+  pyeclib_t *pyeclib_handle= NULL; 
+  char **data_to_encode = NULL;     /* array of k data buffers */
+  char **encoded_parity = NULL;     /* array of m parity buffers */
+  PyObject *list_of_strips = NULL;  /* list of encoded strips to return */
+  char *data;												/* param, data buffer to encode */
+  int data_len;                     /* param, length of data buffer */
+  int aligned_data_len;             /* ec algorithm compatible data length */
+  int orig_data_size;               /* data length to write to headers */
+  int blocksize;                    /* length of each of k data elements */
 
   /* Assume binary data (force "byte array" input) */
   if (!PyArg_ParseTuple(args, ENCODE_ARGS, &pyeclib_obj_handle, &data, &data_len)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
     return NULL;
   }
-
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
     return NULL;
   }
-
-  /* Grab the original size to put in the headers */
-  orig_data_size = data_len;
   
-  /*
-   * This will compute a size aligned to the number of data 
-   * and the underlying wordsize of the EC algorithm.
-   */
+  /* Calculate data sizes, aligned_data_len guaranteed to be divisible by k*/
+  orig_data_size = data_len;
   aligned_data_len = get_aligned_data_size(pyeclib_handle, data_len);
-
-  /* Calculate sizes.  aligned_data_len is guaranteed to be divisible by k */
   blocksize = aligned_data_len / pyeclib_handle->k;
 
 	/* Allocate and initialize an array of zero'd out data buffers */
   data_to_encode = (char**) alloc_zeroed_buffer(sizeof(char*) * pyeclib_handle->k);
   if (NULL == data_to_encode) {
-    return NULL;
+    goto error;
   }
   for (int i = 0; i < pyeclib_handle->k; i++) {
     int payload_size = data_len > blocksize ? blocksize : data_len;
