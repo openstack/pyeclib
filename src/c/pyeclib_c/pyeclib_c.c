@@ -96,6 +96,7 @@ static PyObject * pyeclib_c_init(PyObject *self, PyObject *args);
 static void pyeclib_c_destructor(PyObject *obj);
 static PyObject * pyeclib_c_get_segment_info(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_encode(PyObject *self, PyObject *args);
+static PyObject * pyeclib_c_fragments_to_string(PyObject *self, PyObject *args);
 
 
 /*
@@ -929,7 +930,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   PyObject *list_of_strips = NULL;  /* list of encoded strips to return */
   char *data;												/* param, data buffer to encode */
   int data_len;                     /* param, length of data buffer */
-  int aligned_data_len;             /* ec algorithm compatible data length */
+  int aligned_data_len;             /* EC algorithm compatible data length */
   int orig_data_size;               /* data length to write to headers */
   int blocksize;                    /* length of each of k data elements */
 
@@ -1072,57 +1073,53 @@ exit:
 }
 
 /*
- * Convert a set of fragments into a string.  If, 
- * all k data elements are not present, return NULL;
- * otherwise return a string.
+ * Convert a set of fragments into a string.  If, less than k data fragments 
+ * are present, return None.  Return NULL on error.
+ *
+ * @param pyeclib_obj_handle
+ * @param list of fragments
+ * @param python string or None, NULL on error
  */
 static PyObject *
 pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
 {
-  PyObject *pyeclib_obj_handle;
-  PyObject *fragment_list;
-  PyObject *ret_string;
-  pyeclib_t* pyeclib_handle;
-  char *ret_cstring;
-  char **data;
+  PyObject *pyeclib_obj_handle = NULL;
+  pyeclib_t *pyeclib_handle = NULL;
+  PyObject *fragment_list = NULL;
+  PyObject *ret_string = NULL;
+  char *ret_cstring = NULL;
+  char **data = NULL;
   int string_len = 0;
   int string_off = 0;
-  int i = 0;
   int num_fragments = 0;
   int num_data = 0;
   int orig_data_size = -1;
   int ret_data_size;
 
+	/* Collect and validate the method arguments */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_list)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.fragments_to_string");
     return NULL;
   }
-  
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.fragments_to_string");
     return NULL;
   }
-  
   if (!PyList_Check(fragment_list)) {
     PyErr_SetString(PyECLibError, "Invalid structure passed in for fragment list in pyeclib.fragments_to_string");
     return NULL;
   }
   
-  // Set the number of fragments we have
-  num_fragments = (int)PyList_Size(fragment_list);
-
-  /*
-   * If we have less than k fragments, then we definitely need to call decode, so return NULL
-   */
+  /* Return None if there's insufficient fragments */
+  num_fragments = (int) PyList_Size(fragment_list);
   if (pyeclib_handle->k > num_fragments) {
-    return Py_BuildValue("");
+  	return Py_BuildValue("");
   }
-  
-  data = (char**)malloc(sizeof(char*) * pyeclib_handle->k); 
-  if (data == NULL) {
-    PyErr_SetString(PyECLibError, "Could not allocate memory for data buffers");
-    return NULL;
+  	
+  data = (char **) alloc_zeroed_buffer(sizeof(char *) * pyeclib_handle->k);
+  if (NULL == data) {
+  	return NULL;
   }
   
   /*
@@ -1133,92 +1130,80 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
    * Iterate over the fragments.  If we have all k data fragments, then we can
    * concatenate them into a string and return it; otherwise, we return NULL
    */
-  for (i=0; i < num_fragments && num_data < pyeclib_handle->k; i++) {
+  for (int i = 0; i < num_fragments && num_data < pyeclib_handle->k; i++) {
     PyObject *tmp_data = PyList_GetItem(fragment_list, i);
     char *tmp_buf;
     int index;
     int data_size;
     Py_ssize_t len;
 
+    /* Get and validate the fragment index and size */
     PyBytes_AsStringAndSize(tmp_data, &tmp_buf, &len);
-    
-    /*
-     * Get fragment index and size
-     */
     index = get_fragment_idx(tmp_buf);
-    if (index < 0) {
-      ret_string = NULL;
-      goto out;
-    }
     data_size = get_fragment_size(tmp_buf);
-    if (data_size < 0) {
+    if ((index < 0) || (data_size < 0)) {
       ret_string = NULL;
       goto out;
     }
 
-    /*
-     * If we got this far, then we shouold
-     * find a valid original data size.
-     */
+    /* Validate the original data size */
     if (orig_data_size < 0) {
       orig_data_size = get_orig_data_size(tmp_buf);
     } else {
-      int my_orig_data_size = get_orig_data_size(tmp_buf);
-      if (my_orig_data_size != orig_data_size) {
-        PyErr_SetString(PyECLibError, "Inconsistent orig data sizes found in headers");
+    	if (get_orig_data_size(tmp_buf) != orig_data_size) {
+    		PyErr_SetString(PyECLibError, "Inconsistent orig data sizes found in headers");
         ret_string = NULL;
         goto out;
       }
     }
     
-    /*
-     * Skip over parity fragments
-     */
+    /* Skip over parity fragments */
     if (index >= pyeclib_handle->k) {
       continue;
     }
 
-    /*
-     * Put fragment reference in proper index of data
-     */
+    /* Put fragment reference in proper index of data */
     data[index] = tmp_buf;
 
-    // Increment the number of data fragments we have
+    /* Increment the number of data fragments we have */
     num_data++;
     string_len += data_size;
   }
 
+	/* Return None if there still isn't insufficient fragments */
   if (num_data != pyeclib_handle->k) {
     ret_string = Py_BuildValue("");
     goto out;
   }
-
-  ret_cstring = (char*)malloc(orig_data_size);
-
+  
+  /* Create the c-string to return */
+  ret_cstring = (char *) alloc_zeroed_buffer(orig_data_size);
+  if (NULL == ret_cstring) {
+  	goto out;
+  }
   ret_data_size = orig_data_size;
 
   /*
    * Copy data payloads into a cstring.  The
    * fragments should be ordered by index in data.
    */
-  for (i=0; i < num_data && orig_data_size > 0; i++) {
+  for (int i = 0; i < num_data && orig_data_size > 0; i++) {
     char* fragment_data = get_data_ptr_from_fragment(data[i]);
     int fragment_size = get_fragment_size(data[i]);
     int payload_size = orig_data_size > fragment_size ? fragment_size : orig_data_size;
 
     memcpy(ret_cstring + string_off, fragment_data, payload_size);
-
     orig_data_size -= payload_size;
     string_off += payload_size;
   }
-
   ret_string = PY_BUILDVALUE_OBJ_LEN(ret_cstring, ret_data_size);
-  free(ret_cstring);
 
 out:
-  free(data);
+  if (data) free(data);
+  if (ret_cstring) free(ret_cstring);
   return ret_string;
 }
+
 
 /*
  * Return a tuple containing a refernece to a data fragment 
