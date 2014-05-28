@@ -1072,6 +1072,7 @@ exit:
   return list_of_strips;
 }
 
+
 /*
  * Convert a set of fragments into a string.  If, less than k data fragments 
  * are present, return None.  Return NULL on error.
@@ -1085,16 +1086,15 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle = NULL;
   pyeclib_t *pyeclib_handle = NULL;
-  PyObject *fragment_list = NULL;
-  PyObject *ret_string = NULL;
-  char *ret_cstring = NULL;
-  char **data = NULL;
-  int string_len = 0;
-  int string_off = 0;
-  int num_fragments = 0;
-  int num_data = 0;
-  int orig_data_size = -1;
-  int ret_data_size;
+  PyObject *fragment_list = NULL;  /* param, python list of fragments */
+  PyObject *ret_string = NULL;     /* python string to return */
+  char *ret_cstring = NULL;        /* c string to build return string from */
+  int ret_data_size;               /* size of return string in bytes */
+  char **data = NULL;              /* array of data buffers */
+  int string_off = 0;              /* offset into cstring */
+  int num_fragments = 0;           /* num of fragments provided by caller */
+  int num_data = 0;                /* num of fragments that are data */
+  int orig_data_size = -1;         /* data size from fragment header */
 
 	/* Collect and validate the method arguments */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_list)) {
@@ -1117,11 +1117,6 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   	return Py_BuildValue("");
   }
   	
-  data = (char **) alloc_zeroed_buffer(sizeof(char *) * pyeclib_handle->k);
-  if (NULL == data) {
-  	return NULL;
-  }
-  
   /*
    * NOTE: Update to only copy original size out of the buffers
    */
@@ -1130,6 +1125,10 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
    * Iterate over the fragments.  If we have all k data fragments, then we can
    * concatenate them into a string and return it; otherwise, we return NULL
    */
+  data = (char **) alloc_zeroed_buffer(sizeof(char *) * pyeclib_handle->k);
+  if (NULL == data) {
+  	return NULL;
+  }
   for (int i = 0; i < num_fragments && num_data < pyeclib_handle->k; i++) {
     PyObject *tmp_data = PyList_GetItem(fragment_list, i);
     char *tmp_buf;
@@ -1157,17 +1156,13 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
       }
     }
     
-    /* Skip over parity fragments */
+    /* Skip parity fragments, put data fragments in index order */
     if (index >= pyeclib_handle->k) {
       continue;
+    } else {
+    	data[index] = tmp_buf;
+    	num_data++;
     }
-
-    /* Put fragment reference in proper index of data */
-    data[index] = tmp_buf;
-
-    /* Increment the number of data fragments we have */
-    num_data++;
-    string_len += data_size;
   }
 
 	/* Return None if there still isn't insufficient fragments */
@@ -1183,10 +1178,7 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   }
   ret_data_size = orig_data_size;
 
-  /*
-   * Copy data payloads into a cstring.  The
-   * fragments should be ordered by index in data.
-   */
+  /* Copy fragment data into cstring (fragments should be in index order) */
   for (int i = 0; i < num_data && orig_data_size > 0; i++) {
     char* fragment_data = get_data_ptr_from_fragment(data[i]);
     int fragment_size = get_fragment_size(data[i]);
