@@ -97,6 +97,7 @@ static void pyeclib_c_destructor(PyObject *obj);
 static PyObject * pyeclib_c_get_segment_info(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_encode(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_fragments_to_string(PyObject *self, PyObject *args);
+static PyObject * pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args);
 
 
 /*
@@ -201,7 +202,7 @@ void* get_aligned_buffer16(int size)
 }
 
 
-/*
+/**
  * Memory Management Methods
  * 
  * The following methods provide wrappers for allocating and deallocating
@@ -1433,86 +1434,107 @@ exit:
 }
 
 
+/**
+ * Return a list of lists with valid rebuild indexes given an EC algorithm
+ * and a list of missing indexes.
+ *
+ * @param pyeclib_obj_handle
+ * @param missing_list indexes of missing fragments
+ * @return a list of lists of indexes to rebuild data from
+ */
 static PyObject *
 pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
 {
-  PyObject *pyeclib_obj_handle;
-  PyObject *missing_list;
-  PyObject *fragment_idx_list = NULL;
-  pyeclib_t* pyeclib_handle;
-  int num_missing;
-  int *c_missing_list;
-  int i, j;
-  unsigned long missing_bm = 0;
+  PyObject *pyeclib_obj_handle = NULL;
+  pyeclib_t *pyeclib_handle = NULL;
+  PyObject *missing_list = NULL;        /* param, */
+  PyObject *fragment_idx_list = NULL;   /* list of req'd indexes to return */
+  int *c_missing_list = NULL;           /* c-array of missing indexes */
+  int num_missing;                      /* size of passed in missing list */
+  int j = 0;                            /* a counter */
+  int k, m;                             /* EC algorithm parameters */
+  unsigned long missing_bm = 0;         /* bitmap of missing indexes */
+  int *fragments_needed = NULL;         /* indexes of xor code fragments */
+  int ret;                              /* return value for xor code */
 
+	/* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &missing_list)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_required_fragments");
     return NULL;
   }
-
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.get_required_fragments");
     return NULL;
+  } else {
+    k = pyeclib_handle->k;
+    m = pyeclib_handle->m;
   }
 
-  num_missing = (int)PyList_Size(missing_list);
-
-  c_missing_list = (int*)malloc((num_missing+1)*sizeof(int));
-
-  for (i=0; i < num_missing; i++) {
+	/* Generate -1 terminated c-array and bitmap of missing indexes */
+  num_missing = (int) PyList_Size(missing_list);
+  c_missing_list = (int *) alloc_zeroed_buffer((num_missing + 1) * sizeof(int));
+  if (NULL == c_missing_list) {
+  	return NULL;
+  } else {
+  	c_missing_list[num_missing] = -1;
+  }
+  for (int i = 0; i < num_missing; i++) {
     PyObject *obj_idx = PyList_GetItem(missing_list, i);
     long idx = PyLong_AsLong(obj_idx);
-    c_missing_list[i] = (int)idx;
+    c_missing_list[i] = (int) idx;
   }
-
-  c_missing_list[num_missing] = -1;
-
   missing_bm = convert_list_to_bitmap(c_missing_list);
-      
+   
+  /* Generate the python list of lists of rebuild indexes to return */   
   fragment_idx_list = PyList_New(0);
-
+  if (NULL == fragment_idx_list) {
+  	goto exit;
+  }
+  j = 0;
   switch(pyeclib_handle->type) {
     case PYECC_RS_CAUCHY_ORIG:
     case PYECC_RS_VAND:
-      j=0;
-      for (i=0; i < pyeclib_handle->k + pyeclib_handle->m; i++) {
+      for (int i = 0; i < (k + m); i++) {
         if (!(missing_bm & (1 << i))) {
           PyList_Append(fragment_idx_list, Py_BuildValue("i", i));
           j++;
         }
-        if (j == pyeclib_handle->k) {
+        if (j == k) {
           break;
         }
       }
 
-      if (j != pyeclib_handle->k) {
-        // Let the garbage collector clean this up
+      if (j != k) {
+        /* Let the garbage collector clean this up */
         Py_DECREF(fragment_idx_list);
-        PyErr_Format(PyECLibError, "Not enough fragments for pyeclib.get_required_fragments (need at least %d, %d are given)", pyeclib_handle->k, j);
+        PyErr_Format(PyECLibError, "Not enough fragments for pyeclib.get_required_fragments (need at least %d, %d are given)", k, j);
         fragment_idx_list = NULL;
       }
       break;
     case PYECC_XOR_HD_3:
     case PYECC_XOR_HD_4:
     {
-      int *fragments_needed = (int*)malloc(sizeof(int)*(pyeclib_handle->k+pyeclib_handle->m));
-      int ret = pyeclib_handle->xor_code_desc->fragments_needed(pyeclib_handle->xor_code_desc, c_missing_list, fragments_needed);
+    	fragments_needed = alloc_zeroed_buffer(sizeof(int) * (k + m));
+    	if (NULL == fragments_needed) {
+    		fragment_idx_list = NULL;
+    		goto exit;
+    	}
+    	ret = pyeclib_handle->xor_code_desc->fragments_needed(pyeclib_handle->xor_code_desc,
+      																											c_missing_list, 
+      																											fragments_needed);
 
       if (ret < 0) {
         Py_DECREF(fragment_idx_list);
         PyErr_Format(PyECLibError, "Not enough fragments for pyeclib.get_required_fragments!");
         fragment_idx_list = NULL;
-        free(fragments_needed);
         break;
       }
 
-      j=0;
       while (fragments_needed[j] > -1) {
         PyList_Append(fragment_idx_list, Py_BuildValue("i", fragments_needed[j]));
         j++;
-      } 
-      free(fragments_needed);
+      }
       break;
     }
     default:
@@ -1520,11 +1542,13 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
       break;
   }
 
-  // Free the temporary list
-  free(c_missing_list);
+exit:
+  if (c_missing_list) free_buffer(c_missing_list);
+  if (fragments_needed) free_buffer(fragments_needed);
 
   return fragment_idx_list;
 }
+
 
 /*
  * TODO: If we are reconstructing a parity element, ensure that all of the data elements are available!
