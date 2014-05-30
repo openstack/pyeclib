@@ -252,7 +252,7 @@ void * alloc_zeroed_buffer(int size)
 static
 void * free_buffer(void * buf)
 {
-	PyMem_Free(buf);
+	if (buf) PyMem_Free(buf);
 	
 	return NULL;
 }
@@ -1259,8 +1259,8 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   ret_string = PY_BUILDVALUE_OBJ_LEN(ret_cstring, ret_data_size);
 
 exit:
-  if (data) free_buffer(data);
-  if (ret_cstring) free_buffer(ret_cstring);
+  free_buffer(data);
+  free_buffer(ret_cstring);
 
   return ret_string;
 }
@@ -1426,9 +1426,9 @@ error:
 	return_lists = NULL;
 
 exit:
-	if (data) free_buffer(data);
-	if (parity) free_buffer(parity);
-	if (missing) free_buffer(missing);
+	free_buffer(data);
+	free_buffer(parity);
+	free_buffer(missing);
   
   return return_lists;
 }
@@ -1543,8 +1543,8 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   }
 
 exit:
-  if (c_missing_list) free_buffer(c_missing_list);
-  if (fragments_needed) free_buffer(fragments_needed);
+  free_buffer(c_missing_list);
+  free_buffer(fragments_needed);
 
   return fragment_idx_list;
 }
@@ -1557,30 +1557,31 @@ static PyObject *
 pyeclib_c_reconstruct(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle = NULL;
-  PyObject *data_list = NULL;
-  PyObject *parity_list = NULL;
-  PyObject *missing_idx_list = NULL;
-  PyObject *reconstructed = NULL;
+  PyObject *data_list = NULL;           /* param */
+  PyObject *parity_list = NULL;         /* param */
+  PyObject *missing_idx_list = NULL;    /* param, list of missing indexes */
+  PyObject *reconstructed = NULL;       /* reconstructed object to return */
   int *erased = NULL;
   pyeclib_t *pyeclib_handle = NULL;
-  int fragment_size;
-  int blocksize;
-  char **data = NULL;
-  char **parity = NULL;
-  int *missing_idxs = NULL;
-  int destination_idx;
-  unsigned long long realloc_bm = 0; // Identifies symbols that had to be allocated for alignment 
+  int fragment_size;                    /* param, size in bytes of fragment */
+  int blocksize;                        /* size in bytes, fragment - header */
+  char **data = NULL;                   /* k length array of data buffers */
+  char **parity = NULL;                 /* m length array of parity buffers */
+  int *missing_idxs = NULL;             /* array of missing indexes */
+  int destination_idx;                  /* param, index to reconstruct */
+  unsigned long long realloc_bm = 0;    /* Identifies symbols allocated for alignment */
   int orig_data_size = -1;
-  int missing_size;
+  int missing_size;                     /* number of missing indexes */
   int *decoding_matrix = NULL;
   int *decoding_row = NULL;
   int *dm_ids = NULL;
   int k, m, w;                          /* EC algorithm parameters */
   int ret;
-  int i;
 
 	/* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "OOOOii", &pyeclib_obj_handle, &data_list, &parity_list, &missing_idx_list, &destination_idx, &fragment_size)) {
+  if (!PyArg_ParseTuple(args, "OOOOii", &pyeclib_obj_handle, &data_list, 
+  											&parity_list, &missing_idx_list, &destination_idx, 
+  											&fragment_size)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
     return NULL;
   }
@@ -1610,18 +1611,12 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
   blocksize = FRAGSIZE_2_BLOCKSIZE(fragment_size);
   missing_size = (int) PyList_Size(missing_idx_list);
   missing_idxs = (int *) alloc_zeroed_buffer(sizeof(int) * (missing_size + 1));
-  if (NULL == missing_idxs) {
-  	goto error;
-  }
   data = (char **) alloc_zeroed_buffer(sizeof(char *) * k);
-  if (NULL == data) {
-  	goto error;
-  }
   parity = (char **) alloc_zeroed_buffer(sizeof(char *) * m);
-  if (NULL == parity) {
+  if (NULL == missing_idxs || NULL == data || NULL == parity) {
   	goto error;
   }
-
+  
 	/* Obtain decoding info, no need to go further on error */
   if (get_decoding_info(pyeclib_handle, data_list, parity_list, 
   											missing_idx_list, data, parity, missing_idxs, 
@@ -1634,56 +1629,54 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
 
   switch (pyeclib_handle->type) {
     case PYECC_RS_CAUCHY_ORIG:
-
       if (destination_idx < k) {
-        decoding_matrix = (int*)malloc(sizeof(int*) * k * k * w * w);
-        dm_ids = (int*)malloc(sizeof(int)*pyeclib_handle->k);
-        ret = jerasure_make_decoding_bitmatrix(k, m, w, pyeclib_handle->bitmatrix, erased, decoding_matrix, dm_ids);
+        decoding_matrix = (int *) alloc_zeroed_buffer(sizeof(int*) * k * k * w * w);
+        dm_ids = (int *) alloc_zeroed_buffer(sizeof(int) * k);
+        if (NULL == decoding_matrix || NULL == dm_ids) {
+        	goto error;
+        }
+        
+        ret = jerasure_make_decoding_bitmatrix(k, m, w, pyeclib_handle->bitmatrix, 
+        																			 erased, decoding_matrix, dm_ids);
         decoding_row = decoding_matrix + (destination_idx * k * w * w);
       } else {
-        dm_ids = NULL;
         decoding_row = pyeclib_handle->bitmatrix + ((destination_idx - k) * k * w * w);    
         ret = 0;
       }
       if (ret == 0) {
-        jerasure_bitmatrix_dotprod(k, w, decoding_row, dm_ids, destination_idx, data, parity, blocksize, PYECC_CAUCHY_PACKETSIZE);
+        jerasure_bitmatrix_dotprod(k, w, decoding_row, dm_ids, destination_idx, 
+        													 data, parity, blocksize, 
+        													 PYECC_CAUCHY_PACKETSIZE);
       }
-
-      if (destination_idx < k) {
-        free(decoding_matrix);
-      }
-      free(dm_ids);
-
       break;
     case PYECC_RS_VAND:
-  
       if (destination_idx < k) {
-        decoding_matrix = (int*)malloc(sizeof(int*) * k * k);
-        dm_ids = (int*)malloc(sizeof(int) * k);
-        ret = jerasure_make_decoding_matrix(k, m, w, pyeclib_handle->matrix, erased, decoding_matrix, dm_ids);
+        decoding_matrix = (int *) alloc_zeroed_buffer(sizeof(int*) * k * k);
+        dm_ids = (int *) alloc_zeroed_buffer(sizeof(int) * k);
+        if (NULL == decoding_matrix || NULL == dm_ids) {
+        	goto error;
+        }
+        
+        ret = jerasure_make_decoding_matrix(k, m, w, pyeclib_handle->matrix, 
+        																		erased, decoding_matrix, dm_ids);
         decoding_row = decoding_matrix + (destination_idx * k);
       } else {
-        dm_ids = NULL;
         decoding_row = pyeclib_handle->matrix + ((destination_idx - k) * k);
         ret = 0;
       }
       if (ret == 0) {
-        jerasure_matrix_dotprod(k, w, decoding_row, dm_ids, destination_idx, data, parity, blocksize);
-      }
-
-      if (destination_idx < k) {
-        free(decoding_matrix);
-        free(dm_ids);
+        jerasure_matrix_dotprod(k, w, decoding_row, dm_ids, destination_idx, 
+        												data, parity, blocksize);
       }
   
       break;
-
     case PYECC_XOR_HD_3:
     case PYECC_XOR_HD_4:
-      xor_reconstruct_one(pyeclib_handle->xor_code_desc, data, parity, missing_idxs, destination_idx, blocksize);
+      xor_reconstruct_one(pyeclib_handle->xor_code_desc, data, parity, 
+      										missing_idxs, destination_idx, blocksize);
       ret = 0;
+      
       break;
-
     default:
       ret = -1;
       break;
@@ -1714,31 +1707,34 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
     }
 
     reconstructed = PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size);
-
   } else {
     reconstructed = NULL;
   }
     
-  for (i=0; i < k; i++) {
+  for (int i = 0; i < k; i++) {
     if (realloc_bm & (1 << i)) {
       char *ptr = get_fragment_ptr_from_data_novalidate(data[i]);
       free(ptr);
     }
   }
-  for (i=0; i < m; i++) {
+  for (int i = 0; i < m; i++) {
     if (realloc_bm & (1 << (i + k))) {
       char *ptr = get_fragment_ptr_from_data_novalidate(parity[i]);
       free(ptr);
     }
   }
+  
+  goto out;
 
 error:
 	reconstructed = NULL;
   
 out:
-  if (missing_idxs) free_buffer(missing_idxs);
-  if (data) free_buffer(data);
-  if (parity) free_buffer(parity);
+  free_buffer(missing_idxs);
+  free_buffer(data);
+  free_buffer(parity);
+  free_buffer(decoding_matrix);
+  free_buffer(dm_ids);
 
   return reconstructed;
 }
