@@ -187,24 +187,6 @@ void init_fragment_header(char *buf)
   header->magic = PYECC_HEADER_MAGIC;
 }
 
-static
-void* get_aligned_buffer16(int size)
-{
-  void *buf;
-  
-  /*
-   * Ensure all memory is aligned to
-   * 16-byte boundaries to support 
-   * 128-bit operations
-   */
-  if (posix_memalign(&buf, 16, size) < 0) {
-    return NULL;
-  }
-  bzero(buf, size);
-  
-  return buf;
-}
-
 
 /**
  * Memory Management Methods
@@ -263,9 +245,37 @@ void * free_buffer(void * buf)
 
 
 /**
+ * Allocate and zero out a buffer aligned to a 16-byte boundary in order
+ * to support 128-bit operations.  On error, call PyErr_NoMemory to set
+ * the appropriate error string and return NULL.
+ * 
+ * @param size integer size in bytes of buffer to allocate
+ * @return pointer to start of allocated buffer, or NULL on error
+ */
+static
+void* alloc_aligned_buffer16(int size)
+{
+  void *buf = NULL;
+  
+  /*
+   * Ensure all memory is aligned to
+   * 16-byte boundaries to support 
+   * 128-bit operations
+   */
+  if (posix_memalign(&buf, 16, size) < 0) {
+    return PyErr_NoMemory();
+  } else {
+	  memset(buf, 0, size);
+	}
+  
+  return buf;
+}
+
+
+/**
  * Allocate an initialized fragment buffer.  On error, return NULL and 
- * call PyErr_NoMemory.  Note, all allocated memory is aligned to 16-bytes
- * boundaries in order to support 128-bit operations.
+ * preserve call to PyErr_NoMemory.  Note, all allocated memory is aligned 
+ * to 16-bytes boundaries in order to support 128-bit operations.
  *
  * @param size integer size in bytes of buffer to allocate
  * @return pointer to start of allocated fragment or NULL on error
@@ -280,12 +290,9 @@ char *alloc_fragment_buffer(int size)
   size += sizeof(fragment_header_t);
 
   /* Allocate and init the aligned buffer, or set the appropriate error */
-  if (posix_memalign((void**)&buf, 16, size) < 0) {
-    buf = (char *) PyErr_NoMemory();
-  } else {
-		memset(buf, 0, (size_t) size);
-		header = (fragment_header_t*)buf;
-		header->magic = PYECC_HEADER_MAGIC;
+  buf = alloc_aligned_buffer16(size);
+  if (buf) {
+  	init_fragment_header(buf);
   }
 
   return buf;
@@ -2031,7 +2038,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     c_fragment_metadata_list[fragment_metadata->idx] = fragment_metadata;
 
     if (supports_alg_sig(pyeclib_handle)) {
-      c_fragment_signatures[fragment_metadata->idx] = (char*)get_aligned_buffer16(PYCC_MAX_SIG_LEN);
+      c_fragment_signatures[fragment_metadata->idx] = (char*)alloc_aligned_buffer16(PYCC_MAX_SIG_LEN);
       memcpy(c_fragment_signatures[fragment_metadata->idx], fragment_metadata->signature, PYCC_MAX_SIG_LEN);
     } else {
       c_fragment_signatures[fragment_metadata->idx] = fragment_metadata->signature;
@@ -2045,7 +2052,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     	goto error;
     }
     for (int i = 0; i < m; i++) {
-      parity_sigs[i] = (char *) get_aligned_buffer16(PYCC_MAX_SIG_LEN);
+      parity_sigs[i] = (char *) alloc_aligned_buffer16(PYCC_MAX_SIG_LEN);
       if (NULL == parity_sigs[i]) {
       	for (int j = 0; j < i; j++) free(parity_sigs[j]);
       	goto error;
