@@ -101,6 +101,7 @@ static PyObject * pyeclib_c_get_fragment_partition(PyObject *self, PyObject *arg
 static PyObject * pyeclib_c_reconstruct(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_decode(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_get_metadata(PyObject *self, PyObject *args);
+static PyObject * pyeclib_c_check_metadata(PyObject *self, PyObject *args);
 
 
 /*
@@ -1965,46 +1966,61 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
 }
 
 
+/**
+ * Confirm the health of the fragment metadata.
+ *
+ * TODO: Return a list containing tuples (index, problem).  An empty list means
+ * everything is OK.
+ * 
+ * @param pyeclib_obj_handle
+ * @param fragment_metadata_list list of fragment metadata headers
+ * @return -1 if no errors, or the index of the first problem checksum
+ */
 static PyObject*
 pyeclib_c_check_metadata(PyObject *self, PyObject *args)
 {
-  PyObject *pyeclib_obj_handle;
-  PyObject *fragment_metadata_list;
-  pyeclib_t *pyeclib_handle;
-  int i;
-  int ret = -1;
-  int num_fragments;
-  fragment_metadata_t** c_fragment_metadata_list;
-  char **c_fragment_signatures;
+  PyObject *pyeclib_obj_handle = NULL;
+  pyeclib_t *pyeclib_handle = NULL;
+  PyObject *fragment_metadata_list = NULL;                /* param, fragment metadata */
+  fragment_metadata_t **c_fragment_metadata_list = NULL;  /* c version of metadata */
+  int num_fragments;                                      /* k + m from EC algorithm */
+  char **c_fragment_signatures = NULL;                    /* array of alg. signatures */
+  int k, m, w;                                            /* EC algorithm params */
+  int size;                                               /* size for buf allocation */
+  int ret = -1;                                           /* c return value */
+  PyObject *ret_obj = NULL;                               /* python long to return */
 
+	/* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_metadata_list)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
     return NULL;
   }
-
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
     return NULL;
-  }
-
-  num_fragments = pyeclib_handle->k + pyeclib_handle->m;
-
+  } else {
+  	k = pyeclib_handle->k;
+  	m = pyeclib_handle->m;
+	  w = pyeclib_handle->w;
+	}
+  num_fragments = k + m;
   if (num_fragments != PyList_Size(fragment_metadata_list)) {
     PyErr_SetString(PyECLibError, "Not enough fragment metadata to perform integrity check");
     return NULL;
   }
-
-  c_fragment_metadata_list = (fragment_metadata_t**)malloc(sizeof(fragment_metadata_t*)*num_fragments);
-  memset(c_fragment_metadata_list, 0, sizeof(fragment_metadata_t*)*num_fragments);
   
-  c_fragment_signatures = (char**)malloc(sizeof(char*)*num_fragments);
-  memset(c_fragment_signatures, 0, sizeof(char*)*num_fragments);
+  /* Allocate space for fragment signatures */
+  size = sizeof(fragment_metadata_t * ) * num_fragments;
+  c_fragment_metadata_list = (fragment_metadata_t**) alloc_zeroed_buffer(size);
+  size = sizeof(char *) * num_fragments;
+  c_fragment_signatures = (char **) alloc_zeroed_buffer(size);
+  if (NULL == c_fragment_metadata_list || NULL == c_fragment_signatures) {
+  	goto error;
+  }
 
-  /*
-   * Populate and order the metadata
-   */
-  for (i=0; i < num_fragments; i++) {
+  /* Populate and order the metadata */
+  for (int i = 0; i < num_fragments; i++) {
     PyObject *tmp_data = PyList_GetItem(fragment_metadata_list, i);
     Py_ssize_t len = 0;
     char *c_buf = NULL;
@@ -2022,60 +2038,70 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     }
   }
 
-  /*
-   * Ensure all fragments are here and check integrity using alg signatures 
-   */
+  /* Ensure all fragments are here and check integrity using alg signatures */
   if (supports_alg_sig(pyeclib_handle)) {
-    char **parity_sigs = (char**)malloc(sizeof(char**)*pyeclib_handle->m);
-    
-    for (i=0; i < pyeclib_handle->m; i++) {
-      parity_sigs[i] = (char*)get_aligned_buffer16(PYCC_MAX_SIG_LEN);
-      memset(parity_sigs[i], 0, PYCC_MAX_SIG_LEN);
+    char **parity_sigs = (char **) alloc_zeroed_buffer(sizeof(char **) * m);
+    if (NULL == parity_sigs) {
+    	goto error;
+    }
+    for (int i = 0; i < m; i++) {
+      parity_sigs[i] = (char *) get_aligned_buffer16(PYCC_MAX_SIG_LEN);
+      if (NULL == parity_sigs[i]) {
+      	for (int j = 0; j < i; j++) free(parity_sigs[j]);
+      	goto error;
+      } else {
+      	memset(parity_sigs[i], 0, PYCC_MAX_SIG_LEN);
+      }
     }
 
+		/* Calculate the parity of the signatures */
     if (pyeclib_handle->type == PYECC_RS_VAND) {
-      jerasure_matrix_encode(pyeclib_handle->k, 
-                             pyeclib_handle->m, 
-                             pyeclib_handle->w, 
-                             pyeclib_handle->matrix, 
-                             c_fragment_signatures, 
-                             parity_sigs, 
-                             PYCC_MAX_SIG_LEN);
+      jerasure_matrix_encode(k, m, w, pyeclib_handle->matrix, 
+                             c_fragment_signatures, parity_sigs, PYCC_MAX_SIG_LEN);
     } else {
       pyeclib_handle->xor_code_desc->encode(pyeclib_handle->xor_code_desc, 
-                                            c_fragment_signatures,  
+                                            c_fragment_signatures,
                                             parity_sigs, 
                                             PYCC_MAX_SIG_LEN);
     }
-
-    for (i=0; i < pyeclib_handle->m; i++) {
-      if (memcmp(parity_sigs[i], c_fragment_signatures[pyeclib_handle->k + i], PYCC_MAX_SIG_LEN) != 0) {
+		
+		/* Compare the parity of the signatures, and the signature of the parity */
+    for (int i = 0; i < m; i++) {
+      if (memcmp(parity_sigs[i], c_fragment_signatures[k + i], PYCC_MAX_SIG_LEN) != 0) {
         ret = i;
         break;
       }
     }
 
-    for (i=0; i < pyeclib_handle->m; i++) {
+		/* Clean up memory used in algebraic signature checking */
+    for (int i = 0; i < m; i++) {
       free(parity_sigs[i]);
     }
-    for (i=0; i < pyeclib_handle->k; i++) {
+    free_buffer(parity_sigs);
+    for (int i = 0; i < k; i++) {
       free(c_fragment_signatures[i]);
     }
-    free(parity_sigs);
   } else if (use_inline_chksum(pyeclib_handle)) {
-    for (i=0; i < num_fragments; i++) {
+    for (int i = 0; i < num_fragments; i++) {
       if (c_fragment_metadata_list[i]->chksum_mismatch == 1) {
         ret = i;
         break;
       }
     }
   }
-    
+
+	/* Return index of first checksum signature error */  
+  ret_obj = PyLong_FromLong((long)ret);
+  goto exit;
+
+error:
+	ret_obj = NULL;
+
+exit:
   free(c_fragment_signatures);
   free(c_fragment_metadata_list);
-
-  // TODO: Return a list containing tuples (index, problem).  An empty list means everything is OK.
-  return PyLong_FromLong((long)ret);
+  
+  return ret_obj;
 }
 
 
@@ -2112,4 +2138,3 @@ MOD_INIT(pyeclib_c)
 
     return MOD_SUCCESS_VAL(m);
 }
-
