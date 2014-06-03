@@ -1008,11 +1008,12 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   char **data_to_encode = NULL;     /* array of k data buffers */
   char **encoded_parity = NULL;     /* array of m parity buffers */
   PyObject *list_of_strips = NULL;  /* list of encoded strips to return */
-  char *data;                        /* param, data buffer to encode */
+  char *data;                       /* param, data buffer to encode */
   int data_len;                     /* param, length of data buffer */
   int aligned_data_len;             /* EC algorithm compatible data length */
   int orig_data_size;               /* data length to write to headers */
   int blocksize;                    /* length of each of k data elements */
+  int i;                            /* a counter */
 
   /* Assume binary data (force "byte array" input) */
   if (!PyArg_ParseTuple(args, ENCODE_ARGS, &pyeclib_obj_handle, &data, &data_len)) {
@@ -1035,7 +1036,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   if (NULL == data_to_encode) {
     goto error;
   }
-  for (int i = 0; i < pyeclib_handle->k; i++) {
+  for (i = 0; i < pyeclib_handle->k; i++) {
     int payload_size = data_len > blocksize ? blocksize : data_len;
     char *fragment = alloc_fragment_buffer(blocksize);    
     if (NULL == fragment) {
@@ -1060,7 +1061,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   if (NULL == encoded_parity) {
     goto error;
   }
-  for (int i = 0; i < pyeclib_handle->m; i++) {
+  for (i = 0; i < pyeclib_handle->m; i++) {
     char *fragment = alloc_fragment_buffer(blocksize);
     if (NULL == fragment) {
       goto error;
@@ -1100,7 +1101,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   }
   
   /* Finalize data fragments and add them to the python list to return */
-  for (int i = 0; i < pyeclib_handle->k; i++) {
+  for (i = 0; i < pyeclib_handle->k; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(data_to_encode[i]);
     int fragment_size = blocksize + sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, i);
@@ -1114,7 +1115,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   }
   
   /* Finalize parity fragments and add them to the python list to return */
-  for (int i = 0; i < pyeclib_handle->m; i++) {
+  for (i = 0; i < pyeclib_handle->m; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(encoded_parity[i]);
     int fragment_size = blocksize + sizeof(fragment_header_t);
     set_fragment_idx(fragment_ptr, pyeclib_handle->k+i);
@@ -1134,13 +1135,13 @@ error:
   
 exit:
   if (data_to_encode) {
-    for (int i = 0; i < pyeclib_handle->k; i++) {
+    for (i = 0; i < pyeclib_handle->k; i++) {
       if (data_to_encode[i]) free_fragment_buffer(data_to_encode[i]);
     }
     free_buffer(data_to_encode);
   }
   if (encoded_parity) {
-    for (int i = 0; i < pyeclib_handle->m; i++) {
+    for (i = 0; i < pyeclib_handle->m; i++) {
       if (encoded_parity[i]) free_fragment_buffer(encoded_parity[i]);
     }
     free_buffer(encoded_parity);
@@ -1172,6 +1173,7 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   int num_fragments = 0;           /* num of fragments provided by caller */
   int num_data = 0;                /* num of fragments that are data */
   int orig_data_size = -1;         /* data size from fragment header */
+  int i = 0;                       /* a counter */
 
   /* Collect and validate the method arguments */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_list)) {
@@ -1206,7 +1208,7 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   if (NULL == data) {
     return NULL;
   }
-  for (int i = 0; i < num_fragments && num_data < pyeclib_handle->k; i++) {
+  for (i = 0; i < num_fragments && num_data < pyeclib_handle->k; i++) {
     PyObject *tmp_data = PyList_GetItem(fragment_list, i);
     char *tmp_buf;
     int index;
@@ -1257,7 +1259,7 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   ret_data_size = orig_data_size;
 
   /* Copy fragment data into cstring (fragments should be in index order) */
-  for (int i = 0; i < num_data && orig_data_size > 0; i++) {
+  for (i = 0; i < num_data && orig_data_size > 0; i++) {
     char* fragment_data = get_data_ptr_from_fragment(data[i]);
     int fragment_size = get_fragment_size(data[i]);
     int payload_size = orig_data_size > fragment_size ? fragment_size : orig_data_size;
@@ -1303,6 +1305,7 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
   int num_missing = 0;                /* num of missing fragments */
   int num_fragments;                  /* num of frags provided by caller */
   int fragment_size = 0;              /* size in bytes of fragments */
+  int i = 0;                          /* a counter */
 
   /* Collect and validate the method arguments */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_list)) {
@@ -1331,7 +1334,7 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
       
   /* Fill in the data and parity pointers to reveal missing fragments */
   num_fragments = (int) PyList_Size(fragment_list);
-  for (int i = 0; i < num_fragments; i++) {
+  for (i = 0; i < num_fragments; i++) {
     PyObject *tmp_data = PyList_GetItem(fragment_list, i);
     char *c_buf;
     int index;
@@ -1362,13 +1365,13 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
     goto error;
   } else {
     num_missing = 0;
-    for (int i = 0; i < pyeclib_handle->k; i++) {
+    for (i = 0; i < pyeclib_handle->k; i++) {
       if (data[i] == NULL) {
         missing[num_missing] = i;
         num_missing++;
       }
     }
-    for (int i = 0; i < pyeclib_handle->m; i++) {
+    for (i = 0; i < pyeclib_handle->m; i++) {
       if (parity[i] == NULL) {
         missing[num_missing] = i + pyeclib_handle->k;
         num_missing++;
@@ -1387,7 +1390,7 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
   }
   
   /* Fill in the data fragments, create zero fragment if missing */
-  for (int i = 0; i < pyeclib_handle->k; i++) {
+  for (i = 0; i < pyeclib_handle->k; i++) {
     if (data[i] != NULL) {
       /* BORROWED REF: increment ref count before inserting into list */
       Py_INCREF(data[i]);
@@ -1402,7 +1405,7 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
   }
 
   /* Fill in the parity fragments, create zero fragment if missing */
-  for (int i = 0; i < pyeclib_handle->m; i++) {
+  for (i = 0; i < pyeclib_handle->m; i++) {
     if (parity[i] != NULL) {
       /* BORROWED REF: increment ref count before inserting into list */
       Py_INCREF(parity[i]);
@@ -1417,7 +1420,7 @@ pyeclib_c_get_fragment_partition(PyObject *self, PyObject *args)
   }
 
   /* Fill in the list of missing indexes */
-  for(int i = 0;i < num_missing; i++) {
+  for (i = 0;i < num_missing; i++) {
     PyList_SET_ITEM(missing_list, i, Py_BuildValue("i", missing[i]));
   }
   
@@ -1461,7 +1464,7 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   PyObject *fragment_idx_list = NULL;   /* list of req'd indexes to return */
   int *c_missing_list = NULL;           /* c-array of missing indexes */
   int num_missing;                      /* size of passed in missing list */
-  int j = 0;                            /* a counter */
+  int i = 0, j = 0;                     /* counters */
   int k, m;                             /* EC algorithm parameters */
   unsigned long missing_bm = 0;         /* bitmap of missing indexes */
   int *fragments_needed = NULL;         /* indexes of xor code fragments */
@@ -1487,7 +1490,7 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
     return NULL;
   }
   c_missing_list[num_missing] = -1;
-  for (int i = 0; i < num_missing; i++) {
+  for (i = 0; i < num_missing; i++) {
     PyObject *obj_idx = PyList_GetItem(missing_list, i);
     long idx = PyLong_AsLong(obj_idx);
     c_missing_list[i] = (int) idx;
@@ -1503,7 +1506,7 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   switch(pyeclib_handle->type) {
     case PYECC_RS_CAUCHY_ORIG:
     case PYECC_RS_VAND:
-      for (int i = 0; i < (k + m); i++) {
+      for (i = 0; i < (k + m); i++) {
         if (!(missing_bm & (1 << i))) {
           PyList_Append(fragment_idx_list, Py_BuildValue("i", i));
           j++;
@@ -1596,6 +1599,7 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
   int *dm_ids = NULL;                   /* k length array of surviving indexes */
   int k, m, w;                          /* EC algorithm parameters */
   int ret;                              /* decode matrix creation return val */
+  int i = 0;                            /* a counter */
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OOOOii", &pyeclib_obj_handle, &data_list, 
@@ -1735,12 +1739,12 @@ error:
   
 out:
   /* Free fragment buffers that needed to be reallocated for alignment */
-  for (int i = 0; i < k; i++) {
+  for (i = 0; i < k; i++) {
     if (realloc_bm & (1 << i)) {
       free(get_fragment_ptr_from_data_novalidate(data[i]));
     }
   }
-  for (int i = 0; i < m; i++) {
+  for (i = 0; i < m; i++) {
     if (realloc_bm & (1 << (i + k))) {
       free(get_fragment_ptr_from_data_novalidate(parity[i]));
     }
@@ -1787,7 +1791,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   int missing_size;                   /* number of missing indexes */
   int orig_data_size = -1;            /* data size in bytes ,from fragment hdr */
   int k, m, w;                        /* EC algorithm parameters */
-  int j = 0;                          /* counter */
+  int i = 0, j = 0;                   /* counters */
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OOOOi", &pyeclib_obj_handle, &data_list, &parity_list, &missing_idx_list, &fragment_size)) {
@@ -1886,12 +1890,12 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   }
 
   /* Fill in the data fragments */
-  for (int i = 0; i < k; i++) {
+  for (i = 0; i < k; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(data[i]);
     PyList_SET_ITEM(list_of_strips, i, PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
   }
   /* Fill in the parity fragments */
-  for (int i = 0; i < m; i++) {
+  for (i = 0; i < m; i++) {
     char *fragment_ptr = get_fragment_ptr_from_data(parity[i]);
     PyList_SET_ITEM(list_of_strips, k + i, PY_BUILDVALUE_OBJ_LEN(fragment_ptr, fragment_size));
   }
@@ -1903,12 +1907,12 @@ error:
 
 exit:
   /* Free fragment buffers that needed to be reallocated for alignment */
-  for (int i = 0; i < k; i++) {
+  for (i = 0; i < k; i++) {
     if (realloc_bm & (1 << i)) {
       free(get_fragment_ptr_from_data_novalidate(data[i]));
     }
   }
-  for (int i = 0; i < m; i++) {
+  for (i = 0; i < m; i++) {
     if (realloc_bm & (1 << (i + k))) {
       free(get_fragment_ptr_from_data_novalidate(parity[i]));
     }
@@ -1991,6 +1995,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   int size;                                               /* size for buf allocation */
   int ret = -1;                                           /* c return value */
   PyObject *ret_obj = NULL;                               /* python long to return */
+  int i = 0;                                              /* a counter */
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_metadata_list)) {
@@ -2021,7 +2026,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   }
 
   /* Populate and order the metadata */
-  for (int i = 0; i < num_fragments; i++) {
+  for (i = 0; i < num_fragments; i++) {
     PyObject *tmp_data = PyList_GetItem(fragment_metadata_list, i);
     Py_ssize_t len = 0;
     char *c_buf = NULL;
@@ -2045,7 +2050,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     if (NULL == parity_sigs) {
       goto error;
     }
-    for (int i = 0; i < m; i++) {
+    for (i = 0; i < m; i++) {
       parity_sigs[i] = (char *) alloc_aligned_buffer16(PYCC_MAX_SIG_LEN);
       if (NULL == parity_sigs[i]) {
         for (int j = 0; j < i; j++) free(parity_sigs[j]);
@@ -2067,7 +2072,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     }
     
     /* Compare the parity of the signatures, and the signature of the parity */
-    for (int i = 0; i < m; i++) {
+    for (i = 0; i < m; i++) {
       if (memcmp(parity_sigs[i], c_fragment_signatures[k + i], PYCC_MAX_SIG_LEN) != 0) {
         ret = i;
         break;
@@ -2075,15 +2080,15 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     }
 
     /* Clean up memory used in algebraic signature checking */
-    for (int i = 0; i < m; i++) {
+    for (i = 0; i < m; i++) {
       free(parity_sigs[i]);
     }
     free_buffer(parity_sigs);
-    for (int i = 0; i < k; i++) {
+    for (i = 0; i < k; i++) {
       free(c_fragment_signatures[i]);
     }
   } else if (use_inline_chksum(pyeclib_handle)) {
-    for (int i = 0; i < num_fragments; i++) {
+    for (i = 0; i < num_fragments; i++) {
       if (c_fragment_metadata_list[i]->chksum_mismatch == 1) {
         ret = i;
         break;
