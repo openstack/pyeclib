@@ -531,8 +531,19 @@ int validate_fragment(char *buf)
 
 
 /*
- * Buffers for data, parity and missing_idxs
- * must be alloc'd by the caller.
+ * Prepares the fragments and helper data structures for decoding.  Note, 
+ * buffers for data, parity and missing_idxs must be allocated by the caller.
+ *
+ * @param *pyeclib_handle
+ * @param *data_list python list of data fragments
+ * @param *parity_list python list of parity fragments
+ * @param *missing_idx_list python list of indexes of missing fragments
+ * @param **data allocated k-length array of data buffers
+ * @param **parity allocated m-length array of parity buffers
+ * @param *missing_idxs array of missing indexes with extra space for -1 terminator
+ * @param *orig_size original size of object from the fragment header
+ * @param fragment_size integer size in bytes of fragment
+ * @return 0 on success, -1 on error
  */
 static int get_decoding_info(pyeclib_t *pyeclib_handle,
                              PyObject  *data_list, 
@@ -545,19 +556,18 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
                              int       fragment_size,
                              unsigned long long *realloc_bm)
 {
-  int i;
-  int data_size, parity_size, missing_size;
-  int orig_data_size = -1;
-  unsigned long long missing_bm;
+  int i;                          /* a counter */
+  int data_size = 0;              /* number of data fragments provided */
+  int parity_size = 0;            /* number of parity fragments provided */
+  int missing_size = 0;           /* number of missing index entries */
+  int orig_data_size = -1;        /* data size (B) from fragment header */
+  unsigned long long missing_bm;  /* bitmap form of missing indexes list */
   int needs_addr_alignment = PYECLIB_NEEDS_ADDR_ALIGNMENT(pyeclib_handle->type);
-
+  
+  /* Validate the list sizes */
   data_size = (int)PyList_Size(data_list);
   parity_size = (int)PyList_Size(parity_list);
-  missing_size = (int)PyList_Size(missing_idx_list);
-  
-  /*
-   * Validate the list sizes
-   */
+  missing_size = (int)PyList_Size(missing_idx_list);  
   if (data_size != pyeclib_handle->k) {
     return -1;
   }
@@ -565,47 +575,44 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
     return -1;
   }
   
+  /* Record missing indexes in a -1 terminated array and bitmap */
   for (i = 0; i < missing_size; i++) {
     PyObject *obj_idx = PyList_GetItem(missing_idx_list, i);
-    long idx = PyLong_AsLong(obj_idx);
-
-    missing_idxs[i] = (int)idx;
+    
+    missing_idxs[i] = (int) PyLong_AsLong(obj_idx);;
   }
   missing_idxs[i] = -1; 
-
   missing_bm = convert_list_to_bitmap(missing_idxs);
 
   /*
-   * Determine if each fragment is:
+   * Determine if each data fragment is:
    * 1.) Alloc'd: if not, alloc new buffer (for missing fragments)
    * 2.) Aligned to 16-byte boundaries: if not, alloc a new buffer
    *     memcpy the contents and free the old buffer 
    */
-  for (i=0; i < pyeclib_handle->k; i++) {
+  for (i = 0; i < pyeclib_handle->k; i++) {
     PyObject *tmp_data = PyList_GetItem(data_list, i);
     Py_ssize_t len = 0;
     PyBytes_AsStringAndSize(tmp_data, &(data[i]), &len);
     
     /*
-     * Replace with aligned buffer, if the buffer was not 
-     * aligned.  DO NOT FREE: the python GC should free
-     * the original when cleaning up 'data_list'
+     * Allocate or replace with aligned buffer if the buffer was not aligned.
+     * DO NOT FREE: the python GC should free the original when cleaning up 'data_list'
      */
     if (len == 0 || !data[i]) {
-      // Missing item has not been allocated...  Allocate it
-      data[i] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      data[i] = alloc_fragment_buffer(fragment_size - sizeof(fragment_header_t));
+      if (NULL == data[i]) {
+        return -1;
+      }
       *realloc_bm = *realloc_bm | (1 << i);
     } else if ((needs_addr_alignment && !is_addr_aligned((unsigned long)data[i], 16))) {
-      char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      char *tmp_buf = alloc_fragment_buffer(fragment_size - sizeof(fragment_header_t));
       memcpy(tmp_buf, data[i], fragment_size);
       data[i] = tmp_buf;
       *realloc_bm = *realloc_bm | (1 << i);
     }
 
-
-    /*
-     * Need to determine the size of the original data
-     */
+    /* Need to determine the size of the original data */
     if (((missing_bm & (1 << i)) == 0) && orig_data_size < 0) {
       orig_data_size = get_orig_data_size(data[i]);
       if (orig_data_size < 0) {
@@ -613,25 +620,28 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
       }
     }
 
+    /* Set the data element to the fragment payload */
     data[i] = get_data_ptr_from_fragment(data[i]);
     if (data[i] == NULL) {
       return -1;
     }
   }
 
+  /* Perform the same allocation, alignment checks on the parity fragments */
   for (i=0; i < pyeclib_handle->m; i++) {
     PyObject *tmp_parity = PyList_GetItem(parity_list, i);
     Py_ssize_t len = 0;
     PyBytes_AsStringAndSize(tmp_parity, &(parity[i]), &len);
     
     /*
-     * Replace with aligned buffer, if the buffer was not 
-     * aligned.  DO NOT FREE: the python GC should free
-     * the original when cleaning up 'data_list'
+     * Allocate or replace with aligned buffer, if the buffer was not aligned.
+     * DO NOT FREE: the python GC should free the original when cleaning up 'data_list'
      */
     if (len == 0 || !parity[i]) {
-      // Missing item has not been allocated...  Allocate it
       parity[i] = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
+      if (NULL == parity[i]) {
+        return -1;
+      }
       *realloc_bm = *realloc_bm | (1 << (pyeclib_handle->k + i));
     } else if (needs_addr_alignment && !is_addr_aligned((unsigned long)parity[i], 16)) {
       char *tmp_buf = alloc_fragment_buffer(fragment_size-sizeof(fragment_header_t));
@@ -640,6 +650,7 @@ static int get_decoding_info(pyeclib_t *pyeclib_handle,
       *realloc_bm = *realloc_bm | (1 << (pyeclib_handle->k + i));
     } 
     
+    /* Set the parity element to the fragment payload */
     parity[i] = get_data_ptr_from_fragment(parity[i]);
     if (parity[i] == NULL) {
       return -1;
