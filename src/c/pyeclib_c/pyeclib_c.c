@@ -2053,7 +2053,8 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     for (i = 0; i < m; i++) {
       parity_sigs[i] = (char *) alloc_aligned_buffer16(PYCC_MAX_SIG_LEN);
       if (NULL == parity_sigs[i]) {
-        for (int j = 0; j < i; j++) free(parity_sigs[j]);
+        int j;
+        for (j = 0; j < i; j++) free(parity_sigs[j]);
         goto error;
       } else {
         memset(parity_sigs[i], 0, PYCC_MAX_SIG_LEN);
