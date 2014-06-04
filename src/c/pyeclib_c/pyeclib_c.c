@@ -879,22 +879,23 @@ pyeclib_c_destructor(PyObject *obj)
  * @param pyeclib_obj_handle
  * @param data_len integer length of data in bytes
  * @param segment_size integer length of segment in bytes
+ * @return a python dictionary with segment information
  * 
  */
 static PyObject *
 pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle = NULL;
-  PyObject *ret_dict = NULL;
   pyeclib_t *pyeclib_handle = NULL;
-  int data_len;
-  int segment_size, last_segment_size;
-  int num_segments;
-  int fragment_size, last_fragment_size;
-  int min_segment_size;
-  int aligned_segment_size;
-  int aligned_data_len;
-
+  PyObject *ret_dict = NULL;               /* python dictionary to return */
+  int data_len;                            /* data length from user in bytes */
+  int segment_size, last_segment_size;     /* segment sizes in bytes */
+  int num_segments;                        /* total number of segments */
+  int fragment_size, last_fragment_size;   /* fragment sizes in bytes */
+  int min_segment_size;                    /* EC algorithm's min. size (B) */
+  int aligned_segment_size;                /* size (B) adjusted for addr alignment */
+  int aligned_data_len;                    /* size (B) adjusted for addr alignment */
+  
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "Oii", &pyeclib_obj_handle, &data_len, &segment_size)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
@@ -906,14 +907,10 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  /*
-   * The minimum segment size depends on the EC type
-   */
+  /* The minimum segment size depends on the EC algorithm */
   min_segment_size = get_minimum_encode_size(pyeclib_handle);
 
-  /*
-   * Get the number of segments
-   */
+  /* Get the number of segments */
   num_segments = (int)ceill((double)data_len / segment_size);
 
   /*
@@ -924,9 +921,7 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
     num_segments--;
   }
 
-  /*
-   * Compute the fragment size from the segment size
-   */
+  /* Compute the fragment size from the segment size */
   if (num_segments == 1) {
     /*
      * There is one fragment, or two fragments, where the second is 
@@ -939,14 +934,10 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      */
     aligned_data_len = get_aligned_data_size(pyeclib_handle, data_len);
 
-    /*
-     * aligned_data_len is guaranteed to be divisible by k
-     */
+    /* aligned_data_len is guaranteed to be divisible by k */
     fragment_size = aligned_data_len / pyeclib_handle->k;
 
-    /*
-     * Segment size is the user-provided segment size
-     */
+    /* Segment size is the user-provided segment size */
     segment_size = data_len;
     last_fragment_size = fragment_size;
     last_segment_size = segment_size;
@@ -958,9 +949,7 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 
     aligned_segment_size = get_aligned_data_size(pyeclib_handle, segment_size);
 
-    /*
-     * aligned_data_len is guaranteed to be divisible by k
-     */
+    /* aligned_data_len is guaranteed to be divisible by k */
     fragment_size = aligned_segment_size / pyeclib_handle->k;
 
     last_segment_size = data_len - (segment_size * (num_segments - 1)); 
@@ -970,21 +959,20 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      * with the previous fragment
      */
     if (last_segment_size < min_segment_size) {
-
       // assert(num_segments > 2)?
 
-      // Add current "last segment" to second to last segment
+      /* Add current "last segment" to second to last segment */
       num_segments--;
       last_segment_size = last_segment_size + segment_size;
     } 
     
     aligned_segment_size = get_aligned_data_size(pyeclib_handle, last_segment_size);
      
-    // Compute the last fragment size from the last segment size
+    /* Compute the last fragment size from the last segment size */
     last_fragment_size = aligned_segment_size / pyeclib_handle->k;
   }
   
-  // Add header to fragment sizes
+  /* Add header to fragment sizes */
   last_fragment_size += sizeof(fragment_header_t);
   fragment_size += sizeof(fragment_header_t);
 
