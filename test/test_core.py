@@ -24,6 +24,9 @@
 import sys
 import os
 
+import unittest
+
+
 base_c_dir = "../src/c"
 xor_code_dir = "%s/xor_codes" % (base_c_dir)
 alg_sig_dir = "%s/alg_sig" % (base_c_dir)
@@ -43,40 +46,70 @@ py_test_dirs = [
      pyeclib_core_test),
     (pyeclib_iface_test_dir,
      pyeclib_iface_test)]
+     
+
+class TestCoreC(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    @unittest.skip("Test refactoring")
+    def test_c_stuff(self):
+        self.assertTrue(True)
+        cur_dir = os.getcwd()
+        for (dir, test) in c_build_dirs:
+            self.assertEqual(0, os.system(test))
 
 
-def test_c_stuff():
-    cur_dir = os.getcwd()
-    for (dir, test) in c_build_dirs:
-        os.system(test)
+class TestCoreTest(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+    
+    @unittest.skip("Test refactoring")
+    def test_core(self):
+        self.assertTrue(True)
+        cur_dir = os.getcwd()
+        for (dir, test) in py_test_dirs:
+            print("Dir: %s, test: %s" % (dir, test))
+            """
+            os.chdir(dir)
+            ret = os.system("python %s" % test)
+            if ret != 0:
+                print("Building %s failed!!!" % (dir))
+                sys.exit(1)
+            os.system("rm -f *.pyc")
+            os.chdir(cur_dir)
+            """
 
 
-def pyeclib_core_test():
-    cur_dir = os.getcwd()
-    for (dir, test) in py_test_dirs:
-        os.chdir(dir)
-        ret = os.system("python %s" % test)
-        if ret != 0:
-            print("Building %s failed!!!" % (dir))
-            sys.exit(1)
-        os.system("rm -f *.pyc")
-        os.chdir(cur_dir)
+class TestCoreValgrind(unittest.TestCase):
+    def setUp(self):
+        pass
 
+    def tearDown(self):
+        pass
+    
+    @unittest.skipUnless(0 == os.system("which valgrind"), "requires valgrind")
+    def test_core_valgrind(self):
+        self.assertTrue(True)
+        """
+        cur_dir = os.getcwd()
+        for (dir, test) in py_test_dirs:
+            os.chdir(dir)
+            ret = os.system(
+                "valgrind --leak-check=full python %s >%s/valgrind.%s.out 2>&1" %
+                (test, cur_dir, test))
+            if ret != 0:
+                print("Building %s failed!!!" % (dir))
+                sys.exit(1)
+            os.system("rm -f *.pyc")
+            os.chdir(cur_dir)
+        """
 
-def pyeclib_core_valgrind():
-    cur_dir = os.getcwd()
-    for (dir, test) in py_test_dirs:
-        os.chdir(dir)
-        ret = os.system(
-            "valgrind --leak-check=full python %s >%s/valgrind.%s.out 2>&1" %
-            (test, cur_dir, test))
-        if ret != 0:
-            print("Building %s failed!!!" % (dir))
-            sys.exit(1)
-        os.system("rm -f *.pyc")
-        os.chdir(cur_dir)
-
-
-#test_c_stuff()
-#pyeclib_core_test()
-# pyeclib_core_valgrind()
+if __name__ == "__main__":
+    unittest.main()
