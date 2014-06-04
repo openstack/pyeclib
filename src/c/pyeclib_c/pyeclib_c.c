@@ -228,15 +228,15 @@ void * alloc_zeroed_buffer(int size)
 
 
 /**
- * Deallocate memory buffer.  This methods returns NULL so that you can free
- * and reset a buffer using a single line as follows:
+ * Deallocate memory buffer if it's not NULL.  This methods returns NULL so 
+ * that you can free and reset a buffer using a single line as follows:
  *
- * my_ptr = free_buffer(my_ptr);
+ * my_ptr = check_and_free_buffer(my_ptr);
  *
  * @return NULL
  */
 static
-void * free_buffer(void * buf)
+void * check_and_free_buffer(void * buf)
 {
   if (buf) PyMem_Free(buf);
   
@@ -348,7 +348,7 @@ PyObject * alloc_zero_string(int size)
   
   /* Create the python value to return */
   zero_string = PY_BUILDVALUE_OBJ_LEN(tmp_data, size);
-  free_buffer(tmp_data);
+  check_and_free_buffer(tmp_data);
   
   return zero_string;
 }
@@ -820,7 +820,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   /* Clean up the allocated memory on error, or update the ref count */
   if (pyeclib_obj_handle == NULL) {
     PyErr_SetString(PyECLibError, "Could not encapsulate pyeclib_handle into Python object in pyeclib.init");
-    free_buffer(pyeclib_handle);
+    check_and_free_buffer(pyeclib_handle);
   } else {
     Py_INCREF(pyeclib_obj_handle);
   }
@@ -846,7 +846,7 @@ pyeclib_c_destructor(PyObject *obj)
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Attempted to free an invalid reference to pyeclib_handle");
   } else {
-    free_buffer(pyeclib_handle);
+    check_and_free_buffer(pyeclib_handle);
   }
   
   return;
@@ -1149,13 +1149,13 @@ exit:
     for (i = 0; i < pyeclib_handle->k; i++) {
       if (data_to_encode[i]) free_fragment_buffer(data_to_encode[i]);
     }
-    free_buffer(data_to_encode);
+    check_and_free_buffer(data_to_encode);
   }
   if (encoded_parity) {
     for (i = 0; i < pyeclib_handle->m; i++) {
       if (encoded_parity[i]) free_fragment_buffer(encoded_parity[i]);
     }
-    free_buffer(encoded_parity);
+    check_and_free_buffer(encoded_parity);
   }
   
   return list_of_strips;
@@ -1282,8 +1282,8 @@ pyeclib_c_fragments_to_string(PyObject *self, PyObject *args)
   ret_string = PY_BUILDVALUE_OBJ_LEN(ret_cstring, ret_data_size);
 
 exit:
-  free_buffer(data);
-  free_buffer(ret_cstring);
+  check_and_free_buffer(data);
+  check_and_free_buffer(ret_cstring);
 
   return ret_string;
 }
@@ -1450,9 +1450,9 @@ error:
   return_lists = NULL;
 
 exit:
-  free_buffer(data);
-  free_buffer(parity);
-  free_buffer(missing);
+  check_and_free_buffer(data);
+  check_and_free_buffer(parity);
+  check_and_free_buffer(missing);
   
   return return_lists;
 }
@@ -1565,8 +1565,8 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   }
 
 exit:
-  free_buffer(c_missing_list);
-  free_buffer(fragments_needed);
+  check_and_free_buffer(c_missing_list);
+  check_and_free_buffer(fragments_needed);
 
   return fragment_idx_list;
 }
@@ -1761,11 +1761,11 @@ out:
     }
   }
 
-  free_buffer(missing_idxs);
-  free_buffer(data);
-  free_buffer(parity);
-  free_buffer(decoding_matrix);
-  free_buffer(dm_ids);
+  check_and_free_buffer(missing_idxs);
+  check_and_free_buffer(data);
+  check_and_free_buffer(parity);
+  check_and_free_buffer(decoding_matrix);
+  check_and_free_buffer(dm_ids);
 
   return reconstructed;
 }
@@ -1929,9 +1929,9 @@ exit:
     }
   }
   
-  free_buffer(missing_idxs);
-  free_buffer(data);
-  free_buffer(parity);
+  check_and_free_buffer(missing_idxs);
+  check_and_free_buffer(data);
+  check_and_free_buffer(parity);
 
   return list_of_strips;
 }
@@ -1976,7 +1976,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
     get_fragment_metadata(pyeclib_handle, data, fragment_metadata);
     ret_fragment_metadata = PY_BUILDVALUE_OBJ_LEN((char*)fragment_metadata, 
                                                    metadata_len);                                                  
-    free_buffer(fragment_metadata);
+    check_and_free_buffer(fragment_metadata);
   }
 
   return ret_fragment_metadata;
@@ -2095,7 +2095,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     for (i = 0; i < m; i++) {
       free(parity_sigs[i]);
     }
-    free_buffer(parity_sigs);
+    check_and_free_buffer(parity_sigs);
     for (i = 0; i < k; i++) {
       free(c_fragment_signatures[i]);
     }
