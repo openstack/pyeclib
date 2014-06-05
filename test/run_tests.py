@@ -77,6 +77,6 @@ def pyeclib_core_valgrind():
         os.chdir(cur_dir)
 
 
-#test_c_stuff()
+test_c_stuff()
 #pyeclib_core_test()
 # pyeclib_core_valgrind()

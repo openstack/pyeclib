@@ -55,7 +55,7 @@ class TestCoreC(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @unittest.skip("Scheduled for replacement by liberasurecode")
+    # Scheduled for replacement by liberasurecode
     def test_c_stuff(self):
         self.assertTrue(True)
         cur_dir = os.getcwd()
@@ -75,8 +75,6 @@ class TestCoreTest(unittest.TestCase):
         self.assertTrue(True)
         cur_dir = os.getcwd()
         for (dir, test) in py_test_dirs:
-            print("Dir: %s, test: %s" % (dir, test))
-            """
             os.chdir(dir)
             ret = os.system("python %s" % test)
             if ret != 0:
@@ -84,7 +82,6 @@ class TestCoreTest(unittest.TestCase):
                 sys.exit(1)
             os.system("rm -f *.pyc")
             os.chdir(cur_dir)
-            """
 
 
 class TestCoreValgrind(unittest.TestCase):
@@ -97,7 +94,6 @@ class TestCoreValgrind(unittest.TestCase):
     @unittest.skipUnless(0 == os.system("which valgrind"), "requires valgrind")
     def test_core_valgrind(self):
         self.assertTrue(True)
-        """
         cur_dir = os.getcwd()
         for (dir, test) in py_test_dirs:
             os.chdir(dir)
@@ -109,7 +105,6 @@ class TestCoreValgrind(unittest.TestCase):
                 sys.exit(1)
             os.system("rm -f *.pyc")
             os.chdir(cur_dir)
-        """
 
 if __name__ == "__main__":
     unittest.main()
