@@ -102,6 +102,7 @@ class TestPyECLibDriver(unittest.TestCase):
             os.unlink(filename)
         os.rmdir("./test_files")
 
+    @unittest.skip("Test refactoring")
     def test_small_encode(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
@@ -126,6 +127,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
                 self.assertTrue(decoded_str == encode_str)
 
+    @unittest.skip("Test refactoring")
     def test_verify_fragment_algsig_chksum_fail(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
@@ -184,6 +186,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 pyeclib_driver.verify_stripe_metadata(fragment_metadata_list)
                 != -1)
 
+    @unittest.skip("Test refactoring")
     def test_verify_fragment_inline_succeed(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
@@ -231,6 +234,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 pyeclib_driver.verify_stripe_metadata(fragment_metadata_list)
                 == -1)
 
+    @unittest.skip("Test refactoring")
     def test_verify_fragment_inline_chksum_fail(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
@@ -283,6 +287,7 @@ class TestPyECLibDriver(unittest.TestCase):
             self.assertTrue(pyeclib_driver.verify_stripe_metadata(
                 fragment_metadata_list) == fragment_to_corrupt)
 
+    @unittest.skip("Test refactoring")
     def test_verify_fragment_inline_chksum_succeed(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
@@ -325,6 +330,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 pyeclib_driver.verify_stripe_metadata(fragment_metadata_list)
                 == -1)
 
+    @unittest.skip("Test refactoring")
     def test_get_segment_info(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
@@ -405,6 +411,7 @@ class TestPyECLibDriver(unittest.TestCase):
                             last_fragment_size == len(
                                 encoded_fragments[0]))
 
+    @unittest.skip("Test refactoring")
     def test_rs(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
