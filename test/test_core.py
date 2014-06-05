@@ -49,16 +49,13 @@ py_test_dirs = [
      
 
 class TestCoreC(unittest.TestCase):
-    """
-    TODO: ensure that all these tests run without strange directory acrobatics
-    """
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    @unittest.skip("Test refactoring")
+    @unittest.skip("Scheduled for replacement by liberasurecode")
     def test_c_stuff(self):
         self.assertTrue(True)
         cur_dir = os.getcwd()
@@ -67,16 +64,13 @@ class TestCoreC(unittest.TestCase):
 
 
 class TestCoreTest(unittest.TestCase):
-    """
-    TODO: migrate src/python/test/pyeclib_test.py to /test
-    """
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    @unittest.skip("Test refactoring")
+    @unittest.skip("Scheduled for replacement by liberasurecode")
     def test_core(self):
         self.assertTrue(True)
         cur_dir = os.getcwd()
