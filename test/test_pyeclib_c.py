@@ -51,6 +51,7 @@ class Timer:
 
 
 class TestPyECLib(unittest.TestCase):
+
     def __init__(self, *args):
         self.num_datas = [12, 12, 12]
         self.num_parities = [2, 3, 4]
@@ -411,6 +412,7 @@ class TestPyECLib(unittest.TestCase):
                     self.assertTrue(success)
                     print(("Reconstruct (%s): %s" %
                            (size_str, self.get_throughput(avg_time, size_str))))
+
 
 if __name__ == "__main__":
     unittest.main()

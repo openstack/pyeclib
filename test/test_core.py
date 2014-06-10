@@ -21,70 +21,54 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import os
-
+import sys
 import unittest
 
 
+#
+# TestCoreC Test Configuration
+#
 base_c_dir = "../src/c"
 xor_code_dir = "%s/xor_codes" % (base_c_dir)
 alg_sig_dir = "%s/alg_sig" % (base_c_dir)
-pyeclib_core_dir = "%s/pyeclib" % (base_c_dir)
 xor_code_test = "/usr/local/bin/test_xor_hd_code"
 alg_sig_test = "/usr/local/bin/alg_sig_test"
-pyeclib_core_test = "pyeclib_test.py"
-pyeclib_iface_test = "ec_test.py"
-base_python_dir = "../src/python"
+c_build_dirs = [
+    (xor_code_dir, xor_code_test),
+    (alg_sig_dir, alg_sig_test)
+]
+
+#
+# TestCoreValgrind Test Configuration
+#
+base_python_dir = ".."
 pyeclib_core_test_dir = "%s/test" % (base_python_dir)
-pyeclib_iface_test_dir = "%s/pyeclib" % (base_python_dir)
-pyeclib_core_test = "pyeclib_test.py"
-pyeclib_iface_test = "ec_test.py"
-c_build_dirs = [(xor_code_dir, xor_code_test), (alg_sig_dir, alg_sig_test)]
+pyeclib_iface_test_dir = "%s/test" % (base_python_dir)
+pyeclib_core_test = "test_pyeclib_c.py"
+pyeclib_iface_test = "test_pyeclib_api.py"
 py_test_dirs = [
-    (pyeclib_core_test_dir,
-     pyeclib_core_test),
-    (pyeclib_iface_test_dir,
-     pyeclib_iface_test)]
-     
+    (pyeclib_core_test_dir, pyeclib_core_test),
+    (pyeclib_iface_test_dir, pyeclib_iface_test)
+]
+
 
 class TestCoreC(unittest.TestCase):
+
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    # Scheduled for replacement by liberasurecode
     def test_c_stuff(self):
-        self.assertTrue(True)
         cur_dir = os.getcwd()
         for (dir, test) in c_build_dirs:
             self.assertEqual(0, os.system(test))
 
 
-class TestCoreTest(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    @unittest.skip("Scheduled for replacement by liberasurecode")
-    def test_core(self):
-        self.assertTrue(True)
-        cur_dir = os.getcwd()
-        for (dir, test) in py_test_dirs:
-            os.chdir(dir)
-            ret = os.system("python %s" % test)
-            if ret != 0:
-                print("Building %s failed!!!" % (dir))
-                sys.exit(1)
-            os.system("rm -f *.pyc")
-            os.chdir(cur_dir)
-
-
 class TestCoreValgrind(unittest.TestCase):
+
     def setUp(self):
         pass
 
@@ -105,6 +89,7 @@ class TestCoreValgrind(unittest.TestCase):
                 sys.exit(1)
             os.system("rm -f *.pyc")
             os.chdir(cur_dir)
+
 
 if __name__ == "__main__":
     unittest.main()

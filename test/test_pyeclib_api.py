@@ -21,12 +21,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from pyeclib.ec_iface import ECDriver
-import unittest
 import random
 from string import ascii_letters, ascii_uppercase, digits
 import sys
 import tempfile
+import unittest
+
+from pyeclib.ec_iface import ECDriver
 
 
 if sys.version < '3':
@@ -411,6 +412,7 @@ class TestPyECLibDriver(unittest.TestCase):
                     self.assertTrue(
                         reconstructed_fragments[0] == orig_fragments[
                             idxs_to_remove[0]])
+
 
 if __name__ == '__main__':
     unittest.main()
