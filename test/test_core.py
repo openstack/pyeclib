@@ -22,35 +22,32 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys
 import unittest
 
 
 #
 # TestCoreC Test Configuration
 #
-base_c_dir = "../src/c"
-xor_code_dir = "%s/xor_codes" % (base_c_dir)
-alg_sig_dir = "%s/alg_sig" % (base_c_dir)
 xor_code_test = "/usr/local/bin/test_xor_hd_code"
 alg_sig_test = "/usr/local/bin/alg_sig_test"
-c_build_dirs = [
-    (xor_code_dir, xor_code_test),
-    (alg_sig_dir, alg_sig_test)
+c_tests = [
+    xor_code_test,
+    alg_sig_test,
 ]
 
-#
-# TestCoreValgrind Test Configuration
-#
-base_python_dir = ".."
-pyeclib_core_test_dir = "%s/test" % (base_python_dir)
-pyeclib_iface_test_dir = "%s/test" % (base_python_dir)
-pyeclib_core_test = "test_pyeclib_c.py"
-pyeclib_iface_test = "test_pyeclib_api.py"
-py_test_dirs = [
-    (pyeclib_core_test_dir, pyeclib_core_test),
-    (pyeclib_iface_test_dir, pyeclib_iface_test)
-]
+
+def valid_c_tests():
+    """
+    Asserts that the c_tests are reachable.  Returns True if all of the
+    tests exists as a file, False otherwise.
+    """
+    valid = True
+
+    for test in c_tests:
+        if not os.path.isfile(test):
+            valid = False
+
+    return valid
 
 
 class TestCoreC(unittest.TestCase):
@@ -61,16 +58,33 @@ class TestCoreC(unittest.TestCase):
     def tearDown(self):
         pass
 
+    @unittest.skipUnless(valid_c_tests(), "Error locating tests in: %s" % c_tests)
     def test_c_stuff(self):
-        cur_dir = os.getcwd()
-        for (dir, test) in c_build_dirs:
+        for test in c_tests:
             self.assertEqual(0, os.system(test))
 
 
 class TestCoreValgrind(unittest.TestCase):
 
+    def __init__(self, *args):
+        self.pyeclib_core_test = "test_pyeclib_c.py"
+        self.pyeclib_iface_test = "test_pyeclib_api.py"
+
+        unittest.TestCase.__init__(self, *args)
+
     def setUp(self):
-        pass
+        # Determine which directory we're in
+        dirs = os.getcwd().split('/')
+        if dirs[-1] == 'test':
+            self.pyeclib_test_dir = "."
+        else:
+            self.pyeclib_test_dir = "./test"
+
+        # Create the array of tests to run
+        self.py_test_dirs = [
+            (self.pyeclib_test_dir, self.pyeclib_core_test),
+            (self.pyeclib_test_dir, self.pyeclib_iface_test)
+        ]
 
     def tearDown(self):
         pass
@@ -79,17 +93,18 @@ class TestCoreValgrind(unittest.TestCase):
     def test_core_valgrind(self):
         self.assertTrue(True)
         cur_dir = os.getcwd()
-        for (dir, test) in py_test_dirs:
+        for (dir, test) in self.py_test_dirs:
             os.chdir(dir)
-            ret = os.system(
-                "valgrind --leak-check=full python %s >%s/valgrind.%s.out 2>&1" %
-                (test, cur_dir, test))
-            if ret != 0:
-                print("Building %s failed!!!" % (dir))
-                sys.exit(1)
-            os.system("rm -f *.pyc")
-            os.chdir(cur_dir)
+            if os.path.isfile(test):
+                ret = os.system(
+                    "valgrind --leak-check=full python %s >%s/valgrind.%s.out 2>&1" %
+                    (test, cur_dir, test))
 
+                self.assertEqual(0, ret)
+                os.system("rm -f *.pyc")
+                os.chdir(cur_dir)
+            else:
+                self.assertTrue(False)
 
 if __name__ == "__main__":
     unittest.main()
