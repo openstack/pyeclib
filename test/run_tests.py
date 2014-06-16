@@ -25,11 +25,7 @@ import sys
 import os
 
 base_c_dir = "../src/c"
-xor_code_dir = "%s/xor_codes" % (base_c_dir)
-alg_sig_dir = "%s/alg_sig" % (base_c_dir)
 pyeclib_core_dir = "%s/pyeclib" % (base_c_dir)
-xor_code_test = "/usr/local/bin/test_xor_hd_code"
-alg_sig_test = "/usr/local/bin/alg_sig_test"
 pyeclib_core_test = "pyeclib_test.py"
 pyeclib_iface_test = "ec_test.py"
 base_python_dir = "../src/python"
@@ -37,18 +33,11 @@ pyeclib_core_test_dir = "%s/test" % (base_python_dir)
 pyeclib_iface_test_dir = "%s/pyeclib" % (base_python_dir)
 pyeclib_core_test = "pyeclib_test.py"
 pyeclib_iface_test = "ec_test.py"
-c_build_dirs = [(xor_code_dir, xor_code_test), (alg_sig_dir, alg_sig_test)]
 py_test_dirs = [
     (pyeclib_core_test_dir,
      pyeclib_core_test),
     (pyeclib_iface_test_dir,
      pyeclib_iface_test)]
-
-
-def test_c_stuff():
-    cur_dir = os.getcwd()
-    for (dir, test) in c_build_dirs:
-        os.system(test)
 
 
 def pyeclib_core_test():
@@ -77,6 +66,5 @@ def pyeclib_core_valgrind():
         os.chdir(cur_dir)
 
 
-test_c_stuff()
 pyeclib_core_test()
 # pyeclib_core_valgrind()

@@ -25,7 +25,6 @@
 
 import os
 import platform
-import sys
 
 from distutils.command.build import build as _build
 from distutils.command.clean import clean as _clean
@@ -43,38 +42,12 @@ except ImportError:
 from setuptools import Extension
 from setuptools.command.install import install as _install
 
-#
-# Fuck Apple and their universal binaries!
-# I am not supporting powerpc, so ignoring
-# it
-#
-autoconf_arguments = "ac_none"
-
 platform_str = platform.platform()
-if platform_str.find("Darwin") > -1:
-    if platform_str.find("x86_64") > -1 and platform_str.find("i386") > -1:
-        autoconf_arguments = 'CC="gcc -arch i386 -arch x86_64" CPP="gcc -E"'
-
 default_python_incdir = get_python_inc()
 default_python_libdir = get_python_lib()
 default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
                          '/lib', '/usr/lib', '/usr/local/lib']
-
-# build CPPFLAGS, LDFLAGS, LIBS
-global cppflags
-global ldflags
-global libs
-
-c_eclib_dir = "c_eclib-0.9"
-
-
-def _construct_jerasure_buildenv():
-    _cppflags = _read_file_as_str("%s/._cppflags" % c_eclib_dir)
-    _ldflags = _read_file_as_str("%s/._ldflags" % c_eclib_dir)
-    _libs = _read_file_as_str("%s/._libs" % c_eclib_dir)
-    return _cppflags, _ldflags, _libs
-
 
 # utility routine
 def _read_file_as_str(name):
@@ -86,27 +59,12 @@ def _read_file_as_str(name):
 class build(_build):
 
     def run(self):
-        ret = os.system('(cd %s && chmod 755 build-c_eclib.sh && \
-                         ./build-c_eclib.sh "%s" %s)' %
-                        (c_eclib_dir, autoconf_arguments, _exec_prefix))
-        if ret != 0:
-            sys.exit(ret)
-
-        cppflags, ldflags, libs = _construct_jerasure_buildenv()
-        os.environ['CPPFLAGS'] = cppflags
-        os.environ['LDFLAGS'] = ldflags
-        os.environ['LIBS'] = libs
-
         _build.run(self)
 
 
 class clean(_clean):
 
     def run(self):
-        ret = os.system('(cd %s && chmod 755 clean-c_eclib.sh && \
-                          ./clean-c_eclib.sh)' % c_eclib_dir)
-        if ret != 0:
-            sys.exit(2)
         _clean.run(self)
 
 
@@ -139,12 +97,6 @@ class install(_install):
         # exception is "/usr"
         if installroot.startswith("/usr"):
             installroot = "/"
-
-        ret = os.system('(cd %s && chmod 755 install-c_eclib.sh && \
-                        ./install-c_eclib.sh %s)' %
-                        (c_eclib_dir, installroot))
-        if ret != 0:
-            sys.exit(ret)
 
         default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
         _install.run(self)
@@ -193,13 +145,13 @@ module = Extension('pyeclib_c',
                                   ('MINOR VERSION', '9')],
                    include_dirs=[default_python_incdir,
                                  '/usr/local/include',
+                                 '/usr/local/include/jerasure',
                                  '/usr/include',
                                  'src/c/pyeclib_c',
-                                 '%s/include' % c_eclib_dir,
                                  '/usr/local/include'],
                    library_dirs=default_library_paths,
                    runtime_library_dirs=default_library_paths,
-                   libraries=['Jerasure', 'Xorcode', 'alg_sig'],
+                   libraries=['Jerasure', 'erasurecode'],
                    # The extra arguments are for debugging
                    # extra_compile_args=['-g', '-O0'],
                    extra_link_args=['-Wl,-rpath,%s' %
