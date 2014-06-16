@@ -1,17 +1,19 @@
-This is v0.9 of PyECLib.  This library provides a simple Python interface for
+This is v0.10 of PyECLib.  This library provides a simple Python interface for
 implementing erasure codes and is known to work with Python v2.6, 2.7 and 3.x.
 
-To obtain the best possible performance, the underlying erasure code algorithms 
-are written in C.  Please let us know if you have any other issues building or
-installing (email: kmgreen2@gmail.com or tusharsg@gmail.com).
+To obtain the best possible performance, the library utilizes liberasurecode,
+which is a C based erasure code library.  Please let us know if you have any
+other issues building or installing (email: kmgreen2@gmail.com or
+tusharsg@gmail.com).
 
-This library makes use of Jerasure for Reed-Solomon and provides its own flat
-XOR-based erasure code encoder and decoder.  Currently, it implements a
-specific class of HD Combination Codes (see "Flat XOR-based erasure codes in
-storage systems: Constructions, efficient recovery, and tradeoffs" in IEEE MSST
-2010).  These codes are well-suited to archival use-cases, have a simple
-construction and require a minimum number of participating disks during
-single-disk reconstruction (think XOR-based LRC code).
+This library makes use of Jesasure for Reed-Solomon as implemented by the
+liberasurecode library and provides its' own flat XOR-based erasure code
+encoder and decoder.  Currently, it implements a specific class of HD
+Combination Codes (see "Flat XOR-based erasure codes in storage systems:
+Constructions, efficient recovery, and tradeoffs" in IEEE MSST 2010).  These
+codes are well-suited to archival use-cases, have a simple construction and
+require a minimum number of participating disks during single-disk
+reconstruction (think XOR-based LRC code).
 
 Examples of using this library are provided in "tools" directory:
 
@@ -111,10 +113,11 @@ Quick Start:
 
   Standard stuff to install::
   
-    ``Python 2.6``, ``2.7`` or ``3.x`` (including development packages) and ``argparse``.
+    ``Python 2.6``, ``2.7`` or ``3.x`` (including development packages), ``argparse`` and ``liberasurecode``.
 
-  This package includes *c_eclib*, which contains a few C libraries used by
-  PyECLib.  These are built when running the PyECLib install (see below).
+
+  As mentioned above, PyECLib depends on the installation of the liberasurecde library (liberasurecode
+  can be found at http://bitbucket.org/elambert/liberasurecode).
 
 
   Install PyECLib::
@@ -123,9 +126,7 @@ Quick Start:
 
   Run test suite included::
 
-    $ (cd test && \
-       python run_tests.py && \
-       ./ec_pyeclib_file_test.sh)
+    $ sudo python setup.py test && (cd test; ./ec_pyeclib_file_test.sh)
 
   If all of this works, then you should be good to go.  If not, send us an email!
 
@@ -140,4 +141,4 @@ Quick Start:
     $ ldconfig
 
 --
-0.9
+0.10
