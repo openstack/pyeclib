@@ -25,45 +25,6 @@ import os
 import unittest
 
 
-#
-# TestCoreC Test Configuration
-#
-xor_code_test = "/usr/local/bin/test_xor_hd_code"
-alg_sig_test = "/usr/local/bin/alg_sig_test"
-c_tests = [
-    xor_code_test,
-    alg_sig_test,
-]
-
-
-def valid_c_tests():
-    """
-    Asserts that the c_tests are reachable.  Returns True if all of the
-    tests exists as a file, False otherwise.
-    """
-    valid = True
-
-    for test in c_tests:
-        if not os.path.isfile(test):
-            valid = False
-
-    return valid
-
-
-class TestCoreC(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    @unittest.skipUnless(valid_c_tests(), "Error locating tests in: %s" % c_tests)
-    def test_c_stuff(self):
-        for test in c_tests:
-            self.assertEqual(0, os.system(test))
-
-
 class TestCoreValgrind(unittest.TestCase):
 
     def __init__(self, *args):
