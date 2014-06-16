@@ -1,4 +1,3 @@
 recursive-include src *
-recursive-include c_eclib-0.9 *
 recursive-include test *
 recursive-include tools *
