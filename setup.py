@@ -175,4 +175,5 @@ setup(name='PyECLib',
       packages=['pyeclib'],
       package_dir={'pyeclib': 'src/python/pyeclib'},
       cmdclass={'build': build, 'install': install, 'clean': clean},
-      py_modules=['pyeclib.ec_iface', 'pyeclib.core'])
+      py_modules=['pyeclib.ec_iface', 'pyeclib.core'],
+      test_suite='test')
