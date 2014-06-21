@@ -22,8 +22,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pyeclib_c
 import math
+import pyeclib_c
 
 #
 # Generic ECPyECLibException
@@ -141,14 +141,14 @@ class ECPyECLibDriver(object):
             ret_string = pyeclib_c.fragments_to_string(
                 self.handle,
                 fragment_payloads)
-        except Exception as e:
+        except Exception:
             raise ECPyECLibException("Error in ECPyECLibDriver.decode")
 
         if ret_string is None:
             (data_frags,
              parity_frags,
              missing_idxs) = pyeclib_c.get_fragment_partition(
-                self.handle, fragment_payloads)
+                 self.handle, fragment_payloads)
             decoded_fragments = pyeclib_c.decode(
                 self.handle, data_frags, parity_frags, missing_idxs,
                 len(data_frags[0]))
@@ -172,7 +172,7 @@ class ECPyECLibDriver(object):
             (data_frags,
              parity_frags,
              missing_idxs) = pyeclib_c.get_fragment_partition(
-                self.handle, fragment_payloads)
+                 self.handle, fragment_payloads)
             reconstructed = pyeclib_c.reconstruct(
                 self.handle, data_frags, parity_frags, missing_idxs,
                 index, len(data_frags[0]))
@@ -230,8 +230,7 @@ class ECNullDriver(object):
 class ECStripingDriver(object):
 
     def __init__(self, k, m):
-        """
-        Stripe an arbitrary-sized string into k fragments
+        """Stripe an arbitrary-sized string into k fragments
         :param k: the number of data fragments to stripe
         :param m: the number of parity fragments to stripe
         :raises: ECPyECLibException if there is an error during encoding
@@ -244,8 +243,7 @@ class ECStripingDriver(object):
         self.m = m
 
     def encode(self, data_bytes):
-        """
-        Stripe an arbitrary-sized string into k fragments
+        """Stripe an arbitrary-sized string into k fragments
         :param data_bytes: the buffer to encode
         :returns: a list of k buffers (data only)
         :raises: ECPyECLibException if there is an error during encoding
@@ -267,8 +265,7 @@ class ECStripingDriver(object):
         return fragments
 
     def decode(self, fragment_payloads):
-        """
-        Convert a k-fragment data stripe into a string
+        """Convert a k-fragment data stripe into a string
         :param fragment_payloads: fragments (in order) to convert into a string
         :returns: a string containing the original data
         :raises: ECPyECLibException if there is an error during decoding
@@ -288,8 +285,7 @@ class ECStripingDriver(object):
 
     def reconstruct(self, available_fragment_payloads,
                     missing_fragment_indexes):
-        """
-        We cannot reconstruct a fragment using other fragments.  This means
+        """We cannot reconstruct a fragment using other fragments.  This means
         that reconstruction means all fragments must be specified, otherwise we
         cannot reconstruct and must raise an error.
         :param available_fragment_payloads: available fragments (in order)
@@ -305,25 +301,23 @@ class ECStripingDriver(object):
         return available_fragment_payloads
 
     def fragments_needed(self, missing_fragment_indexes):
-        """
-        By definition, all missing fragment indexes are needed to reconstruct,
-        so just return the list handed to this function.
+        """By definition, all missing fragment indexes are needed to
+        reconstruct, so just return the list handed to this function.
         :param missing_fragment_indexes: indexes of missing fragments
         :returns: missing_fragment_indexes
         """
         return missing_fragment_indexes
 
     def get_metadata(self, fragment):
-        """
-        This driver does not include fragment metadata, so return empty string
+        """This driver does not include fragment metadata, so return empty
+        string
         :param fragment: a fragment
         :returns: empty string
         """
         return ''
 
     def verify_stripe_metadata(self, fragment_metadata_list):
-        """
-        This driver does not include fragment metadata, so return true
+        """This driver does not include fragment metadata, so return true
         :param fragment_metadata_list: a list of fragments
         :returns: True
         """
