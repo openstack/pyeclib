@@ -1,4 +1,6 @@
-/* * Copyright (c) 2013, Kevin Greenan (kmgreen2@gmail.com)
+/* 
+ * Copyright (c) 2013-2014, Kevin Greenan (kmgreen2@gmail.com)
+ * Copyright (c) 2014, Tushar Gohad (tusharsg@gmail.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -163,20 +165,6 @@ static unsigned long convert_list_to_bitmap(int *list)
   } 
 
   return bm;
-}
-
-/*
- * Convert the string ECC type to the enum value
- */
-static pyeclib_type_t get_ecc_type(const char *str_type)
-{
-  int i;
-  for (i=0; i < PYECC_NUM_TYPES; i++) {
-    if (strcmp(str_type, pyeclib_type_str[i]) == 0) {
-      return i; 
-    }
-  }
-  return PYECC_NOT_FOUND;
 }
 
 static

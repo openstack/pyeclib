@@ -1,4 +1,6 @@
-/* * Copyright (c) 2013, Kevin Greenan (kmgreen2@gmail.com)
+/* 
+ * Copyright (c) 2013-2014, Kevin Greenan (kmgreen2@gmail.com)
+ * Copyright (c) 2014, Tushar Gohad (tusharsg@gmail.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,14 +27,61 @@
 #ifndef __PYEC_LIB_C_H_
 #define __PYEC_LIB_C_H_
 
-typedef enum { PYECC_RS_VAND, PYECC_RS_CAUCHY_ORIG, PYECC_XOR_HD_4, PYECC_XOR_HD_3, PYECC_NUM_TYPES, PYECC_NOT_FOUND } pyeclib_type_t;
+/* 
+ * Make sure these enum values match those exposed from the Python EC interface
+ * src/python/pyeclib/ec_iface.py
+ */
+typedef enum {
+    PYECC_NOT_FOUND = 0,
+    PYECC_RS_VAND = 1, 
+    PYECC_RS_CAUCHY_ORIG = 2,
+    PYECC_XOR_HD_3 = 3, 
+    PYECC_XOR_HD_4 = 4, 
+    PYECC_NUM_TYPES = 4, 
+} pyeclib_type_t;
 
-const char *pyeclib_type_str[] = { "rs_vand", "rs_cauchy_orig", "flat_xor_4", "flat_xor_3" };
-const int pyeclib_type_word_size_bytes[] = { sizeof(long), sizeof(long), sizeof(long), sizeof(long) };
+const char *pyeclib_type_str[] = { 
+    "not_found",
+    "rs_vand", 
+    "rs_cauchy_orig", 
+    "flat_xor_3",
+    "flat_xor_4", 
+};
 
-// Unconditionally enforce alignment for now...  This is needed for the SIMD extentions.
+/*
+ * Convert the string ECC type to the enum value
+ * Start lookup at index 1
+ */
+static inline
+pyeclib_type_t get_ecc_type(const char *str_type)
+{
+  int i;
+  for (i = 1; i <= PYECC_NUM_TYPES; i++) {
+    if (strcmp(str_type, pyeclib_type_str[i]) == 0) {
+      return i; 
+    }
+  }
+  return PYECC_NOT_FOUND;
+}
+
+const int pyeclib_type_word_size_bytes[] = { 
+    0,
+    sizeof(long),   /* rs_vand */
+    sizeof(long),   /* rs_cauchy_orig */
+    sizeof(long),   /* flat_xor_3 */
+    sizeof(long)    /* flat_xor_4 */
+};
+
+// Unconditionally enforce alignment for now.
+// This is needed for the SIMD extentions.
 // TODO (kmg): Parse cpuinfo and determine if it is necessary...
-const int pyeclib_type_needs_addr_align[] = { 1, 1, 1, 1 };
+const int pyeclib_type_needs_addr_align[] = { 
+    -1, 
+     1, 
+     1, 
+     1, 
+     1 
+};
 
 #define PYECC_FLAGS_MASK          0x1
 #define PYECC_FLAGS_READ_VERIFY   0x1
