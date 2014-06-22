@@ -1,4 +1,5 @@
-# Copyright (c) 2013, Kevin Greenan (kmgreen2@gmail.com)
+# Copyright (c) 2013-2014, Kevin Greenan (kmgreen2@gmail.com)
+# Copyright (c) 2014, Tushar Gohad (tushar.gohad@intel.com)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,8 +22,39 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from enum import Enum
+from enum import unique
 import sys
-import types
+import traceback
+
+
+@unique
+class PyECLibEnum(Enum):
+
+    def describe(self):
+        # returns supported types
+        return list(self)
+
+    def __str__(self):
+        return "%s: %d" % (self.name, self.value)
+
+
+# Note: the Enum start value defaults to 1 as the starting value and not 0
+# 0 is False in the boolean sense but enum members evaluate to True
+class PyECLib_EC_Types(PyECLibEnum):
+    rs_vand = 1
+    rs_cauchy_orig = 2
+    flat_xor_3 = 3
+    flat_xor_4 = 4
+
+
+# Note: the Enum start value defaults to 1 as the starting value and not 0
+# 0 is False in the boolean sense but enum members evaluate to True
+class PyECLib_HDRCHKSUM_Types(PyECLibEnum):
+    none = 1
+    inline = 2
+    algsig = 3
+
 
 #
 # Generic ECDriverException
@@ -59,6 +91,7 @@ def import_class(import_str):
 def create_instance(import_str, *args, **kwargs):
     """
     Returns instance of class which imported by import path.
+
     :param import_str: import path of class
     :param \*args: indexed arguments for new instance
     :param \*\*kwargs: keyword arguments for new instance
@@ -84,10 +117,14 @@ class ECDriver(object):
         for (key, value) in kwargs.items():
             if key == "k":
                 self.k = int(value)
-            if key == "m":
+            elif key == "m":
                 self.m = int(value)
-            if key == "w":
+            elif key == "w":
                 self.w = int(value)
+            elif key == "ec_type":
+                self.ec_type = value
+            elif key == "chksum_type":
+                self.chksum_type = value
 
         if library_import_str is not None:
             self.library_import_str = library_import_str
