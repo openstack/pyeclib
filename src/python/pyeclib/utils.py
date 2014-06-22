@@ -22,6 +22,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import sys
+import traceback
+
 
 def positive_int_value(param):
     # Returns value as a positive int or raises ValueError otherwise
@@ -33,3 +36,40 @@ def positive_int_value(param):
         # and AssertionError for values <= 0
         raise ValueError('Must be an integer > 0, not "%s".' % param)
     return value
+
+
+def import_class(import_str):
+    """
+    Returns a class from a string that specifies a module and/or class
+
+    :param import_str: import path, e.g. 'httplib.HTTPConnection'
+    :returns imported object
+    :raises: ImportedError if the class does not exist or the path is invalid
+    """
+    (mod_str, separator, class_str) = import_str.rpartition('.')
+    try:
+        __import__(mod_str)
+        return getattr(sys.modules[mod_str], class_str)
+    except (ValueError, AttributeError) as e:
+        raise ImportError('Class %s cannot be found (%)' %
+                          (class_str,
+                           traceback.format_exception(*sys.exc_info())))
+
+
+def create_instance(import_str, *args, **kwargs):
+    """
+    Returns instance of class which imported by import path.
+
+    :param import_str: import path of class
+    :param \*args: indexed arguments for new instance
+    :param \*\*kwargs: keyword arguments for new instance
+    :returns: instance of imported class which instantiated with
+    arguments *args and **kwargs
+    """
+    try:
+        object_class = import_class(import_str)
+    except Exception as e:
+        raise
+    instance = object_class(*args, **kwargs)
+
+    return instance
