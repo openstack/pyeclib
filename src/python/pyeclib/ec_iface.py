@@ -81,8 +81,6 @@ class ECDriver(object):
                 self.k = int(value)
             elif key == "m":
                 self.m = int(value)
-            elif key == "w":
-                self.w = int(value)
             elif key == "ec_type":
                 self.ec_type = value
             elif key == "chksum_type":
