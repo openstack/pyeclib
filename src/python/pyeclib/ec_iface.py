@@ -38,6 +38,15 @@ class PyECLibEnum(Enum):
         # returns supported types
         return list(self)
 
+    @classmethod
+    def is_member(cls, name):
+        # returns True if name is a valid member of the enum
+        try:
+            cls.__getattr__(name)
+        except AttributeError:
+            return False
+        return True
+
     def __str__(self):
         return "%s: %d" % (self.name, self.value)
 
