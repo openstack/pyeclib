@@ -21,7 +21,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ec_iface import PyECLib_EC_Types
 from ec_iface import PyECLib_HDRCHKSUM_Types
 import math
 import pyeclib_c
@@ -29,11 +28,8 @@ import sys
 
 pyver = float('%s.%s' % sys.version_info[:2])
 
-#
+
 # Generic ECPyECLibException
-#
-
-
 class ECPyECLibException(Exception):
 
     def __init__(self, error_str):
@@ -45,35 +41,24 @@ class ECPyECLibException(Exception):
 
 class ECPyECLibDriver(object):
 
-    def __init__(self, k, m, ec_type, chksum_type="none"):
+    def __init__(self, k, m, ec_type,
+                 chksum_type=PyECLib_HDRCHKSUM_Types.inline):
         self.k = k
         self.m = m
-
-        if PyECLib_EC_Types.is_member(ec_type):
-            self.ec_type = ec_type
-        else:
-            raise ECPyECLibException("%s is not a valid EC type for PyECLib!" %
-                                     ec_type)
-
-        if PyECLib_HDRCHKSUM_Types.is_member(chksum_type):
-            self.chksum_type = chksum_type
-        else:
-            raise ECPyECLibException(
-                "%s is not a valid checksum type for PyECLib!")
+        self.ec_type = ec_type
+        self.chksum_type = chksum_type
 
         self.inline_chksum = 0
         self.algsig_chksum = 0
-        if self.chksum_type == PyECLib_HDRCHKSUM_Types.inline:
+        if self.chksum_type is PyECLib_HDRCHKSUM_Types.inline:
             self.inline_chksum = 1
-            self.algsig_chksum = 0
-        elif self.chksum_type == PyECLib_HDRCHKSUM_Types.algsig:
-            self.inline_chksum = 0
+        elif self.chksum_type is PyECLib_HDRCHKSUM_Types.algsig:
             self.algsig_chksum = 1
 
         self.handle = pyeclib_c.init(
             self.k,
             self.m,
-            self.ec_type,
+            self.ec_type.name,
             self.inline_chksum,
             self.algsig_chksum)
 
@@ -140,7 +125,7 @@ class ECPyECLibDriver(object):
 
 class ECNullDriver(object):
 
-    def __init__(self, k, m):
+    def __init__(self, k, m, ec_type=None, chksum_type=None):
         self.k = k
         self.m = m
 
@@ -173,7 +158,7 @@ class ECNullDriver(object):
 #
 class ECStripingDriver(object):
 
-    def __init__(self, k, m):
+    def __init__(self, k, m, ec_type=None, chksum_type=None):
         """Stripe an arbitrary-sized string into k fragments
         :param k: the number of data fragments to stripe
         :param m: the number of parity fragments to stripe

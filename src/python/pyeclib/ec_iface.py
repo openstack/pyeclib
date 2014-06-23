@@ -100,6 +100,8 @@ class ECDriver(object):
     def __init__(self, library_import_str, *args, **kwargs):
         self.k = -1
         self.m = -1
+        self.ec_type = None
+        self.chksum_type = None
         self.library_import_str = None
         for (key, value) in kwargs.items():
             if key == "k":
@@ -115,9 +117,19 @@ class ECDriver(object):
                     raise ECDriverError(
                         "Invalid number of data fragments (m)")
             elif key == "ec_type":
-                self.ec_type = value
+                if PyECLib_EC_Types.has_enum(value):
+                    self.ec_type = \
+                        PyECLib_EC_Types.get_by_name(value)
+                else:
+                    raise ECDriverError(
+                        "%s is not a valid EC type for PyECLib!" % value)
             elif key == "chksum_type":
-                self.chksum_type = value
+                if PyECLib_HDRCHKSUM_Types.has_enum(value):
+                    self.chksum_type = \
+                        PyECLib_HDRCHKSUM_Types.get_by_name(value)
+                else:
+                    raise ECDriverError(
+                        "%s is not a valid checksum type for PyECLib!" % value)
 
         if library_import_str is not None:
             self.library_import_str = library_import_str
@@ -126,13 +138,14 @@ class ECDriver(object):
                 "Library import string (library_import_str) was not specified "
                 "and is a required argument!")
         #
-        # We require keyword arguments to prevent ambiguity between EC libs
+        # Instantiate EC backend driver
         #
         self.ec_lib_reference = create_instance(
             library_import_str,
-            *args,
-            **kwargs)
-
+            k=self.k,
+            m=self.m,
+            ec_type=self.ec_type,
+            chksum_type=self.chksum_type)
         #
         # Verify that the imported library implements the required functions
         #
