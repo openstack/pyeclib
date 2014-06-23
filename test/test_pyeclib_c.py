@@ -58,7 +58,7 @@ class TestPyECLib(unittest.TestCase):
         self.iterations = 100
 
         # EC algorithm and config parameters
-        self.rs_types = [("rs_vand", 16), ("rs_cauchy_orig", 4)]
+        self.rs_types = [("rs_vand"), ("rs_cauchy_orig")]
         self.xor_types = [("flat_xor_4", 12, 6, 4),
                           ("flat_xor_4", 10, 5, 4),
                           ("flat_xor_3", 10, 5, 3)]
@@ -111,13 +111,14 @@ class TestPyECLib(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def time_encode(self, num_data, num_parity, w, ec_type, file_size, iterations):
+    def time_encode(self, num_data, num_parity, ec_type,
+                    file_size, iterations):
         """
         :return average encode time
         """
         timer = Timer()
         tsum = 0
-        handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type)
         whole_file_bytes = self.get_tmp_file(file_size).read()
 
         timer.start()
@@ -128,14 +129,14 @@ class TestPyECLib(unittest.TestCase):
         return tsum / iterations
 
     def time_decode(self,
-                    num_data, num_parity, w, ec_type,
+                    num_data, num_parity, ec_type,
                     file_size, iterations, hd):
         """
         :return 2-tuple, (success, average decode time)
         """
         timer = Timer()
         tsum = 0
-        handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type)
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
@@ -179,14 +180,14 @@ class TestPyECLib(unittest.TestCase):
         return success, tsum / iterations
 
     def time_reconstruct(self,
-                         num_data, num_parity, w, ec_type,
+                         num_data, num_parity, ec_type,
                          file_size, iterations):
         """
         :return 2-tuple, (success, average reconstruct time)
         """
         timer = Timer()
         tsum = 0
-        handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type)
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
@@ -242,35 +243,34 @@ class TestPyECLib(unittest.TestCase):
             type_str = "%s" % (ec_type)
 
             for size_str in self.sizes:
-                avg_time = self.time_encode(k, m, 32,
-                                            type_str, size_str,
+                avg_time = self.time_encode(k, m, type_str,
+                                            size_str,
                                             self.iterations)
                 print("Encode (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
             for size_str in self.sizes:
-                success, avg_time = self.time_decode(k, m, 32,
-                                                     type_str, size_str,
+                success, avg_time = self.time_decode(k, m, type_str,
+                                                     size_str,
                                                      self.iterations, 3)
                 self.assertTrue(success)
                 print("Decode (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
             for size_str in self.sizes:
-                success, avg_time = self.time_reconstruct(k, m, 32,
-                                                          type_str, size_str,
+                success, avg_time = self.time_reconstruct(k, m, type_str,
+                                                          size_str,
                                                           self.iterations)
                 self.assertTrue(success)
                 print("Reconstruct (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
-    def _test_get_fragment_partition(self,
-                                     num_data, num_parity, w, ec_type,
+    def _test_get_fragment_partition(self, num_data, num_parity, ec_type,
                                      file_size, iterations):
         """
         :return boolean, True if all tests passed
         """
-        handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type)
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
@@ -302,12 +302,12 @@ class TestPyECLib(unittest.TestCase):
             return success
 
     def _test_fragments_to_string(self,
-                                  num_data, num_parity, w, ec_type,
+                                  num_data, num_parity, ec_type,
                                   file_size):
         """
         :return boolean, True if all tests passed
         """
-        handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type)
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
@@ -322,11 +322,11 @@ class TestPyECLib(unittest.TestCase):
 
         return success
 
-    def _test_get_required_fragments(self, num_data, num_parity, w, ec_type):
+    def _test_get_required_fragments(self, num_data, num_parity, ec_type):
         """
         :return boolean, True if all tests passed
         """
-        handle = pyeclib_c.init(num_data, num_parity, w, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type)
         success = True
 
         #
@@ -359,14 +359,14 @@ class TestPyECLib(unittest.TestCase):
         return success
 
     def test_rs_code(self):
-        for (ec_type, w) in self.rs_types:
-            print(("\nRunning tests for %s w=%d" % (ec_type, w)))
+        for ec_type in self.rs_types:
+            print(("\nRunning tests for %s" % (ec_type)))
 
             for i in range(len(self.num_datas)):
                 for size_str in self.sizes:
                     success = self._test_get_fragment_partition(self.num_datas[i],
                                                                 self.num_parities[i],
-                                                                w, ec_type, size_str,
+                                                                ec_type, size_str,
                                                                 self.iterations)
                     self.assertTrue(success)
 
@@ -374,20 +374,20 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     success = self._test_fragments_to_string(self.num_datas[i],
                                                              self.num_parities[i],
-                                                             w, ec_type, size_str)
+                                                             ec_type, size_str)
                     self.assertTrue(success)
 
             for i in range(len(self.num_datas)):
                 success = self._test_get_required_fragments(self.num_datas[i],
                                                             self.num_parities[i],
-                                                            w, ec_type)
+                                                            ec_type)
                 self.assertTrue(success)
 
             for i in range(len(self.num_datas)):
                 for size_str in self.sizes:
                     avg_time = self.time_encode(self.num_datas[i],
                                                 self.num_parities[i],
-                                                w, ec_type, size_str,
+                                                ec_type, size_str,
                                                 self.iterations)
                     print(("Encode (%s): %s" %
                            (size_str, self.get_throughput(avg_time, size_str))))
@@ -396,7 +396,7 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     success, avg_time = self.time_decode(self.num_datas[i],
                                                          self.num_parities[i],
-                                                         w, ec_type, size_str,
+                                                         ec_type, size_str,
                                                          self.iterations,
                                                          self.num_parities[i] + 1)
                     self.assertTrue(success)
@@ -407,7 +407,7 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     success, avg_time = self.time_reconstruct(self.num_datas[i],
                                                               self.num_parities[i],
-                                                              w, ec_type, size_str,
+                                                              ec_type, size_str,
                                                               self.iterations)
                     self.assertTrue(success)
                     print(("Reconstruct (%s): %s" %
@@ -416,4 +416,3 @@ class TestPyECLib(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
