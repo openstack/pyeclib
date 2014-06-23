@@ -21,10 +21,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from ec_iface import PyECLib_EC_Types
+from ec_iface import PyECLib_HDRCHKSUM_Types
 import math
 import pyeclib_c
 import sys
-
 
 pyver = float('%s.%s' % sys.version_info[:2])
 
@@ -48,12 +49,12 @@ class ECPyECLibDriver(object):
         self.k = k
         self.m = m
 
-        if ec_type in self.ec_types:
+        if ec_type in PyECLib_EC_Types:
             self.ec_type = ec_type
         else:
             raise ECPyECLibException("%s is not a valid EC type for PyECLib!")
 
-        if chksum_type in self.chksum_types:
+        if chksum_type in PyECLib_HDRCHKSUM_Types:
             self.chksum_type = chksum_type
         else:
             raise ECPyECLibException(
@@ -61,10 +62,10 @@ class ECPyECLibDriver(object):
 
         self.inline_chksum = 0
         self.algsig_chksum = 0
-        if self.chksum_type == self.chksum_inline:
+        if self.chksum_type == PyECLib_HDRCHKSUM_Types.inline:
             self.inline_chksum = 1
             self.algsig_chksum = 0
-        elif self.chksum_type == self.chksum_algsig:
+        elif self.chksum_type == PyECLib_HDRCHKSUM_Types.algsig:
             self.inline_chksum = 0
             self.algsig_chksum = 1
 
