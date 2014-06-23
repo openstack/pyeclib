@@ -22,10 +22,15 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import sys
 import unittest
 
+run_under_valgrind = False
+test_cmd_prefix = ""
+log_filename_prefix = ""
 
-class TestCoreValgrind(unittest.TestCase):
+
+class TestCore(unittest.TestCase):
 
     def __init__(self, *args):
         self.pyeclib_core_test = "test_pyeclib_c.py"
@@ -49,23 +54,36 @@ class TestCoreValgrind(unittest.TestCase):
 
     def tearDown(self):
         pass
-    
-    @unittest.skipUnless(0 == os.system("which valgrind"), "requires valgrind")
-    def test_core_valgrind(self):
+
+    def test_core(self):
         self.assertTrue(True)
         cur_dir = os.getcwd()
+        print("\n")
         for (dir, test) in self.py_test_dirs:
+            sys.stdout.write("Running test %s ... " % test)
+            sys.stdout.flush()
             os.chdir(dir)
             if os.path.isfile(test):
                 ret = os.system(
-                    "valgrind --leak-check=full python %s >%s/valgrind.%s.out 2>&1" %
-                    (test, cur_dir, test))
+                    "%s python %s >%s/%s.%s.out 2>&1" %
+                    (test_cmd_prefix, test, cur_dir,
+                     log_filename_prefix, test))
 
                 self.assertEqual(0, ret)
                 os.system("rm -f *.pyc")
                 os.chdir(cur_dir)
+                print('ok')
             else:
                 self.assertTrue(False)
+                print('failed')
+
 
 if __name__ == "__main__":
-    unittest.main()
+    if '_valgrind' in sys.argv[0]:
+        if (0 != os.system("which valgrind")):
+            print("--valgrind option requires valgrind program installed")
+            sys.exit(-1)
+        run_under_valgrind = True
+        test_cmd_prefix = "valgrind --leak-check=full "
+        log_filename_prefix = "valgrind"
+    unittest.main(verbosity=2)
