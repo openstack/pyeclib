@@ -31,6 +31,9 @@
  * Make sure these enum values match those exposed from the Python EC interface
  * src/python/pyeclib/ec_iface.py
  */
+#define PYECC_MAX_DATA              32
+#define PYECC_MAX_PARITY            32
+
 typedef enum {
     PYECC_NOT_FOUND = 0,
     PYECC_RS_VAND = 1, 
@@ -83,15 +86,29 @@ const int pyeclib_type_needs_addr_align[] = {
      1 
 };
 
-#define PYECC_FLAGS_MASK          0x1
-#define PYECC_FLAGS_READ_VERIFY   0x1
-#define PYECC_HANDLE_NAME "pyeclib_handle"
-#define PYECC_HEADER_MAGIC  0xb0c5ecc
-#define PYECC_CAUCHY_PACKETSIZE sizeof(long) * 128
-#define PYECC_MAX_DATA 32
-#define PYECC_MAX_PARITY 32
+typedef struct pyeclib_s
+{
+  int k;
+  int m;
+  int w;
+  int *matrix;
+  int *bitmatrix;
+  int **schedule;
+  xor_code_t *xor_code_desc;
+  alg_sig_t  *alg_sig_desc;
+  pyeclib_type_t type;
+  int inline_chksum;
+  int algsig_chksum;
+} pyeclib_t;
 
-#define PYCC_MAX_SIG_LEN 8
+
+#define PYECC_FLAGS_MASK            0x1
+#define PYECC_FLAGS_READ_VERIFY     0x1
+#define PYECC_HANDLE_NAME           "pyeclib_handle"
+#define PYECC_HEADER_MAGIC          0xb0c5ecc
+#define PYECC_CAUCHY_PACKETSIZE     (sizeof(long) * 128)
+
+#define PYCC_MAX_SIG_LEN            8
 
 /*
  * Prevent the compiler from padding
@@ -116,21 +133,6 @@ typedef struct fragment_metadata_s
   char signature[PYCC_MAX_SIG_LEN];
   int chksum_mismatch;
 } fragment_metadata_t;
-
-typedef struct pyeclib_s
-{
-  int k;
-  int m;
-  int w;
-  int *matrix;
-  int *bitmatrix;
-  int **schedule;
-  xor_code_t *xor_code_desc;
-  alg_sig_t  *alg_sig_desc;
-  pyeclib_type_t type;
-  int inline_chksum;
-  int algsig_chksum;
-} pyeclib_t;
 
 #define FRAGSIZE_2_BLOCKSIZE(fragment_size) (fragment_size - sizeof(fragment_header_t))
 
