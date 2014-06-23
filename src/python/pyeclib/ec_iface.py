@@ -26,6 +26,9 @@ from enum import Enum
 from enum import unique
 from utils import create_instance
 
+PYECLIB_MAX_DATA = 32
+PYECLIB_MAX_PARITY = 32
+
 
 @unique
 class PyECLibEnum(Enum):

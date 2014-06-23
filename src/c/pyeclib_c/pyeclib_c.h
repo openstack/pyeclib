@@ -31,8 +31,8 @@
  * Make sure these enum values match those exposed from the Python EC interface
  * src/python/pyeclib/ec_iface.py
  */
-#define PYECC_MAX_DATA              32
-#define PYECC_MAX_PARITY            32
+#define PYECLIB_MAX_DATA              32
+#define PYECLIB_MAX_PARITY            32
 
 typedef enum {
     PYECC_NOT_FOUND = 0,
