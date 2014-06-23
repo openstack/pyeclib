@@ -740,7 +740,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_type_t type;
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "iiis|ii", &k, &m, &w, &type_str, &use_inline_chksum, &use_algsig_chksum)) {
+  if (!PyArg_ParseTuple(args, "iis|ii", &k, &m, &type_str, &use_inline_chksum, &use_algsig_chksum)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.init");
     return NULL;
   }
@@ -749,6 +749,14 @@ pyeclib_c_init(PyObject *self, PyObject *args)
     PyErr_SetString(PyECLibError, "Invalid type passed to pyeclib.init");
     return NULL;
   }
+
+  w = get_best_w_for_ecc_type(type);
+  if (w < 0) {
+    /* this should not happen */
+    PyErr_SetString(PyECLibError, "Invalid w value. pyeclib internal error");
+    return NULL;
+  }
+
   if (!validate_args(k, m, w, type)) {
     PyErr_SetString(PyECLibError, "Invalid args passed to pyeclib.init");
     return NULL;
@@ -759,6 +767,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   if (!pyeclib_handle) {
     return NULL;
   }
+
   pyeclib_handle->k = k;
   pyeclib_handle->m = m;
   pyeclib_handle->w = w;

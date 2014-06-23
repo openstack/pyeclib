@@ -51,28 +51,20 @@ const char *pyeclib_type_str[] = {
     "flat_xor_4", 
 };
 
-/*
- * Convert the string ECC type to the enum value
- * Start lookup at index 1
- */
-static inline
-pyeclib_type_t get_ecc_type(const char *str_type)
-{
-  int i;
-  for (i = 1; i <= PYECC_NUM_TYPES; i++) {
-    if (strcmp(str_type, pyeclib_type_str[i]) == 0) {
-      return i; 
-    }
-  }
-  return PYECC_NOT_FOUND;
-}
-
 const int pyeclib_type_word_size_bytes[] = { 
     0,
     sizeof(long),   /* rs_vand */
     sizeof(long),   /* rs_cauchy_orig */
     sizeof(long),   /* flat_xor_3 */
     sizeof(long)    /* flat_xor_4 */
+};
+
+const int pyeclib_type_best_w_size_bytes[] = { 
+    32,             /* default */
+    16,             /* rs_vand */
+     4,             /* rs_cauchy_orig */
+    32,             /* flat_xor_3 */
+    32              /* flat_xor_4 */
 };
 
 // Unconditionally enforce alignment for now.
@@ -100,6 +92,35 @@ typedef struct pyeclib_s
   int inline_chksum;
   int algsig_chksum;
 } pyeclib_t;
+
+/*
+ * Convert the string ECC type to the enum value
+ * Start lookup at index 1
+ */
+static inline
+pyeclib_type_t get_ecc_type(const char *str_type)
+{
+  int i;
+  for (i = 1; i <= PYECC_NUM_TYPES; i++) {
+    if (strcmp(str_type, pyeclib_type_str[i]) == 0) {
+      return i; 
+    }
+  }
+  return PYECC_NOT_FOUND;
+}
+
+/*
+ * Convert the string ECC type to the w value
+ * Start lookup at index 1
+ */
+static inline
+unsigned int get_best_w_for_ecc_type(pyeclib_type_t type)
+{
+    if (type > PYECC_NUM_TYPES)
+        return -1;
+
+    return pyeclib_type_best_w_size_bytes[type];
+}
 
 
 #define PYECC_FLAGS_MASK            0x1

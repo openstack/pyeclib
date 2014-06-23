@@ -1,4 +1,3 @@
-
 # Copyright (c) 2013, 2014, Kevin Greenan (kmgreen2@gmail.com)
 # All rights reserved.
 #
@@ -24,6 +23,10 @@
 
 import math
 import pyeclib_c
+import sys
+
+
+pyver = float('%s.%s' % sys.version_info[:2])
 
 #
 # Generic ECPyECLibException
@@ -42,53 +45,8 @@ class ECPyECLibException(Exception):
 class ECPyECLibDriver(object):
 
     def __init__(self, k, m, ec_type, chksum_type="none"):
-        self.ec_rs_vand = "rs_vand"
-        self.ec_rs_cauchy_orig = "rs_cauchy_orig"
-        self.ec_flat_xor_3 = "flat_xor_3"
-        self.ec_flat_xor_4 = "flat_xor_4"
-        self.chksum_none = "none"
-        self.chksum_inline = "inline"
-        self.chksum_algsig = "algsig"
-        self.ec_types = [
-            self.ec_rs_vand,
-            self.ec_rs_cauchy_orig,
-            self.ec_flat_xor_3,
-            self.ec_flat_xor_4]
-        self.chksum_types = [
-            self.chksum_none,
-            self.chksum_inline,
-            self.chksum_algsig]
-        self.ec_rs_vand_best_w = 16
-        self.ec_default_w = 32
-        self.ec_rs_cauchy_best_w = 4
         self.k = k
         self.m = m
-
-        #
-        # Override the default wordsize (w) for Reed-Solomon, if specified
-        #
-        if ec_type[:len(self.ec_rs_vand)] == self.ec_rs_vand \
-                and len(ec_type) > len(self.ec_rs_vand):
-            type_ary = ec_type.split("_")
-            if len(type_ary) != 3:
-                raise ECPyECLibException(
-                    "%s is not a valid EC type for PyECLib!" %
-                    ec_type)
-            self.ec_rs_vand_best_w = int(type_ary[2])
-            ec_type = self.ec_rs_vand
-
-        #
-        # Override the default wordsize (w) for Cauchy, if specified
-        #
-        if ec_type[:len(self.ec_rs_cauchy_orig)] == self.ec_rs_cauchy_orig \
-                and len(ec_type) > len(self.ec_rs_cauchy_orig):
-            type_ary = ec_type.split("_")
-            if len(type_ary) != 4:
-                raise ECPyECLibException(
-                    "%s is not a valid EC type for PyECLib!" %
-                    ec_type)
-            self.ec_rs_cauchy_best_w = int(type_ary[3])
-            ec_type = self.ec_rs_cauchy_orig
 
         if ec_type in self.ec_types:
             self.ec_type = ec_type
@@ -100,21 +58,6 @@ class ECPyECLibDriver(object):
         else:
             raise ECPyECLibException(
                 "%s is not a valid checksum type for PyECLib!")
-
-        if self.ec_type == self.ec_rs_vand:
-            self.w = self.ec_rs_vand_best_w
-            self.hd = self.m + 1
-        elif self.ec_type == self.ec_rs_cauchy_orig:
-            self.w = self.ec_rs_cauchy_best_w
-            self.hd = self.m + 1
-        elif self.ec_type == self.ec_flat_xor_3:
-            self.w = self.ec_default_w
-            self.hd = 3
-        elif self.ec_type == self.ec_flat_xor_4:
-            self.w = self.ec_default_w
-            self.hd = 4
-        else:
-            self.w = self.ec_default_w
 
         self.inline_chksum = 0
         self.algsig_chksum = 0
@@ -128,7 +71,6 @@ class ECPyECLibDriver(object):
         self.handle = pyeclib_c.init(
             self.k,
             self.m,
-            self.w,
             self.ec_type,
             self.inline_chksum,
             self.algsig_chksum)
@@ -141,7 +83,7 @@ class ECPyECLibDriver(object):
             ret_string = pyeclib_c.fragments_to_string(
                 self.handle,
                 fragment_payloads)
-        except Exception:
+        except Exception as e:
             raise ECPyECLibException("Error in ECPyECLibDriver.decode")
 
         if ret_string is None:

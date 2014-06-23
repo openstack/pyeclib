@@ -77,7 +77,6 @@ class ECDriver(object):
     def __init__(self, library_import_str, *args, **kwargs):
         self.k = -1
         self.m = -1
-        self.w = -1
         self.library_import_str = None
         for (key, value) in kwargs.items():
             if key == "k":
