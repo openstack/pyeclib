@@ -68,11 +68,7 @@ class PyECLib_HDRCHKSUM_Types(PyECLibEnum):
     algsig = 3
 
 
-#
 # Generic ECDriverException
-#
-
-
 class ECDriverError(Exception):
 
     def __init__(self, error_str):
@@ -82,6 +78,7 @@ class ECDriverError(Exception):
         return self.error_str
 
 
+# Main ECDriver class
 class ECDriver(object):
 
     def __init__(self, library_import_str, *args, **kwargs):
