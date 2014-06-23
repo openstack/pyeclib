@@ -151,7 +151,7 @@ module = Extension('pyeclib_c',
                                  '/usr/local/include'],
                    library_dirs=default_library_paths,
                    runtime_library_dirs=default_library_paths,
-                   libraries=['Jerasure', 'erasurecode'],
+                   libraries=['Jerasure', 'Xorcode', 'alg_sig'],
                    # The extra arguments are for debugging
                    # extra_compile_args=['-g', '-O0'],
                    extra_link_args=['-Wl,-rpath,%s' %
