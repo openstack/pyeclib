@@ -52,7 +52,8 @@ class ECPyECLibDriver(object):
         if ec_type in PyECLib_EC_Types:
             self.ec_type = ec_type
         else:
-            raise ECPyECLibException("%s is not a valid EC type for PyECLib!")
+            raise ECPyECLibException("%s is not a valid EC type for PyECLib!" %
+                                     ec_type)
 
         if chksum_type in PyECLib_HDRCHKSUM_Types:
             self.chksum_type = chksum_type
