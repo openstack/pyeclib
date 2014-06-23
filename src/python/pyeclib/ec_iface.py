@@ -25,6 +25,7 @@
 from enum import Enum
 from enum import unique
 from utils import create_instance
+from utils import positive_int_value
 
 PYECLIB_MAX_DATA = 32
 PYECLIB_MAX_PARITY = 32
@@ -80,9 +81,17 @@ class ECDriver(object):
         self.library_import_str = None
         for (key, value) in kwargs.items():
             if key == "k":
-                self.k = int(value)
+                try:
+                    self.k = positive_int_value(value)
+                except ValueError as e:
+                    raise ECDriverError(
+                        "Invalid number of data fragments (k)")
             elif key == "m":
-                self.m = int(value)
+                try:
+                    self.m = positive_int_value(value)
+                except ValueError as e:
+                    raise ECDriverError(
+                        "Invalid number of data fragments (m)")
             elif key == "ec_type":
                 self.ec_type = value
             elif key == "chksum_type":
@@ -94,16 +103,6 @@ class ECDriver(object):
             raise ECDriverError(
                 "Library import string (library_import_str) was not specified "
                 "and is a required argument!")
-
-        if self.k < 0:
-            raise ECDriverError(
-                "Number of data fragments (k) was not specified "
-                "and is a required argument!")
-        if self.m < 0:
-            raise ECDriverError(
-                "Number of parity fragments (m) was not specified "
-                "and is a required argument!")
-
         #
         # We require keyword arguments to prevent ambiguity between EC libs
         #
