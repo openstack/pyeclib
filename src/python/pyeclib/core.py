@@ -42,7 +42,7 @@ class ECPyECLibException(Exception):
 class ECPyECLibDriver(object):
 
     def __init__(self, k, m, ec_type,
-                 chksum_type=PyECLib_HDRCHKSUM_Types.inline):
+                 chksum_type=PyECLib_HDRCHKSUM_Types.inline_crc32):
         self.k = k
         self.m = m
         self.ec_type = ec_type
@@ -50,7 +50,8 @@ class ECPyECLibDriver(object):
 
         self.inline_chksum = 0
         self.algsig_chksum = 0
-        if self.chksum_type is PyECLib_HDRCHKSUM_Types.inline:
+        # crc32 is the only inline checksum type currently supported
+        if self.chksum_type is PyECLib_HDRCHKSUM_Types.inline_crc32:
             self.inline_chksum = 1
         elif self.chksum_type is PyECLib_HDRCHKSUM_Types.algsig:
             self.algsig_chksum = 1

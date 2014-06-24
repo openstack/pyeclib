@@ -80,8 +80,8 @@ class PyECLib_EC_Types(PyECLibEnum):
 # 0 is False in the boolean sense but enum members evaluate to True
 class PyECLib_HDRCHKSUM_Types(PyECLibEnum):
     none = 1
-    inline = 2
-    algsig = 3
+    algsig = 2
+    inline_crc32 = 3
 
 
 # Generic ECDriverException

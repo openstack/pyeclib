@@ -197,16 +197,16 @@ class TestPyECLibDriver(unittest.TestCase):
         pyeclib_drivers = []
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=2, ec_type="rs_vand", chksum_type="inline"))
+                     k=12, m=2, ec_type="rs_vand", chksum_type="inline_crc32"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=3, ec_type="rs_vand", chksum_type="inline"))
+                     k=12, m=3, ec_type="rs_vand", chksum_type="inline_crc32"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=4, ec_type="rs_vand", chksum_type="inline"))
+                     k=12, m=4, ec_type="rs_vand", chksum_type="inline_crc32"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=2, ec_type="rs_cauchy_orig", chksum_type="inline"))
+                     k=12, m=2, ec_type="rs_cauchy_orig", chksum_type="inline_crc32"))
 
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
@@ -240,16 +240,16 @@ class TestPyECLibDriver(unittest.TestCase):
         pyeclib_drivers = []
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=2, ec_type="rs_vand", chksum_type="inline"))
+                     k=12, m=2, ec_type="rs_vand", chksum_type="inline_crc32"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=3, ec_type="rs_vand", chksum_type="inline"))
+                     k=12, m=3, ec_type="rs_vand", chksum_type="inline_crc32"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=4, ec_type="rs_vand", chksum_type="inline"))
+                     k=12, m=4, ec_type="rs_vand", chksum_type="inline_crc32"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=2, ec_type="rs_cauchy_orig", chksum_type="inline"))
+                     k=12, m=2, ec_type="rs_cauchy_orig", chksum_type="inline_crc32"))
 
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
