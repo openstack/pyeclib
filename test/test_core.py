@@ -158,7 +158,7 @@ class TestCoreValgrind(unittest.TestCase):
 if __name__ == "__main__":
     if '_valgrind' in sys.argv[0]:
         if (0 != os.system("which valgrind")):
-            print("--valgrind option requires valgrind program installed")
+            print("You don't appear to have 'valgrind' installed")
             sys.exit(-1)
         run_under_valgrind = True
         test_cmd_prefix = "valgrind --leak-check=full "
