@@ -155,12 +155,15 @@ class TestCoreValgrind(unittest.TestCase):
                 print('failed')
 
 
+# Invoke this script as "python test_core_valgrind.py"
+# for the "valgrind" variant
+# (test_core_valgrind.py is a symlink to test_core.py)
 if __name__ == "__main__":
     if '_valgrind' in sys.argv[0]:
         if (0 != os.system("which valgrind")):
             print("You don't appear to have 'valgrind' installed")
             sys.exit(-1)
-        run_under_valgrind = True
+        # run_under_valgrind = True
         test_cmd_prefix = "valgrind --leak-check=full "
         log_filename_prefix = "valgrind"
     unittest.main(verbosity=2)
