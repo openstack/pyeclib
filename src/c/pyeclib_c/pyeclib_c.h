@@ -27,6 +27,9 @@
 #ifndef __PYEC_LIB_C_H_
 #define __PYEC_LIB_C_H_
 
+/* For exact-width integer types */
+#include <stdint.h>
+
 /* 
  * Make sure these enum values match those exposed from the Python EC interface
  * src/python/pyeclib/ec_iface.py
@@ -137,14 +140,15 @@ unsigned int get_best_w_for_ecc_type(pyeclib_type_t type)
  */
 typedef struct __attribute__((__packed__)) fragment_header_s
 {
-  int magic;
-  int idx;
-  int size;
-  int orig_data_size;
-  int chksum;
+  uint32_t magic;
+  uint32_t idx;
+  uint32_t size;
+  uint32_t orig_data_size;
+  // FIXME - reserve 16-bytes for md5
+  uint32_t chksum;
   // We must be aligned to 16-byte boundaries
   // So, size this array accordingly
-  int aligned_padding[3];
+  uint32_t aligned_padding[3];
 } fragment_header_t;
 
 typedef struct fragment_metadata_s

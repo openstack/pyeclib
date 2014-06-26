@@ -125,13 +125,13 @@ class install(_install):
             print("***************************************************")
             print("**                                             ")
             print("** PyECLib libraries have been installed to:   ")
-            print("**   %s/usr/local/lib" % installroot)
+            print("**   %susr/local/lib" % installroot)
             print("**                                             ")
             print("** Any user using this library must update:    ")
             print("**   LD_LIBRARY_PATH                         ")
             print("**                                             ")
             print("** The best way to do this is to put this line:")
-            print("**   export LD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
+            print("**   export LD_LIBRARY_PATH=%s" % ("%susr/local/lib"
                                                       % installroot))
             print("**                                             ")
             print("** into .bashrc, .profile, or the appropriate shell")

@@ -109,7 +109,7 @@ static PyObject * pyeclib_c_check_metadata(PyObject *self, PyObject *args);
 /*
  * Determine if an address is aligned to a particular boundary
  */
-static int is_addr_aligned(unsigned int addr, int align)
+static int is_addr_aligned(unsigned long addr, int align)
 {
   return (addr & (align-1)) == 0;
 }
@@ -151,10 +151,10 @@ static int validate_args(int k, int m, int w, pyeclib_type_t type)
  * Convert an int list into a bitmap
  * Assume the list is '-1' terminated.
  */
-static unsigned long convert_list_to_bitmap(int *list)
+static unsigned long long convert_list_to_bitmap(int *list)
 {
   int i = 0;
-  unsigned long bm = 0;
+  unsigned long long bm = 0;
 
   while (list[i] > -1) {
     /*
