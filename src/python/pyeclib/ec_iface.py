@@ -67,18 +67,25 @@ class PyECLibEnum(Enum):
         return "%s: %d" % (self.name, self.value)
 
 
-# Note: the Enum start value defaults to 1 as the starting value and not 0
-# 0 is False in the boolean sense but enum members evaluate to True
+# Erasure Code backends supported as of this PyECLib API rev
 class PyECLib_EC_Types(PyECLibEnum):
+    # Note: the Enum start value defaults to 1 as the starting value and not 0
+    # 0 is False in the boolean sense but enum members evaluate to True
     rs_vand = 1
     rs_cauchy_orig = 2
     flat_xor_3 = 3
     flat_xor_4 = 4
 
 
-# Note: the Enum start value defaults to 1 as the starting value and not 0
-# 0 is False in the boolean sense but enum members evaluate to True
-class PyECLib_HDRCHKSUM_Types(PyECLibEnum):
+# Output of Erasure (en)Coding process are data "fragments".  Fragment data
+# integrity checks are provided by a checksum embedded in a header (prepend)
+# for each fragment.
+
+# The following Enum defines the schemes supported for fragment checksums.
+# The checksum type is "none" unless specified.
+class PyECLib_FRAGHDRCHKSUM_Types(PyECLibEnum):
+    # Note: the Enum start value defaults to 1 as the starting value and not 0
+    # 0 is False in the boolean sense but enum members evaluate to True
     none = 1
     algsig = 2
     inline_crc32 = 3
@@ -124,9 +131,9 @@ class ECDriver(object):
                     raise ECDriverError(
                         "%s is not a valid EC type for PyECLib!" % value)
             elif key == "chksum_type":
-                if PyECLib_HDRCHKSUM_Types.has_enum(value):
+                if PyECLib_FRAGHDRCHKSUM_Types.has_enum(value):
                     self.chksum_type = \
-                        PyECLib_HDRCHKSUM_Types.get_by_name(value)
+                        PyECLib_FRAGHDRCHKSUM_Types.get_by_name(value)
                 else:
                     raise ECDriverError(
                         "%s is not a valid checksum type for PyECLib!" % value)

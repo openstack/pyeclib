@@ -21,7 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ec_iface import PyECLib_HDRCHKSUM_Types
+from ec_iface import PyECLib_FRAGHDRCHKSUM_Types
 import math
 import pyeclib_c
 import sys
@@ -42,7 +42,7 @@ class ECPyECLibException(Exception):
 class ECPyECLibDriver(object):
 
     def __init__(self, k, m, ec_type,
-                 chksum_type=PyECLib_HDRCHKSUM_Types.inline_crc32):
+                 chksum_type=PyECLib_FRAGHDRCHKSUM_Types.none):
         self.k = k
         self.m = m
         self.ec_type = ec_type
@@ -51,9 +51,9 @@ class ECPyECLibDriver(object):
         self.inline_chksum = 0
         self.algsig_chksum = 0
         # crc32 is the only inline checksum type currently supported
-        if self.chksum_type is PyECLib_HDRCHKSUM_Types.inline_crc32:
+        if self.chksum_type is PyECLib_FRAGHDRCHKSUM_Types.inline_crc32:
             self.inline_chksum = 1
-        elif self.chksum_type is PyECLib_HDRCHKSUM_Types.algsig:
+        elif self.chksum_type is PyECLib_FRAGHDRCHKSUM_Types.algsig:
             self.algsig_chksum = 1
 
         self.handle = pyeclib_c.init(
