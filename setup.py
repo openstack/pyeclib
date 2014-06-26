@@ -147,7 +147,7 @@ module = Extension('pyeclib_c',
                                  '/usr/local/include',
                                  '/usr/local/include/jerasure',
                                  '/usr/include',
-                                 'src/c/pyeclib_c',
+                                 'src/c/include',
                                  '/usr/local/include'],
                    library_dirs=default_library_paths,
                    runtime_library_dirs=default_library_paths,
@@ -156,7 +156,9 @@ module = Extension('pyeclib_c',
                    # extra_compile_args=['-g', '-O0'],
                    extra_link_args=['-Wl,-rpath,%s' %
                                     l for l in default_library_paths],
-                   sources=['src/c/pyeclib_c/pyeclib_c.c'])
+                   sources=['src/c/pyeclib_c/pyeclib_c.c',
+                            'src/c/integrity_util/alg_sig.c',
+                            'src/c/integrity_util/crc32.c'])
 
 setup(name='PyECLib',
       version='0.10.0',
