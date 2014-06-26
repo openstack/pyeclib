@@ -233,6 +233,45 @@ void * check_and_free_buffer(void * buf)
 
 
 /**
+ * Allocates the resources required for the algebraic signatures.  On error,
+ * PyErr_NoMemory is called to set the appropriate error response and NULL
+ * is returned.
+ *
+ * NOTE: It is the caller's responsibility to free the memory allocated here!
+ *
+ * @param sig_len integer signature length
+ * @param gf_w integer galois field size
+ * @return ptr to allocated and initialized algebraic signature tables
+ */
+static
+alg_sig_t *alloc_alg_sig(int sig_len, int gf_w)
+{
+  alg_sig_t *buf = NULL;  /* algebraic signature handle to allocate */
+  
+  buf = init_alg_sig(sig_len, gf_w);
+  if (NULL == buf) {
+    PyErr_NoMemory();
+  }
+
+  return buf;
+}
+
+
+/**
+ * Deallocate the resources used for algebraic signatures.
+ *
+ * @return NULL
+ */
+static
+void * check_and_free_alg_sig(alg_sig_t *buf)
+{
+  if (buf) destroy_alg_sig(buf);
+  
+  return NULL;
+}
+
+
+/**
  * Allocate and zero out a buffer aligned to a 16-byte boundary in order
  * to support 128-bit operations.  On error, call PyErr_NoMemory to set
  * the appropriate error string and return NULL.
@@ -764,17 +803,18 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 
   /* Allocate and initialize the pyeclib object */
   pyeclib_handle = (pyeclib_t *) alloc_zeroed_buffer(sizeof(pyeclib_t));
-  if (!pyeclib_handle) {
-    return NULL;
+  if (NULL == pyeclib_handle) {
+    goto error;
   }
-
   pyeclib_handle->k = k;
   pyeclib_handle->m = m;
   pyeclib_handle->w = w;
   pyeclib_handle->type = type;
   pyeclib_handle->inline_chksum = use_inline_chksum;
   pyeclib_handle->algsig_chksum = use_algsig_chksum;
+  pyeclib_handle->alg_sig_desc = NULL;
 
+  /* Allocate and initialize additional resources */
   switch (type) {
     case PYECC_RS_CAUCHY_ORIG:
       pyeclib_handle->matrix = cauchy_original_coding_matrix(k, m, w);
@@ -784,24 +824,27 @@ pyeclib_c_init(PyObject *self, PyObject *args)
     case PYECC_XOR_HD_3:
       pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 3);
       if (pyeclib_handle->algsig_chksum) {
-        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+        pyeclib_handle->alg_sig_desc = alloc_alg_sig(32, 16);
+        if (NULL == pyeclib_handle->alg_sig_desc) goto error;
       }
       break;
     case PYECC_XOR_HD_4:
       pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 4);
       if (pyeclib_handle->algsig_chksum) {
-        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+        pyeclib_handle->alg_sig_desc = alloc_alg_sig(32, 16);
+        if (NULL == pyeclib_handle->alg_sig_desc) goto error;
       }
       break;
     case PYECC_RS_VAND:
     default:
       pyeclib_handle->matrix = reed_sol_vandermonde_coding_matrix(k, m, w);
       if (pyeclib_handle->algsig_chksum && w == 8) {
-        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 8);
+        pyeclib_handle->alg_sig_desc = alloc_alg_sig(32, 8);
+        if (NULL == pyeclib_handle->alg_sig_desc) goto error;
       } else if (pyeclib_handle->algsig_chksum && w == 16) {
-        pyeclib_handle->alg_sig_desc = init_alg_sig(32, 16);
+        pyeclib_handle->alg_sig_desc = alloc_alg_sig(32, 16);
+        if (NULL == pyeclib_handle->alg_sig_desc) goto error;
       }
-      break;
   }
 
   /* Prepare the python object to return */
@@ -817,11 +860,21 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   /* Clean up the allocated memory on error, or update the ref count */
   if (pyeclib_obj_handle == NULL) {
     PyErr_SetString(PyECLibError, "Could not encapsulate pyeclib_handle into Python object in pyeclib.init");
-    check_and_free_buffer(pyeclib_handle);
+    goto error;
   } else {
     Py_INCREF(pyeclib_obj_handle);
   }
   
+  goto exit;
+
+error:
+  if (NULL != pyeclib_handle) {
+    check_and_free_alg_sig(pyeclib_handle->alg_sig_desc);
+  }
+  check_and_free_buffer(pyeclib_handle);
+  pyeclib_obj_handle = NULL;
+
+exit:  
   return pyeclib_obj_handle;
 }
 
@@ -843,6 +896,7 @@ pyeclib_c_destructor(PyObject *obj)
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Attempted to free an invalid reference to pyeclib_handle");
   } else {
+    check_and_free_alg_sig(pyeclib_handle->alg_sig_desc);
     check_and_free_buffer(pyeclib_handle);
   }
   
