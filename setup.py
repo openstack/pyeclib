@@ -25,6 +25,7 @@
 
 import os
 import platform
+import sys
 
 from distutils.command.build import build as _build
 from distutils.command.clean import clean as _clean
@@ -58,7 +59,34 @@ def _read_file_as_str(name):
 
 class build(_build):
 
+    def check_liberasure(self):
+        missing = True
+        library_suffix = ".so"
+        if platform_str.find("Darwin") > -1:
+            library_suffix = ".dylib"
+        liberasure_file = "liberasurecode" + library_suffix
+        for dir in (default_library_paths):
+            liberasure_file_path = dir + os.sep + liberasure_file
+            if (os.path.isfile(liberasure_file_path)):
+                missing = False
+                break
+        if missing:
+            print("***************************************************")
+            print("**                                             ")
+            print("** Can not locate the liberasurecode library:  ")
+            print("**   %s" % (liberasure_file))
+            print("**                                             ")
+            print("** PyECLib requires that the liberasurecode    ")
+            print("** library be installed. The liberasurecode    ")
+            print("** library can be obtained from:               ")
+            print("** git@bitbucket.org:elambert/liberasurecode.git")
+            print("**                                             ")
+            print("** Please install liberasurecode and try again.")
+            print("***************************************************")
+            sys.exit(1)
+
     def run(self):
+        self.check_liberasure()
         _build.run(self)
 
 
