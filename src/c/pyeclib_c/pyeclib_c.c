@@ -289,7 +289,7 @@ void* alloc_aligned_buffer16(int size)
    * 16-byte boundaries to support 
    * 128-bit operations
    */
-  if (posix_memalign(&buf, 16, size) < 0) {
+  if (posix_memalign(&buf, 16, size) != 0) {
     return PyErr_NoMemory();
   } else {
     memset(buf, 0, size);
@@ -1788,6 +1788,7 @@ error:
   reconstructed = NULL;
   
 out:
+  free(erased);
   /* Free fragment buffers that needed to be reallocated for alignment */
   for (i = 0; i < k; i++) {
     if (realloc_bm & (1 << i)) {
