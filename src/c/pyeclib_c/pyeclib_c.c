@@ -760,6 +760,65 @@ int get_fragment_metadata(pyeclib_t *pyeclib_handle, char *fragment_buf, fragmen
 
 
 /**
+ * Free the memory allocated for the Cauchy Reed Solomon encoder.
+ */
+static void
+check_and_free_rs_cauchy_orig(pyeclib_t *handle)
+{
+  if (NULL != handle->matrix) {
+    free(handle->matrix);
+    handle->matrix = NULL;
+  }
+  if (NULL != handle->bitmatrix) {
+    free(handle->bitmatrix);
+    handle->bitmatrix = NULL;
+  }
+  if (NULL != handle->schedule) {
+    free(handle->schedule);
+    handle->schedule = NULL;
+  }
+}
+
+
+/**
+ * Allocate memory and configuration the pyeclib handle for the Cauchy Reed Solomon 
+ * encoder.  Note, this method allocates memory which must be freed by the caller
+ * by using the check_and_free_rs_cauchy_orig method.
+ *
+ * @param handle: allocated pyeclib handle to configure
+ * @returns: 0 on success, non-zero on error
+ */
+static int
+init_rs_cauchy_orig(pyeclib_t *handle)
+{ 
+  int k = handle->k;  /* number of data elements param from handle */
+  int m = handle->m;  /* number of checksum elements param from handle */
+  int w = handle->w;  /* word size param from handle */
+  int rc = 0;         /* return code, 0 on success */
+  
+  /* Zero out the exiting values, alloc and initialize the pyeclib handle*/
+  handle->matrix = NULL;
+  handle->bitmatrix = NULL;
+  handle->schedule = NULL;
+  handle->matrix = cauchy_original_coding_matrix(k, m, w);
+  if (NULL == handle->matrix) goto error;
+  handle->bitmatrix = jerasure_matrix_to_bitmatrix(k, m, w, handle->matrix);
+  if (NULL == handle->bitmatrix) goto error;
+  handle->schedule = jerasure_smart_bitmatrix_to_schedule(k, m, w, handle->bitmatrix);
+  if (NULL == handle->schedule) goto error;
+  goto exit;
+  
+error:
+  check_and_free_rs_cauchy_orig(handle);
+  PyErr_NoMemory();
+  rc = 1;
+
+exit:
+  return rc;
+}
+
+
+/**
  * Constructor method for creating a new pyeclib object using the given parameters.
  *
  * @param k integer number of data elements
@@ -812,14 +871,11 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_handle->type = type;
   pyeclib_handle->inline_chksum = use_inline_chksum;
   pyeclib_handle->algsig_chksum = use_algsig_chksum;
-  pyeclib_handle->alg_sig_desc = NULL;
 
   /* Allocate and initialize additional resources */
   switch (type) {
     case PYECC_RS_CAUCHY_ORIG:
-      pyeclib_handle->matrix = cauchy_original_coding_matrix(k, m, w);
-      pyeclib_handle->bitmatrix = jerasure_matrix_to_bitmatrix(k, m, w, pyeclib_handle->matrix);
-      pyeclib_handle->schedule = jerasure_smart_bitmatrix_to_schedule(k, m, w, pyeclib_handle->bitmatrix);
+      if (0 != init_rs_cauchy_orig(pyeclib_handle)) goto error;
       break;
     case PYECC_XOR_HD_3:
       pyeclib_handle->xor_code_desc = init_xor_hd_code(k, m, 3);
@@ -870,6 +926,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 error:
   if (NULL != pyeclib_handle) {
     check_and_free_alg_sig(pyeclib_handle->alg_sig_desc);
+    check_and_free_rs_cauchy_orig(pyeclib_handle);
   }
   check_and_free_buffer(pyeclib_handle);
   pyeclib_obj_handle = NULL;
@@ -897,6 +954,7 @@ pyeclib_c_destructor(PyObject *obj)
     PyErr_SetString(PyECLibError, "Attempted to free an invalid reference to pyeclib_handle");
   } else {
     check_and_free_alg_sig(pyeclib_handle->alg_sig_desc);
+    check_and_free_rs_cauchy_orig(pyeclib_handle);
     check_and_free_buffer(pyeclib_handle);
   }
   
