@@ -27,6 +27,17 @@ from enum import unique
 from utils import create_instance
 from utils import positive_int_value
 
+
+def PyECLibVersion(z, y, x):
+    return (((z) << 16) + ((y) << 8) + (x))
+
+PYECLIB_MAJOR = 0
+PYECLIB_MINOR = 9
+PYECLIB_REV = 4
+PYECLIB_VERSION = PyECLibVersion(PYECLIB_MAJOR, PYECLIB_MINOR,
+                                 PYECLIB_REV)
+
+
 PYECLIB_MAX_DATA = 32
 PYECLIB_MAX_PARITY = 32
 
