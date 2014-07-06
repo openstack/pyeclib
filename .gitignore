@@ -1,25 +1,53 @@
-jerasure/Examples/Coding/decoder_k01
-jerasure/Examples/Coding/decoder_k02
-jerasure/Examples/Coding/decoder_k03
-jerasure/Examples/Coding/decoder_k04
-jerasure/Examples/Coding/decoder_k05
-jerasure/Examples/Coding/decoder_k06
-jerasure/Examples/Coding/decoder_k07
-jerasure/Examples/Coding/decoder_k08
-jerasure/Examples/Coding/decoder_k09
-jerasure/Examples/Coding/decoder_k10
-jerasure/Examples/Coding/decoder_m01
-jerasure/Examples/Coding/decoder_m02
-jerasure/Examples/Coding/test_file_k01.0
-jerasure/Examples/Coding/test_file_k02.0
-jerasure/Examples/Coding/test_file_k03.0
-jerasure/Examples/Coding/test_file_k04.0
-jerasure/Examples/Coding/test_file_k05.0
-jerasure/Examples/Coding/test_file_k06.0
-jerasure/Examples/Coding/test_file_k07.0
-jerasure/Examples/Coding/test_file_k08.0
-jerasure/Examples/Coding/test_file_k09.0
-jerasure/Examples/Coding/test_file_k10.0
-jerasure/Examples/Coding/test_file_m01.0
-jerasure/Examples/Coding/test_file_m02.0
-jerasure/Examples/test_file.0
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template 
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
