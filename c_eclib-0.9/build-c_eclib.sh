@@ -6,7 +6,7 @@
 exit_if_error() {
   if [ $? -ne 0 ]; then
     echo "ERROR in $0"
-    exit
+    exit $?
   fi
 }
 
