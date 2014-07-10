@@ -45,12 +45,32 @@ except ImportError:
 #
 # TestCoreC Test Configuration
 #
-xor_code_test = "/usr/local/bin/test_xor_hd_code"
-alg_sig_test = "/usr/local/bin/alg_sig_test"
+xor_code_test = "test_xor_hd_code"
+alg_sig_test = "alg_sig_test"
 c_tests = [
     xor_code_test,
     alg_sig_test,
 ]
+
+
+def SearchPath(name, path=None, exts=('',)):
+    """Search PATH for a binary.
+
+    Args:
+      name: the filename to search for
+      path: the optional path string (default: os.environ['PATH')
+      exts: optional list/tuple of extensions to try (default: ('',))
+
+    Returns:
+      The abspath to the binary or None if not found.
+    """
+    path = path or os.environ['PATH']
+    for dir in path.split(os.pathsep):
+        for ext in exts:
+            binpath = os.path.join(dir, name) + ext
+            if os.path.exists(binpath):
+                return os.path.abspath(binpath)
+    return None
 
 
 def valid_c_tests():
@@ -61,7 +81,7 @@ def valid_c_tests():
     valid = True
 
     for test in c_tests:
-        if not os.path.isfile(test):
+        if SearchPath(test) is None:
             valid = False
 
     return valid
