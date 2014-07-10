@@ -21,8 +21,25 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from functools import wraps
 import os
 import unittest
+
+
+# skipUnless added in Python 2.7;
+try:
+    from unittest import skipUnless
+except ImportError:
+    def skipUnless(condition, message):
+        def decorator(testfunc):
+            @wraps(testfunc)
+            def wrapper(self):
+                if condition:
+                    testfunc(self)
+                else:
+                    print "Skipping", testfunc.__name__,"--", message
+            return wrapper
+        return decorator
 
 
 #
@@ -58,7 +75,7 @@ class TestCoreC(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @unittest.skipUnless(valid_c_tests(), "Error locating tests in: %s" % c_tests)
+    @skipUnless(valid_c_tests(), "Error locating tests in: %s" % c_tests)
     def test_c_stuff(self):
         for test in c_tests:
             self.assertEqual(0, os.system(test))
@@ -89,7 +106,7 @@ class TestCoreValgrind(unittest.TestCase):
     def tearDown(self):
         pass
     
-    @unittest.skipUnless(0 == os.system("which valgrind"), "requires valgrind")
+    @skipUnless(0 == os.system("which valgrind"), "requires valgrind")
     def test_core_valgrind(self):
         self.assertTrue(True)
         cur_dir = os.getcwd()
