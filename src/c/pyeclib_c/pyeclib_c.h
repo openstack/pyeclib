@@ -48,8 +48,8 @@ typedef enum {
 
 const char *pyeclib_type_str[] = { 
     "not_found",
-    "rs_vand", 
-    "rs_cauchy_orig", 
+    "jerasure_rs_vand", 
+    "jerasure_rs_cauchy_orig", 
     "flat_xor_3",
     "flat_xor_4", 
 };
@@ -129,27 +129,9 @@ unsigned int get_best_w_for_ecc_type(pyeclib_type_t type)
 #define PYECC_FLAGS_MASK            0x1
 #define PYECC_FLAGS_READ_VERIFY     0x1
 #define PYECC_HANDLE_NAME           "pyeclib_handle"
-#define PYECC_HEADER_MAGIC          0xb0c5ecc
 #define PYECC_CAUCHY_PACKETSIZE     (sizeof(long) * 128)
 
 #define PYCC_MAX_SIG_LEN            8
-
-/*
- * Prevent the compiler from padding
- * this by using the __packed__ keyword
- */
-typedef struct __attribute__((__packed__)) fragment_header_s
-{
-  uint32_t magic;
-  uint32_t idx;
-  uint32_t size;
-  uint32_t orig_data_size;
-  // FIXME - reserve 16-bytes for md5
-  uint32_t chksum;
-  // We must be aligned to 16-byte boundaries
-  // So, size this array accordingly
-  uint32_t aligned_padding[3];
-} fragment_header_t;
 
 typedef struct fragment_metadata_s
 {

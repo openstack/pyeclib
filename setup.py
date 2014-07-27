@@ -79,7 +79,7 @@ class build(_build):
             print("** PyECLib requires that the liberasurecode    ")
             print("** library be installed. The liberasurecode    ")
             print("** library can be obtained from:               ")
-            print("** git@bitbucket.org:elambert/liberasurecode.git")
+            print("** git@bitbucket.org:tsg-/liberasurecode.git")
             print("**                                             ")
             print("** Please install liberasurecode and try again.")
             print("***************************************************")
@@ -187,7 +187,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='0.10.0',
+      version='0.9.10',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',

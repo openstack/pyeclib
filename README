@@ -1,4 +1,4 @@
-This is v0.10 of PyECLib.  This library provides a simple Python interface for
+This is v0.9.10 of PyECLib.  This library provides a simple Python interface for
 implementing erasure codes and is known to work with Python v2.6, 2.7 and 3.x.
 
 To obtain the best possible performance, the library utilizes liberasurecode,
