@@ -47,6 +47,7 @@ class ECPyECLibDriver(object):
         self.m = m
         self.ec_type = ec_type
         self.chksum_type = chksum_type
+        hd = m
 
         self.inline_chksum = 0
         self.algsig_chksum = 0
@@ -56,39 +57,53 @@ class ECPyECLibDriver(object):
         elif self.chksum_type is PyECLib_FRAGHDRCHKSUM_Types.algsig:
             self.algsig_chksum = 1
 
+        name = self.ec_type.name
+
+        if name == "flat_xor_hd_3":
+          hd = 3
+          name = "flat_xor_hd"
+        elif name == "flat_xor_hd_4":
+          hd = 4 
+          name = "flat_xor_hd"
+
         self.handle = pyeclib_c.init(
             self.k,
             self.m,
-            self.ec_type.name,
+            name, 
+            hd,
             self.inline_chksum,
             self.algsig_chksum)
 
     def encode(self, data_bytes):
         return pyeclib_c.encode(self.handle, data_bytes)
 
+    def _validate_and_return_fragment_size(self, fragments):
+      if len(fragments) > 0 and len(fragments[0]) == 0:
+        return -1
+      fragment_len = len(fragments[0])
+
+      for fragment in fragments[1:]:
+        if len(fragment) != fragment_len:
+          return -1
+
+      return fragment_len
+
     def decode(self, fragment_payloads):
-        try:
-            ret_string = pyeclib_c.fragments_to_string(
-                self.handle,
-                fragment_payloads)
-        except Exception as e:
-            raise ECPyECLibException("Error in ECPyECLibDriver.decode")
+        fragment_len = self._validate_and_return_fragment_size(fragment_payloads)
+        if fragment_len < 0:
+            raise ECPyECLibException("Invalid fragment payload in ECPyECLibDriver.decode")
 
-        if ret_string is None:
-            (data_frags,
-             parity_frags,
-             missing_idxs) = pyeclib_c.get_fragment_partition(
-                 self.handle, fragment_payloads)
-            decoded_fragments = pyeclib_c.decode(
-                self.handle, data_frags, parity_frags, missing_idxs,
-                len(data_frags[0]))
-            ret_string = pyeclib_c.fragments_to_string(
-                self.handle,
-                decoded_fragments)
+        if len(fragment_payloads) < self.k:
+            raise ECPyECLibException("Not enough fragments given in ECPyECLibDriver.decode")
 
-        return ret_string
+        return pyeclib_c.decode(self.handle, fragment_payloads, fragment_len)
+            
 
     def reconstruct(self, fragment_payloads, indexes_to_reconstruct):
+        fragment_len = self._validate_and_return_fragment_size(fragment_payloads)
+        if fragment_len < 0:
+            raise ECPyECLibException("Invalid fragment payload in ECPyECLibDriver.reconstruct")
+
         reconstructed_data = []
 
         # Reconstruct the data, then the parity
@@ -99,13 +114,8 @@ class ECPyECLibDriver(object):
 
         while len(_indexes_to_reconstruct) > 0:
             index = _indexes_to_reconstruct.pop(0)
-            (data_frags,
-             parity_frags,
-             missing_idxs) = pyeclib_c.get_fragment_partition(
-                 self.handle, fragment_payloads)
             reconstructed = pyeclib_c.reconstruct(
-                self.handle, data_frags, parity_frags, missing_idxs,
-                index, len(data_frags[0]))
+                self.handle, fragment_payloads, index, fragment_len)
             reconstructed_data.append(reconstructed)
 
         return reconstructed_data
@@ -118,7 +128,11 @@ class ECPyECLibDriver(object):
         return pyeclib_c.get_metadata(self.handle, fragment)
 
     def verify_stripe_metadata(self, fragment_metadata_list):
-        return pyeclib_c.check_metadata(self.handle, fragment_metadata_list)
+        metadata_len = self._validate_and_return_fragment_size(fragment_payloads)
+        if metadata_len < 0:
+            raise ECPyECLibException("Invalid fragment payload in ECPyECLibDriver.verify_metadata")
+
+        return pyeclib_c.check_metadata(self.handle, fragment_metadata_list, metadata_len)
 
     def get_segment_info(self, data_len, segment_size):
         return pyeclib_c.get_segment_info(self.handle, data_len, segment_size)

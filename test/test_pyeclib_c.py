@@ -58,10 +58,10 @@ class TestPyECLib(unittest.TestCase):
         self.iterations = 100
 
         # EC algorithm and config parameters
-        self.rs_types = [("rs_vand"), ("rs_cauchy_orig")]
-        self.xor_types = [("flat_xor_4", 12, 6, 4),
-                          ("flat_xor_4", 10, 5, 4),
-                          ("flat_xor_3", 10, 5, 3)]
+        self.rs_types = [("jerasure_rs_vand"), ("jerasure_rs_cauchy")]
+        self.xor_types = [("flat_xor_hd_4", 12, 6, 4),
+                          ("flat_xor_hd_4", 10, 5, 4),
+                          ("flat_xor_hd_3", 10, 5, 3)]
 
         # Input temp files for testing
         self.sizes = ["101-K", "202-K", "303-K"]
@@ -332,7 +332,7 @@ class TestPyECLib(unittest.TestCase):
         #
         # MDS codes need any k fragments
         #
-        if ec_type in ["rs_vand", "rs_cauchy_orig"]:
+        if ec_type in ["jerasure_rs_vand", "jerasure_rs_cauchy"]:
             expected_fragments = [i for i in range(num_data + num_parity)]
             missing_fragments = []
 

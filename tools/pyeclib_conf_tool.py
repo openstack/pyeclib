@@ -44,8 +44,8 @@
 # ======== swift.conf ============
 # [storage-policy:10]
 # type = erasure_coding
-# name = ec_rs_cauchy_orig_12_2
-# ec_type = rs_cauchy_orig
+# name = ec_jerasure_rs_cauchy_12_2
+# ec_type = jerasure_rs_cauchy
 # ec_k = 12
 # ec_m = 2
 # ============================
@@ -109,11 +109,11 @@ class ECScheme:
     def __str__(self):
         return "k=%d m=%d w=%d ec_type=%s" % (self.k, self.m, self.w, self.ec_type)
 
-valid_flat_xor_3 = [(6, 6), (7, 6), (8, 6), (9, 6),
+valid_flat_xor_hd_3 = [(6, 6), (7, 6), (8, 6), (9, 6),
                     (10, 6), (11, 6), (12, 6), (13, 6),
                     (14, 6), (15, 6)]
 
-valid_flat_xor_4 = [(6, 6), (7, 6), (8, 6), (9, 6),
+valid_flat_xor_hd_4 = [(6, 6), (7, 6), (8, 6), (9, 6),
                     (10, 6), (11, 6), (12, 6), (13, 6),
                     (14, 6), (15, 6), (16, 6), (17, 6),
                     (18, 6), (19, 6), (20, 6)]
@@ -150,11 +150,11 @@ def get_viable_schemes(
         #
         for w in [8, 16, 32]:
             list_of_schemes.append(
-                ECScheme(k, max_num_frags - k, w, "rs_vand_%d" % w))
+                ECScheme(k, max_num_frags - k, w, "jerasure_rs_vand_%d" % w))
 
         for w in [4, 8]:
             list_of_schemes.append(
-                ECScheme(k, max_num_frags - k, w, "rs_cauchy_orig_%d" % w))
+                ECScheme(k, max_num_frags - k, w, "jerasure_rs_cauchy_%d" % w))
 
         #
         # The XOR codes are a little tricker
@@ -163,24 +163,24 @@ def get_viable_schemes(
         # Constraint for 2: k <= (m choose 2)
         # Constraint for 3: k <= (m choose 3)
         #
-        # The '3' flat_xor_3  (and '4' in flat_xor_4) refers to the Hamming
+        # The '3' flat_xor_hd_3  (and '4' in flat_xor_hd_4) refers to the Hamming
         # distance, which means the code guarantees the reconstruction of any
-        # 2 lost fragments (or 3 in the case of flat_xor_4).
+        # 2 lost fragments (or 3 in the case of flat_xor_hd_4).
         #
         # So, only consider the XOR code if the fault_tolerance matches and
         # the additional constraint is met
         #
         if fault_tolerance == 2:
             max_k = nCr(max_num_frags - k, 2)
-            if k <= max_k and (k, max_num_frags - k) in valid_flat_xor_3:
+            if k <= max_k and (k, max_num_frags - k) in valid_flat_xor_hd_3:
                 list_of_schemes.append(
-                    ECScheme(k, max_num_frags - k, 0, "flat_xor_3"))
+                    ECScheme(k, max_num_frags - k, 0, "flat_xor_hd_3"))
 
         if fault_tolerance == 3:
             max_k = nCr(max_num_frags - k, 3)
-            if k <= max_k and (k, max_num_frags - k) in valid_flat_xor_4:
+            if k <= max_k and (k, max_num_frags - k) in valid_flat_xor_hd_4:
                 list_of_schemes.append(
-                    ECScheme(k, max_num_frags - k, 0, "flat_xor_4"))
+                    ECScheme(k, max_num_frags - k, 0, "flat_xor_hd_4"))
 
     return list_of_schemes
 

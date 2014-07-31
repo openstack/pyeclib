@@ -82,10 +82,10 @@ class PyECLibEnum(Enum):
 class PyECLib_EC_Types(PyECLibEnum):
     # Note: the Enum start value defaults to 1 as the starting value and not 0
     # 0 is False in the boolean sense but enum members evaluate to True
-    rs_vand = 1
-    rs_cauchy_orig = 2
-    flat_xor_3 = 3
-    flat_xor_4 = 4
+    jerasure_rs_vand = 1
+    jerasure_rs_cauchy = 2
+    flat_xor_hd_3 = 3
+    flat_xor_hd_4 = 4
 
 
 # Output of Erasure (en)Coding process are data "fragments".  Fragment data
