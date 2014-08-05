@@ -184,6 +184,10 @@ class ECPyECLibDriver(object):
         return pyeclib_c.get_required_fragments(
             self.handle, missing_fragment_indexes)
 
+    def min_parity_needed(self):
+        """ FIXME - fix this to return a function of HD """
+        return 1
+
     def get_metadata(self, fragment):
         return pyeclib_c.get_metadata(self.handle, fragment)
 

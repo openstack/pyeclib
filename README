@@ -77,7 +77,12 @@ needs to be taken when handling input to and output from the ``encode()`` and
   Reconstruct "missing_fragment_indexes" using "available_fragment_payloads"::
 
     def reconstruct(self, available_fragment_payloads, missing_fragment_indexes)
+
+
+- Minimum parity fragments needed for durability gurantees
     
+    def min_parity_needed(self)
+
 
 - Fragments needed for EC Reconstruct
 
