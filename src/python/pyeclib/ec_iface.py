@@ -116,7 +116,7 @@ class ECDriver(object):
             'encode': 0,
             'reconstruct': 0,
             'fragments_needed': 0,
-            'min_parity_needed': 0,
+            'min_parity_fragments_needed': 0,
             'get_metadata': 0,
             'verify_stripe_metadata': 0,
             'get_segment_info': 0
@@ -195,8 +195,8 @@ class ECDriver(object):
         """
         return self.ec_lib_reference.fragments_needed(missing_fragment_indexes)
 
-    def min_parity_needed(self):
-        return self.ec_lib_reference.min_parity_needed()
+    def min_parity_fragments_needed(self):
+        return self.ec_lib_reference.min_parity_fragments_needed()
 
     def get_metadata(self, fragment):
         """

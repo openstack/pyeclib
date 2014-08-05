@@ -81,7 +81,7 @@ needs to be taken when handling input to and output from the ``encode()`` and
 
 - Minimum parity fragments needed for durability gurantees
     
-    def min_parity_needed(self)
+    def min_parity_fragments_needed(self)
 
 
 - Fragments needed for EC Reconstruct

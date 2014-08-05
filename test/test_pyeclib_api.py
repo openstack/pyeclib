@@ -385,6 +385,11 @@ class TestPyECLibDriver(unittest.TestCase):
                         reconstructed_fragments[0] == orig_fragments[
                             idxs_to_remove[0]])
 
+    def test_min_parity_fragments_needed(self):
+        pyeclib_drivers = []
+        pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
+        self.assertTrue(
+            pyeclib_drivers[0].min_parity_fragments_needed() == 1)
 
 if __name__ == '__main__':
     unittest.main()

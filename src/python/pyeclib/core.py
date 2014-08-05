@@ -184,7 +184,7 @@ class ECPyECLibDriver(object):
         return pyeclib_c.get_required_fragments(
             self.handle, missing_fragment_indexes)
 
-    def min_parity_needed(self):
+    def min_parity_fragments_needed(self):
         """ FIXME - fix this to return a function of HD """
         return 1
 
@@ -224,6 +224,9 @@ class ECNullDriver(object):
         pass
 
     def get_segment_info(self, data_len, segment_size):
+        pass
+
+    def min_parity_fragments_needed(self):
         pass
 
 
@@ -334,4 +337,7 @@ class ECStripingDriver(object):
         return True
 
     def get_segment_info(self, data_len, segment_size):
+        pass
+
+    def min_parity_fragments_needed(self):
         pass
