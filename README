@@ -30,14 +30,14 @@ Examples of using this library are provided in "tools" directory:
 
 PyEClib initialization::
 
-  ec_driver = ECDriver("pyeclib.core.ECPyECLibDriver",
-                       k=<num_encoded_data_fragments>,
+  ec_driver = ECDriver(k=<num_encoded_data_fragments>,
                        m=<num_encoded_parity_fragments>,
                        ec_type=<ec_scheme>))
 
 Supported ``ec_type`` values:
 
-  * ``rs_vand`` => Vandermonde Reed-Solomon encoding
+  * ``jerasure_rs_vand`` => Vandermonde Reed-Solomon encoding (Jerasure variant)
+  * ``jerasure_rs_cauchy_orig`` => Cauchy Reed-Solomon encoding (Jerasure variant)
   * ``flat_xor_3``, ``flat_xor_4`` => Flat-XOR based HD combination codes
 
 A configuration utility is provided to help compare available EC schemes in 

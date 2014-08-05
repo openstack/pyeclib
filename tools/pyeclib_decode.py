@@ -44,8 +44,7 @@ print("ec_type = %s" % args.ec_type)
 print("fragments = %s" % args.fragments)
 print("filename = %s" % args.filename)
 
-ec_driver = ECDriver(
-    "pyeclib.core.ECPyECLibDriver", k=args.k, m=args.m, ec_type=args.ec_type)
+ec_driver = ECDriver(k=args.k, m=args.m, ec_type=args.ec_type)
 
 fragment_list = []
 

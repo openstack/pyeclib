@@ -76,11 +76,10 @@ def create_instance(import_str, *args, **kwargs):
 
 class ECDriver(object):
 
-    def __init__(self, library_import_str, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.k = -1
         self.m = -1
         self.w = -1
-        self.library_import_str = None
         for (key, value) in kwargs.items():
             if key == "k":
                 self.k = int(value)
@@ -89,12 +88,8 @@ class ECDriver(object):
             if key == "w":
                 self.w = int(value)
 
-        if library_import_str is not None:
-            self.library_import_str = library_import_str
-        else:
-            raise ECDriverError(
-                "Library import string (library_import_str) was not specified "
-                "and is a required argument!")
+        self.library_import_str = kwargs.pop('library_import_str',
+                                             'pyeclib.core.ECPyECLibDriver')
 
         if self.k < 0:
             raise ECDriverError(
@@ -109,7 +104,7 @@ class ECDriver(object):
         # We require keyword arguments to prevent ambiguity between EC libs
         #
         self.ec_lib_reference = create_instance(
-            library_import_str,
+            self.library_import_str,
             *args,
             **kwargs)
 
@@ -138,7 +133,7 @@ class ECDriver(object):
         if len(not_implemented_str) > 0:
             raise ECDriverError(
                 "The following required methods are not implemented "
-                "in %s: %s" % (library_import_str, not_implemented_str))
+                "in %s: %s" % (self.library_import_str, not_implemented_str))
 
     def encode(self, data_bytes):
         """

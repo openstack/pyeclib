@@ -37,7 +37,7 @@ if [ ! -d ${FRAGMENT_DIR} ]; then
   mkdir ${FRAGMENT_DIR}
 fi
 
-TYPES="flat_xor_4 flat_xor_3 rs_vand rs_cauchy_orig"
+TYPES="flat_xor_4 flat_xor_3 jerasure_rs_vand jerasure_rs_cauchy_orig"
 NUM_DATAS="10 11 12"
 RS_NUM_PARITIES="2 3 4"
 XOR_NUM_PARITIES="6"

@@ -43,9 +43,7 @@ print("k = %d, m = %d" % (args.k, args.m))
 print("ec_type = %s" % args.ec_type)
 print("filename = %s" % args.filename)
 
-ec_driver = ECDriver(
-    "pyeclib.core.ECPyECLibDriver",
-    k=args.k, m=args.m, ec_type=args.ec_type)
+ec_driver = ECDriver(k=args.k, m=args.m, ec_type=args.ec_type)
 
 # read
 with open(("%s/%s" % (args.file_dir, args.filename)), "rb") as fp:

@@ -42,8 +42,8 @@ class ECPyECLibException(Exception):
 class ECPyECLibDriver(object):
 
     def __init__(self, k, m, ec_type, chksum_type="none"):
-        self.ec_rs_vand = "rs_vand"
-        self.ec_rs_cauchy_orig = "rs_cauchy_orig"
+        self.ec_rs_vand = "jerasure_rs_vand"
+        self.ec_rs_cauchy_orig = "jerasure_rs_cauchy_orig"
         self.ec_flat_xor_3 = "flat_xor_3"
         self.ec_flat_xor_4 = "flat_xor_4"
         self.chksum_none = "none"

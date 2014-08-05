@@ -27,7 +27,7 @@
 
 typedef enum { PYECC_RS_VAND, PYECC_RS_CAUCHY_ORIG, PYECC_XOR_HD_4, PYECC_XOR_HD_3, PYECC_NUM_TYPES, PYECC_NOT_FOUND } pyeclib_type_t;
 
-const char *pyeclib_type_str[] = { "rs_vand", "rs_cauchy_orig", "flat_xor_4", "flat_xor_3" };
+const char *pyeclib_type_str[] = { "jerasure_rs_vand", "jerasure_rs_cauchy_orig", "flat_xor_4", "flat_xor_3" };
 const int pyeclib_type_word_size_bytes[] = { sizeof(long), sizeof(long), sizeof(long), sizeof(long) };
 
 // Unconditionally enforce alignment for now...  This is needed for the SIMD extentions.

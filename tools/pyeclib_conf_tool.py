@@ -238,9 +238,7 @@ for scheme in schemes:
             string.ascii_uppercase + string.digits) for x in range(args.s))
 
     try:
-        ec_driver = ECDriver(
-            "pyeclib.core.ECPyECLibDriver",
-            k=scheme.k, m=scheme.m, ec_type=scheme.ec_type)
+        ec_driver = ECDriver(k=scheme.k, m=scheme.m, ec_type=scheme.ec_type)
     except Exception as e:
         print("Scheme %s is not defined (%s)." % (scheme, e))
         continue
