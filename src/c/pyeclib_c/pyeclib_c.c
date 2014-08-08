@@ -437,9 +437,8 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
     goto exit;
   }
 
-  while (fragments_needed[i] > -1) {
+  for (i = 0; fragments_needed[i] > -1; i++) {
     PyList_Append(fragment_idx_list, Py_BuildValue("i", fragments_needed[i]));
-    i++;
   }
 
 exit:
@@ -523,6 +522,7 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
                                             destination_idx, 
                                             c_reconstructed); 
   if (ret < 0) {
+    PyErr_SetString(PyECLibError, "Error calling liberasurecode_reconstruct_fragment");
     reconstructed = NULL;
   } else {
     reconstructed = PY_BUILDVALUE_OBJ_LEN(c_reconstructed, fragment_len);

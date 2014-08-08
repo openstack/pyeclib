@@ -105,6 +105,7 @@ class ECPyECLibDriver(object):
             raise ECPyECLibException("Invalid fragment payload in ECPyECLibDriver.reconstruct")
 
         reconstructed_data = []
+        _fragment_payloads = fragment_payloads[:]
 
         # Reconstruct the data, then the parity
         # The parity cannot be reconstructed until
@@ -115,8 +116,9 @@ class ECPyECLibDriver(object):
         while len(_indexes_to_reconstruct) > 0:
             index = _indexes_to_reconstruct.pop(0)
             reconstructed = pyeclib_c.reconstruct(
-                self.handle, fragment_payloads, index, fragment_len)
+                self.handle, _fragment_payloads, fragment_len, index)
             reconstructed_data.append(reconstructed)
+            _fragment_payloads.append(reconstructed)
 
         return reconstructed_data
 

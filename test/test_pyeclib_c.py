@@ -59,9 +59,9 @@ class TestPyECLib(unittest.TestCase):
 
         # EC algorithm and config parameters
         self.rs_types = [("jerasure_rs_vand"), ("jerasure_rs_cauchy")]
-        self.xor_types = [("flat_xor_hd_4", 12, 6, 4),
-                          ("flat_xor_hd_4", 10, 5, 4),
-                          ("flat_xor_hd_3", 10, 5, 3)]
+        self.xor_types = [("flat_xor_hd", 12, 6, 4),
+                          ("flat_xor_hd", 10, 5, 4),
+                          ("flat_xor_hd", 10, 5, 3)]
 
         # Input temp files for testing
         self.sizes = ["101-K", "202-K", "303-K"]
@@ -111,14 +111,14 @@ class TestPyECLib(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def time_encode(self, num_data, num_parity, ec_type,
+    def time_encode(self, num_data, num_parity, ec_type, hd,
                     file_size, iterations):
         """
         :return average encode time
         """
         timer = Timer()
         tsum = 0
-        handle = pyeclib_c.init(num_data, num_parity, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type, hd)
         whole_file_bytes = self.get_tmp_file(file_size).read()
 
         timer.start()
@@ -129,14 +129,14 @@ class TestPyECLib(unittest.TestCase):
         return tsum / iterations
 
     def time_decode(self,
-                    num_data, num_parity, ec_type,
-                    file_size, iterations, hd):
+                    num_data, num_parity, ec_type, hd,
+                    file_size, iterations):
         """
         :return 2-tuple, (success, average decode time)
         """
         timer = Timer()
         tsum = 0
-        handle = pyeclib_c.init(num_data, num_parity, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type, hd)
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
@@ -147,47 +147,32 @@ class TestPyECLib(unittest.TestCase):
             missing_idxs = []
             num_missing = hd - 1
             for j in range(num_missing):
-                idx = random.randint(0, (num_data + num_parity) - 1)
-                while idx in missing_idxs:
-                    idx = random.randint(0, (num_data + num_parity) - 1)
-                missing_idxs.append(idx)
-                fragments[idx] = b'\0' * len(fragments[0])
+                num_frags_left = len(fragments)
+                idx = random.randint(0, num_frags_left - 1)
+                fragments.pop(idx)
 
             timer.start()
-            decoded_fragments = pyeclib_c.decode(handle,
-                                                 fragments[:num_data],
-                                                 fragments[num_data:],
-                                                 missing_idxs,
+            decoded_file_bytes = pyeclib_c.decode(handle,
+                                                 fragments,
                                                  len(fragments[0]))
             tsum += timer.stop_and_return()
 
-            fragments = decoded_fragments
+            fragments = orig_fragments[:]
 
-            for j in range(num_data + num_parity):
-                if orig_fragments[j] != decoded_fragments[j]:
-                    success = False
-
-                    # Output the fragments for debugging
-                    #with open("orig_fragments", "wb") as fd_orig:
-                    #    fd_orig.write(orig_fragments[j])
-                    #with open("decoded_fragments", "wb") as fd_decoded:
-                    #    fd_decoded.write(decoded_fragments[j])
-                    #print(("Fragment %d was not reconstructed!!!" % j))
-                    #sys.exit(2)
-
-            decoded_fragments = None
+            if whole_file_bytes != decoded_file_bytes:
+              success = False
 
         return success, tsum / iterations
 
     def time_reconstruct(self,
-                         num_data, num_parity, ec_type,
+                         num_data, num_parity, ec_type, hd,
                          file_size, iterations):
         """
         :return 2-tuple, (success, average reconstruct time)
         """
         timer = Timer()
         tsum = 0
-        handle = pyeclib_c.init(num_data, num_parity, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type, hd)
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
@@ -198,30 +183,29 @@ class TestPyECLib(unittest.TestCase):
             num_missing = 1
             missing_idxs = []
             for j in range(num_missing):
-                idx = random.randint(0, (num_data + num_parity) - 1)
+                num_frags_left = len(fragments)
+                idx = random.randint(0, num_frags_left - 1)
                 while idx in missing_idxs:
-                    idx = random.randint(0, (num_data + num_parity) - 1)
+                  idx = random.randint(0, num_frags_left - 1)
                 missing_idxs.append(idx)
-                fragments[idx] = b'\0' * len(fragments[0])
+                fragments.pop(idx)
 
             timer.start()
             reconstructed_fragment = pyeclib_c.reconstruct(handle,
-                                                           fragments[:num_data],
-                                                           fragments[num_data:],
-                                                           missing_idxs,
-                                                           missing_idxs[0],
-                                                           len(fragments[0]))
+                                                           fragments,
+                                                           len(fragments[0]),
+                                                           missing_idxs[0])
             tsum += timer.stop_and_return()
 
             if orig_fragments[missing_idxs[0]] != reconstructed_fragment:
                 success = False
                 # Output the fragments for debugging
-                #with open("orig_fragments", "wb") as fd_orig:
-                #    fd_orig.write(orig_fragments[missing_idxs[0]])
-                #with open("decoded_fragments", "wb") as fd_decoded:
-                #    fd_decoded.write(reconstructed_fragment)
-                #print(("Fragment %d was not reconstructed!!!" % missing_idxs[0]))
-                #sys.exit(2)
+                with open("orig_fragments", "wb") as fd_orig:
+                    fd_orig.write(orig_fragments[missing_idxs[0]])
+                with open("decoded_fragments", "wb") as fd_decoded:
+                    fd_decoded.write(reconstructed_fragment)
+                print(("Fragment %d was not reconstructed!!!" % missing_idxs[0]))
+                sys.exit(2)
 
         return success, tsum / iterations
 
@@ -243,84 +227,27 @@ class TestPyECLib(unittest.TestCase):
             type_str = "%s" % (ec_type)
 
             for size_str in self.sizes:
-                avg_time = self.time_encode(k, m, type_str,
+                avg_time = self.time_encode(k, m, type_str, hd,
                                             size_str,
                                             self.iterations)
                 print("Encode (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
             for size_str in self.sizes:
-                success, avg_time = self.time_decode(k, m, type_str,
+                success, avg_time = self.time_decode(k, m, type_str, hd,
                                                      size_str,
-                                                     self.iterations, 3)
+                                                     self.iterations)
                 self.assertTrue(success)
                 print("Decode (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
             for size_str in self.sizes:
-                success, avg_time = self.time_reconstruct(k, m, type_str,
+                success, avg_time = self.time_reconstruct(k, m, type_str, hd,
                                                           size_str,
                                                           self.iterations)
                 self.assertTrue(success)
                 print("Reconstruct (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
-
-    def _test_get_fragment_partition(self, num_data, num_parity, ec_type,
-                                     file_size, iterations):
-        """
-        :return boolean, True if all tests passed
-        """
-        handle = pyeclib_c.init(num_data, num_parity, ec_type)
-        whole_file_bytes = self.get_tmp_file(file_size).read()
-        success = True
-
-        fragments = pyeclib_c.encode(handle, whole_file_bytes)
-
-        for i in range(iterations):
-            missing_fragments = random.sample(fragments, 3)
-            avail_fragments = fragments[:]
-            missing_fragment_idxs = []
-            for missing_frag in missing_fragments:
-                missing_fragment_idxs.append(fragments.index(missing_frag))
-                avail_fragments.remove(missing_frag)
-
-            (data_frags, parity_frags, missing_idxs) =\
-                pyeclib_c.get_fragment_partition(handle, avail_fragments)
-
-            missing_fragment_idxs.sort()
-            missing_idxs.sort()
-
-            if missing_fragment_idxs != missing_idxs:
-                success = False
-                print(("Missing idx mismatch in test_get_fragment_partition: "
-                       "%s != %s\n" % (missing_fragment_idxs, missing_idxs)))
-                #sys.exit()
-
-            decoded_frags = pyeclib_c.decode(handle, data_frags, parity_frags,
-                                             missing_idxs, len(data_frags[0]))
-
-            return success
-
-    def _test_fragments_to_string(self,
-                                  num_data, num_parity, ec_type,
-                                  file_size):
-        """
-        :return boolean, True if all tests passed
-        """
-        handle = pyeclib_c.init(num_data, num_parity, ec_type)
-        whole_file_bytes = self.get_tmp_file(file_size).read()
-        success = True
-
-        fragments = pyeclib_c.encode(handle, whole_file_bytes)
-        concat_str = pyeclib_c.fragments_to_string(handle, fragments[:num_data])
-
-        if concat_str != whole_file_bytes:
-            success = False
-            print(("String does not equal the original string "
-                   "(len(orig) = %d, len(new) = %d\n" %
-                   (len(whole_file_bytes), len(concat_str))))
-
-        return success
 
     def _test_get_required_fragments(self, num_data, num_parity, ec_type):
         """
@@ -358,24 +285,9 @@ class TestPyECLib(unittest.TestCase):
 
         return success
 
-    def test_rs_code(self):
+    def test_codes(self):
         for ec_type in self.rs_types:
             print(("\nRunning tests for %s" % (ec_type)))
-
-            for i in range(len(self.num_datas)):
-                for size_str in self.sizes:
-                    success = self._test_get_fragment_partition(self.num_datas[i],
-                                                                self.num_parities[i],
-                                                                ec_type, size_str,
-                                                                self.iterations)
-                    self.assertTrue(success)
-
-            for i in range(len(self.num_datas)):
-                for size_str in self.sizes:
-                    success = self._test_fragments_to_string(self.num_datas[i],
-                                                             self.num_parities[i],
-                                                             ec_type, size_str)
-                    self.assertTrue(success)
 
             for i in range(len(self.num_datas)):
                 success = self._test_get_required_fragments(self.num_datas[i],
@@ -387,8 +299,9 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     avg_time = self.time_encode(self.num_datas[i],
                                                 self.num_parities[i],
-                                                ec_type, size_str,
-                                                self.iterations)
+                                                ec_type, self.num_parities[i] + 1, 
+                                                size_str, self.iterations)
+                                                
                     print(("Encode (%s): %s" %
                            (size_str, self.get_throughput(avg_time, size_str))))
 
@@ -396,9 +309,9 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     success, avg_time = self.time_decode(self.num_datas[i],
                                                          self.num_parities[i],
-                                                         ec_type, size_str,
-                                                         self.iterations,
-                                                         self.num_parities[i] + 1)
+                                                         ec_type, self.num_parities[i] + 1,
+                                                         size_str, self.iterations)
+                                                         
                     self.assertTrue(success)
                     print(("Decode (%s): %s" %
                            (size_str, self.get_throughput(avg_time, size_str))))
@@ -407,7 +320,8 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     success, avg_time = self.time_reconstruct(self.num_datas[i],
                                                               self.num_parities[i],
-                                                              ec_type, size_str,
+                                                              ec_type, self.num_parities[i] + 1,
+                                                              size_str,
                                                               self.iterations)
                     self.assertTrue(success)
                     print(("Reconstruct (%s): %s" %

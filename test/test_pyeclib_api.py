@@ -118,7 +118,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
                 self.assertTrue(decoded_str == encode_str)
 
-    def test_verify_fragment_algsig_chksum_fail(self):
+    def disabled_test_verify_fragment_algsig_chksum_fail(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
@@ -159,7 +159,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
             self.assertTrue(pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) != -1)
 
-    def test_verify_fragment_inline_succeed(self):
+    def disabled_test_verify_fragment_inline_succeed(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
@@ -193,7 +193,7 @@ class TestPyECLibDriver(unittest.TestCase):
             self.assertTrue(
                 pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == -1)
 
-    def test_verify_fragment_inline_chksum_fail(self):
+    def disabled_test_verify_fragment_inline_chksum_fail(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
@@ -236,7 +236,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 pyeclib_driver.verify_stripe_metadata(fragment_metadata_list),
                 fragment_to_corrupt)
 
-    def test_verify_fragment_inline_chksum_succeed(self):
+    def disabled_test_verify_fragment_inline_chksum_succeed(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
@@ -408,7 +408,6 @@ class TestPyECLibDriver(unittest.TestCase):
                     reconstructed_fragments = pyeclib_driver.reconstruct(
                         fragments,
                         idxs_to_remove)
-
                     self.assertTrue(
                         reconstructed_fragments[0] == orig_fragments[
                             idxs_to_remove[0]])
