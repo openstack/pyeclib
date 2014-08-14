@@ -111,8 +111,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_handle->ec_args.k = k;
   pyeclib_handle->ec_args.m = m;
   pyeclib_handle->ec_args.hd = hd;
-  pyeclib_handle->ec_args.inline_chksum = use_inline_chksum;
-  pyeclib_handle->ec_args.algsig_chksum = use_algsig_chksum;
+  pyeclib_handle->ec_args.ct = use_inline_chksum ? CHKSUM_CRC32 : CHKSUM_NONE;
 
   pyeclib_handle->ec_desc = liberasurecode_instance_create(type_str, &(pyeclib_handle->ec_args));
   if (pyeclib_handle->ec_desc <= 0) {
@@ -367,6 +366,8 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
     PyList_SET_ITEM(list_of_strips, pyeclib_handle->ec_args.k + i, 
                     PY_BUILDVALUE_OBJ_LEN(encoded_parity[i], fragment_len));
   }
+
+  liberasurecode_encode_cleanup(pyeclib_handle->ec_desc, encoded_data, encoded_parity);
   
   return list_of_strips;
 }
@@ -614,7 +615,7 @@ error:
 
 exit:
   check_and_free_buffer(c_fragments);
-  check_and_free_buffer(c_orig_payload);
+  liberasurecode_decode_cleanup(pyeclib_handle->ec_desc, c_orig_payload); 
 
   return orig_payload;
 }
@@ -633,10 +634,9 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle = NULL;
   pyeclib_t* pyeclib_handle = NULL;
-  char *fragment = NULL;                          /* param, fragment from caller */
-  int fragment_metadata_len;                      /* metadata header size (B) */
-  char *c_fragment_metadata = NULL;               /* buffer to hold metadata */
-  PyObject *fragment_metadata = NULL;             /* metadata object to return */
+  char *fragment = NULL;                            /* param, fragment from caller */
+  fragment_metadata_t c_fragment_metadata;          /* structure to hold metadata */
+  PyObject *fragment_metadata = NULL;               /* metadata object to return */
   int ret;
 
   /* Obtain and validate the method parameters */
@@ -650,14 +650,14 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  ret = liberasurecode_get_fragment_metadata(fragment, &c_fragment_metadata, &fragment_metadata_len);
+  ret = liberasurecode_get_fragment_metadata(pyeclib_handle->ec_desc, fragment, &c_fragment_metadata);
 
   if (ret < 0) {
     fragment_metadata = NULL;
     PyErr_SetString(PyECLibError, "Failed to get metadata in pyeclib.get_metadata");
   } else {
-    fragment_metadata = PY_BUILDVALUE_OBJ_LEN((char*)c_fragment_metadata, 
-                                                 fragment_metadata_len);                                                  
+    fragment_metadata = PY_BUILDVALUE_OBJ_LEN((char*)&c_fragment_metadata, 
+                                                 sizeof(fragment_metadata_t));                                                  
   }
 
   return fragment_metadata;
@@ -721,7 +721,8 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
     PyBytes_AsStringAndSize(tmp_data, &(c_fragment_metadata_list[i]), &len);
   }
   
-  ret = liberasurecode_verify_stripe_metadata(c_fragment_metadata_list, num_fragments, fragment_metadata_size);
+  ret = liberasurecode_verify_stripe_metadata(pyeclib_handle->ec_desc, c_fragment_metadata_list, 
+                                              num_fragments);
         
   ret_obj = PyLong_FromLong((long)ret);
 
