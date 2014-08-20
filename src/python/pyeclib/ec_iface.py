@@ -234,21 +234,24 @@ class ECDriver(object):
         return self.ec_lib_reference.reconstruct(
             available_fragment_payloads, missing_fragment_indexes)
 
-    def fragments_needed(self, missing_fragment_indexes):
+    def fragments_needed(self, reconstruction_indexes, exclude_indexes = []):
         """
         Determine which fragments are needed to reconstruct some subset of
         missing fragments.
 
-        :param missing_fragment_indexes: a list of integers representing the
+        :param reconstruction_indexes: a list of integers representing the
                                          indexes of the fragments to be
                                          reconstructed.
-        :returns: a list of lists containing fragment indexes.  Each sub-list
-                  contains a combination of fragments that can be used to
+        :param exclude_indexes: a list of integers representing the
+                                         indexes of the fragments to be
+                                         excluded from the reconstruction
+                                         equations. 
+        :returns: a list containing fragment indexes that can be used to 
                   reconstruct the missing fragments.
         :raises: ECDriverError if there is an error during decoding or there
                  are not sufficient fragments to decode
         """
-        return self.ec_lib_reference.fragments_needed(missing_fragment_indexes)
+        return self.ec_lib_reference.fragments_needed(reconstruction_indexes, exclude_indexes)
 
     def get_metadata(self, fragment):
         """

@@ -274,7 +274,7 @@ class TestPyECLib(unittest.TestCase):
             expected_fragments = expected_fragments[:num_data]
             required_fragments = pyeclib_c.get_required_fragments(
                 handle,
-                missing_fragments)
+                missing_fragments, [])
 
             if expected_fragments != required_fragments:
                 success = False

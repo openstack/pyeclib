@@ -378,7 +378,8 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
  * and a list of missing indexes.
  *
  * @param pyeclib_obj_handle
- * @param missing_list indexes of missing fragments
+ * @param reconstruct_list list of missing fragments to reconstruct
+ * @param exclude_list list of fragments to exclude from reconstruction
  * @return a list of lists of indexes to rebuild data from
  */
 static PyObject *
@@ -386,17 +387,20 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle = NULL;
   pyeclib_t *pyeclib_handle = NULL;
-  PyObject *missing_list = NULL;        /* param, */
+  PyObject *reconstruct_list = NULL;        /* list of missing fragments to reconstruct */
+  PyObject *exclude_list = NULL;        /* list of fragments to exclude from reconstruction */
   PyObject *fragment_idx_list = NULL;   /* list of req'd indexes to return */
-  int *c_missing_list = NULL;           /* c-array of missing indexes */
+  int *c_reconstruct_list = NULL;           /* c-array of missing indexes */
+  int *c_exclude_list = NULL;           /* c-array of missing indexes */
   int num_missing;                      /* size of passed in missing list */
+  int num_exclude;                      /* size of passed in exclude list */
   int i = 0;                            /* counters */
   int k, m;                             /* EC algorithm parameters */
   int *fragments_needed = NULL;         /* indexes of xor code fragments */
   int ret;                              /* return value for xor code */
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &missing_list)) {
+  if (!PyArg_ParseTuple(args, "OOO", &pyeclib_obj_handle, &reconstruct_list, &exclude_list)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_required_fragments");
     return NULL;
   }
@@ -409,16 +413,28 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   m = pyeclib_handle->ec_args.m;
 
   /* Generate -1 terminated c-array and bitmap of missing indexes */
-  num_missing = (int) PyList_Size(missing_list);
-  c_missing_list = (int *) alloc_zeroed_buffer((num_missing + 1) * sizeof(int));
-  if (NULL == c_missing_list) {
+  num_missing = (int) PyList_Size(reconstruct_list);
+  c_reconstruct_list = (int *) alloc_zeroed_buffer((num_missing + 1) * sizeof(int));
+  if (NULL == c_reconstruct_list) {
     return NULL;
   }
-  c_missing_list[num_missing] = -1;
+  c_reconstruct_list[num_missing] = -1;
   for (i = 0; i < num_missing; i++) {
-    PyObject *obj_idx = PyList_GetItem(missing_list, i);
+    PyObject *obj_idx = PyList_GetItem(reconstruct_list, i);
     long idx = PyLong_AsLong(obj_idx);
-    c_missing_list[i] = (int) idx;
+    c_reconstruct_list[i] = (int) idx;
+  }
+
+  num_exclude = (int) PyList_Size(exclude_list);
+  c_exclude_list = (int *) alloc_zeroed_buffer((num_exclude + 1) * sizeof(int));
+  if (NULL == c_exclude_list) {
+    goto exit; 
+  }
+  c_exclude_list[num_exclude] = -1;
+  for (i = 0; i < num_exclude; i++) {
+    PyObject *obj_idx = PyList_GetItem(exclude_list, i);
+    long idx = PyLong_AsLong(obj_idx);
+    c_exclude_list[i] = (int) idx;
   }
 
   fragments_needed = alloc_zeroed_buffer(sizeof(int) * (k + m));
@@ -426,7 +442,8 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
     goto exit;
   }
 
-  ret = liberasurecode_fragments_needed(pyeclib_handle->ec_desc, c_missing_list, fragments_needed);
+  ret = liberasurecode_fragments_needed(pyeclib_handle->ec_desc, c_reconstruct_list, 
+                                        c_exclude_list, fragments_needed);
   if (ret < 0) {
     PyErr_Format(PyECLibError, "Not enough fragments for pyeclib.get_required_fragments!");
     goto exit; 
@@ -443,7 +460,8 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   }
 
 exit:
-  check_and_free_buffer(c_missing_list);
+  check_and_free_buffer(c_reconstruct_list);
+  check_and_free_buffer(c_exclude_list);
   check_and_free_buffer(fragments_needed);
 
   return fragment_idx_list;
