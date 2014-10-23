@@ -28,6 +28,7 @@ import time
 import unittest
 
 import pyeclib_c
+from pyeclib.ec_iface import PyECLib_EC_Types
 
 
 class Timer:
@@ -58,10 +59,10 @@ class TestPyECLib(unittest.TestCase):
         self.iterations = 100
 
         # EC algorithm and config parameters
-        self.rs_types = [("jerasure_rs_vand"), ("jerasure_rs_cauchy")]
-        self.xor_types = [("flat_xor_hd", 12, 6, 4),
-                          ("flat_xor_hd", 10, 5, 4),
-                          ("flat_xor_hd", 10, 5, 3)]
+        self.rs_types = [(PyECLib_EC_Types.jerasure_rs_vand), (PyECLib_EC_Types.jerasure_rs_cauchy)]
+        self.xor_types = [(PyECLib_EC_Types.flat_xor_hd, 12, 6, 4),
+                          (PyECLib_EC_Types.flat_xor_hd, 10, 5, 4),
+                          (PyECLib_EC_Types.flat_xor_hd, 10, 5, 3)]
 
         # Input temp files for testing
         self.sizes = ["101-K", "202-K", "303-K"]
@@ -224,17 +225,15 @@ class TestPyECLib(unittest.TestCase):
         for (ec_type, k, m, hd) in self.xor_types:
             print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
 
-            type_str = "%s" % (ec_type)
-
             for size_str in self.sizes:
-                avg_time = self.time_encode(k, m, type_str, hd,
+                avg_time = self.time_encode(k, m, ec_type.value, hd,
                                             size_str,
                                             self.iterations)
                 print("Encode (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
             for size_str in self.sizes:
-                success, avg_time = self.time_decode(k, m, type_str, hd,
+                success, avg_time = self.time_decode(k, m, ec_type.value, hd,
                                                      size_str,
                                                      self.iterations)
                 self.assertTrue(success)
@@ -242,7 +241,7 @@ class TestPyECLib(unittest.TestCase):
                       (size_str, self.get_throughput(avg_time, size_str)))
 
             for size_str in self.sizes:
-                success, avg_time = self.time_reconstruct(k, m, type_str, hd,
+                success, avg_time = self.time_reconstruct(k, m, ec_type.value, hd,
                                                           size_str,
                                                           self.iterations)
                 self.assertTrue(success)
@@ -253,7 +252,7 @@ class TestPyECLib(unittest.TestCase):
         """
         :return boolean, True if all tests passed
         """
-        handle = pyeclib_c.init(num_data, num_parity, ec_type)
+        handle = pyeclib_c.init(num_data, num_parity, ec_type.value)
         success = True
 
         #
@@ -299,9 +298,9 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     avg_time = self.time_encode(self.num_datas[i],
                                                 self.num_parities[i],
-                                                ec_type, self.num_parities[i] + 1, 
+                                                ec_type.value, self.num_parities[i] + 1,
                                                 size_str, self.iterations)
-                                                
+
                     print(("Encode (%s): %s" %
                            (size_str, self.get_throughput(avg_time, size_str))))
 
@@ -309,9 +308,9 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     success, avg_time = self.time_decode(self.num_datas[i],
                                                          self.num_parities[i],
-                                                         ec_type, self.num_parities[i] + 1,
+                                                         ec_type.value, self.num_parities[i] + 1,
                                                          size_str, self.iterations)
-                                                         
+
                     self.assertTrue(success)
                     print(("Decode (%s): %s" %
                            (size_str, self.get_throughput(avg_time, size_str))))
@@ -320,7 +319,7 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     success, avg_time = self.time_reconstruct(self.num_datas[i],
                                                               self.num_parities[i],
-                                                              ec_type, self.num_parities[i] + 1,
+                                                              ec_type.value, self.num_parities[i] + 1,
                                                               size_str,
                                                               self.iterations)
                     self.assertTrue(success)

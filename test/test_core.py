@@ -89,4 +89,7 @@ if __name__ == "__main__":
         run_under_valgrind = True
         test_cmd_prefix = "valgrind --leak-check=full "
         log_filename_prefix = "valgrind"
-    unittest.main(verbosity=2)
+    if sys.version_info<(2,7,0):
+        unittest.main()
+    else:
+        unittest.main(verbosity=2)

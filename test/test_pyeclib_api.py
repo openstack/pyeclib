@@ -128,13 +128,10 @@ class TestPyECLibDriver(unittest.TestCase):
                      k=12, m=3, ec_type="jerasure_rs_vand", chksum_type="algsig"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=6, ec_type="flat_xor_hd_4", chksum_type="algsig"))
+                     k=12, m=6, ec_type="flat_xor_hd", chksum_type="algsig"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=10, m=5, ec_type="flat_xor_hd_4", chksum_type="algsig"))
-        pyeclib_drivers.append(
-            ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=10, m=5, ec_type="flat_xor_hd_3", chksum_type="algsig"))
+                     k=10, m=5, ec_type="flat_xor_hd", chksum_type="algsig"))
 
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
@@ -169,13 +166,10 @@ class TestPyECLibDriver(unittest.TestCase):
                      k=12, m=3, ec_type="jerasure_rs_vand", chksum_type="algsig"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=6, ec_type="flat_xor_hd_4", chksum_type="algsig"))
+                     k=12, m=6, ec_type="flat_xor_hd", chksum_type="algsig"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=10, m=5, ec_type="flat_xor_hd_4", chksum_type="algsig"))
-        pyeclib_drivers.append(
-            ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=10, m=5, ec_type="flat_xor_hd_3", chksum_type="algsig"))
+                     k=10, m=5, ec_type="flat_xor_hd", chksum_type="algsig"))
 
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
@@ -358,16 +352,10 @@ class TestPyECLibDriver(unittest.TestCase):
                      k=12, m=3, ec_type="jerasure_rs_cauchy"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=12, m=6, ec_type="flat_xor_hd_4"))
+                     k=12, m=6, ec_type="flat_xor_hd"))
         pyeclib_drivers.append(
             ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=10, m=5, ec_type="flat_xor_hd_4"))
-        pyeclib_drivers.append(
-            ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=10, m=5, ec_type="flat_xor_hd_3"))
-        pyeclib_drivers.append(
-            ECDriver("pyeclib.core.ECPyECLibDriver",
-                     k=9, m=5, ec_type="flat_xor_hd_3"))
+                     k=10, m=5, ec_type="flat_xor_hd"))
 
         for pyeclib_driver in pyeclib_drivers:
             for file_size in self.file_sizes:
