@@ -668,6 +668,10 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
     ret_payload = PY_BUILDVALUE_OBJ_LEN(c_orig_payload, orig_data_size);
   } else {
     ret_payload = PyList_New(num_ranges);
+    if (NULL == ret_payload) {
+        PyErr_SetString(PyECLibError, "Could not alloc list for range payloads in pyeclib.decode");
+        goto error;
+    }
     range_payload_size = 0;
     for (i = 0; i < num_ranges; i++) {
       /* Check that range is within the original buffer */

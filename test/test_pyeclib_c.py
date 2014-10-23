@@ -365,7 +365,7 @@ class TestPyECLib(unittest.TestCase):
                 for size_str in self.sizes:
                     success, avg_time = self.time_range_decode(self.num_datas[i],
                                                                self.num_parities[i],
-                                                               ec_type, self.num_parities[i] + 1,
+                                                               ec_type.value, self.num_parities[i] + 1,
                                                                size_str, self.iterations)
                                                          
                     self.assertTrue(success)
