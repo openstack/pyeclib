@@ -579,7 +579,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   PyObject *pyeclib_obj_handle = NULL;
   pyeclib_t *pyeclib_handle = NULL;
   PyObject *fragments = NULL;             /* param, list of missing indexes */
-  PyObject *orig_payload = NULL;          /* buffer to store original payload in */
+  PyObject *ret_payload = NULL;           /* object to store original payload or ranges of payload */
   PyObject *ranges = NULL;                /* a list of tuples that represent byte ranges */
   pyeclib_byte_range_t *c_ranges = NULL;  /* the byte ranges */
   int num_ranges = 0;                     /* number of specified ranges */
@@ -587,7 +587,6 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   char **c_fragments = NULL;              /* k length array of data buffers */
   int num_fragments;                      /* param, number of fragments */
   char *c_orig_payload = NULL;            /* buffer to store original payload in */
-  char *c_byte_range_payload = NULL;      /* buffer to store payload for byte ranges */
   uint64_t range_payload_size = 0;        /* length of buffer used to store byte ranges */
   uint64_t orig_data_size = 0;            /* data size in bytes ,from fragment hdr */
   int i = 0;                              /* counters */
@@ -621,6 +620,10 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
     
   if (num_ranges > 0) {
     c_ranges = (pyeclib_byte_range_t*)malloc(sizeof(pyeclib_byte_range_t) * num_ranges);
+    if (NULL == c_ranges) {
+        PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib_c.decode");
+        goto error;
+    }
     for (i = 0; i < num_ranges; i++) {
       PyObject *tuple = PyList_GetItem(ranges, i);
       if (PyTuple_Size(tuple) == 2) {
@@ -640,7 +643,6 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
         goto error;
       }
     }
-    c_byte_range_payload = (char*)malloc(sizeof(char) * range_payload_size);  
   }
   
   c_fragments = (char **) alloc_zeroed_buffer(sizeof(char *) * num_fragments);
@@ -663,8 +665,9 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
                             &orig_data_size);
 
   if (num_ranges == 0) {
-    orig_payload = PY_BUILDVALUE_OBJ_LEN(c_orig_payload, orig_data_size);
+    ret_payload = PY_BUILDVALUE_OBJ_LEN(c_orig_payload, orig_data_size);
   } else {
+    ret_payload = PyList_New(num_ranges);
     range_payload_size = 0;
     for (i = 0; i < num_ranges; i++) {
       /* Check that range is within the original buffer */
@@ -672,28 +675,22 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
         PyErr_SetString(PyECLibError, "Invalid range passed to pyeclib.decode");
         goto error;
       }
-
-      /* Copy byte range into the buffer to return */
-      memcpy(c_byte_range_payload + range_payload_size, 
-             c_orig_payload + c_ranges[i].offset, 
-             c_ranges[i].length); 
-      range_payload_size += c_ranges[i].length;
+      PyList_SET_ITEM(ret_payload, i,
+        PY_BUILDVALUE_OBJ_LEN(c_orig_payload + c_ranges[i].offset, c_ranges[i].length));
     }
-    orig_payload = PY_BUILDVALUE_OBJ_LEN(c_byte_range_payload, range_payload_size);
   }
 
   goto exit;
 
 error:
-  orig_payload = NULL;
+  ret_payload = NULL;
 
 exit:
   check_and_free_buffer(c_fragments);
   check_and_free_buffer(c_ranges);
-  check_and_free_buffer(c_byte_range_payload);
   liberasurecode_decode_cleanup(pyeclib_handle->ec_desc, c_orig_payload); 
 
-  return orig_payload;
+  return ret_payload;
 }
 
 

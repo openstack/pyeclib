@@ -194,19 +194,19 @@ class TestPyECLib(unittest.TestCase):
                 fragments.pop(idx)
 
             timer.start()
-            decoded_file_bytes = pyeclib_c.decode(handle,
-                                                 fragments,
-                                                 len(fragments[0]),
-                                                 ranges)
+            decoded_file_ranges = pyeclib_c.decode(handle,
+                                                   fragments,
+                                                   len(fragments[0]),
+                                                   ranges)
             tsum += timer.stop_and_return()
 
             fragments = orig_fragments[:]
 
-            offset = 0
+            range_offset = 0
             for r in ranges:
-              if whole_file_bytes[r[0]:r[1]] != decoded_file_bytes[offset:offset + (r[1] - r[0])]:
+              if whole_file_bytes[r[0]:r[1]+1] != decoded_file_ranges[range_offset]:
                 success = False
-              offset += (r[1] - r[0] + 1)
+              range_offset += 1
 
         return success, tsum / iterations
 
