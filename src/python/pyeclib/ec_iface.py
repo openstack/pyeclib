@@ -84,8 +84,8 @@ class PyECLib_EC_Types(PyECLibEnum):
     # 0 is False in the boolean sense but enum members evaluate to True
     jerasure_rs_vand = 1
     jerasure_rs_cauchy = 2
-    flat_xor_hd_3 = 3
-    flat_xor_hd_4 = 4
+    flat_xor_hd = 3
+    isa_l_rs_vand = 4
 
 
 # Output of Erasure (en)Coding process are data "fragments".  Fragment data

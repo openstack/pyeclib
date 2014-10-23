@@ -59,17 +59,13 @@ class ECPyECLibDriver(object):
 
         name = self.ec_type.name
 
-        if name == "flat_xor_hd_3":
-          hd = 3
-          name = "flat_xor_hd"
-        elif name == "flat_xor_hd_4":
+        if name == "flat_xor_hd":
           hd = 4 
-          name = "flat_xor_hd"
 
         self.handle = pyeclib_c.init(
             self.k,
             self.m,
-            name, 
+            ec_type.value, 
             hd,
             self.inline_chksum,
             self.algsig_chksum)

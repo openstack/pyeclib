@@ -88,7 +88,7 @@ static PyObject * pyeclib_c_check_metadata(PyObject *self, PyObject *args);
  * @param k integer number of data elements
  * @param m integer number of checksum elements
  * @param w integer word size in bytes
- * @param type_str string name of erasure coding algorithm
+ * @param backend_id erasure coding backend
  * @return pointer to PyObject or NULL on error
  */
 static PyObject *
@@ -98,10 +98,10 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   PyObject *pyeclib_obj_handle = NULL;
   int k, m, hd=0;
   int use_inline_chksum = 0, use_algsig_chksum = 0;
-  const char *type_str;
+  const ec_backend_id_t backend_id;
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "iis|iii", &k, &m, &type_str, &hd, &use_inline_chksum, &use_algsig_chksum)) {
+  if (!PyArg_ParseTuple(args, "iii|iii", &k, &m, &backend_id, &hd, &use_inline_chksum, &use_algsig_chksum)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.init");
     return NULL;
   }
@@ -117,7 +117,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_handle->ec_args.hd = hd;
   pyeclib_handle->ec_args.ct = use_inline_chksum ? CHKSUM_CRC32 : CHKSUM_NONE;
 
-  pyeclib_handle->ec_desc = liberasurecode_instance_create(type_str, &(pyeclib_handle->ec_args));
+  pyeclib_handle->ec_desc = liberasurecode_instance_create(backend_id, &(pyeclib_handle->ec_args));  
   if (pyeclib_handle->ec_desc <= 0) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to liberasurecode_instance_create");
     goto error; 
@@ -726,7 +726,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  ret = liberasurecode_get_fragment_metadata(pyeclib_handle->ec_desc, fragment, &c_fragment_metadata);
+  ret = liberasurecode_get_fragment_metadata(fragment, &c_fragment_metadata);
 
   if (ret < 0) {
     fragment_metadata = NULL;
