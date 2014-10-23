@@ -65,6 +65,10 @@
 
 static PyObject *PyECLibError;
 
+typedef struct pyeclib_byte_range {
+  uint64_t offset;
+  uint64_t length;
+} pyeclib_byte_range_t;
 
 /**
  * Prototypes for Python/C API methods
@@ -574,18 +578,23 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle = NULL;
   pyeclib_t *pyeclib_handle = NULL;
-  PyObject *fragments = NULL;         /* param, list of missing indexes */
-  PyObject *orig_payload = NULL;      /* buffer to store original payload in */
-  int fragment_len;                   /* param, size in bytes of fragment */
-  char **c_fragments = NULL;          /* k length array of data buffers */
-  int num_fragments;                  /* param, number of fragments */
-  char *c_orig_payload = NULL;        /* buffer to store original payload in */
-  uint64_t orig_data_size = 0;        /* data size in bytes ,from fragment hdr */
-  int i = 0;                          /* counters */
+  PyObject *fragments = NULL;             /* param, list of missing indexes */
+  PyObject *orig_payload = NULL;          /* buffer to store original payload in */
+  PyObject *ranges = NULL;                /* a list of tuples that represent byte ranges */
+  pyeclib_byte_range_t *c_ranges = NULL;  /* the byte ranges */
+  int num_ranges = 0;                     /* number of specified ranges */
+  int fragment_len;                       /* param, size in bytes of fragment */
+  char **c_fragments = NULL;              /* k length array of data buffers */
+  int num_fragments;                      /* param, number of fragments */
+  char *c_orig_payload = NULL;            /* buffer to store original payload in */
+  char *c_byte_range_payload = NULL;      /* buffer to store payload for byte ranges */
+  uint64_t range_payload_size = 0;        /* length of buffer used to store byte ranges */
+  uint64_t orig_data_size = 0;            /* data size in bytes ,from fragment hdr */
+  int i = 0;                              /* counters */
   int ret = 0;
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "OOi", &pyeclib_obj_handle, &fragments, &fragment_len)) {
+  if (!PyArg_ParseTuple(args, "OOi|O", &pyeclib_obj_handle, &fragments, &fragment_len, &ranges)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.decode");
     return NULL;
   }
@@ -601,9 +610,37 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   
   num_fragments = PyList_Size(fragments);
 
+  if (ranges) {
+    num_ranges = PyList_Size(ranges);
+  }
+
   if (pyeclib_handle->ec_args.k > num_fragments) {
     PyErr_SetString(PyECLibError, "The fragment list does not have enough entries in pyeclib.decode");
     return NULL;
+  }
+    
+  if (num_ranges > 0) {
+    c_ranges = (pyeclib_byte_range_t*)malloc(sizeof(pyeclib_byte_range_t) * num_ranges);
+    for (i = 0; i < num_ranges; i++) {
+      PyObject *tuple = PyList_GetItem(ranges, i);
+      if (PyTuple_Size(tuple) == 2) {
+        PyObject *py_begin = PyTuple_GetItem(tuple, 0);
+        PyObject *py_end = PyTuple_GetItem(tuple, 1);
+
+        if (!PyLong_Check(py_begin) || !PyLong_Check(py_end)) {
+          PyErr_SetString(PyECLibError, "Invalid range passed to pyeclib.decode");
+          goto error;
+        }
+
+        c_ranges[i].offset = PyLong_AsLong(py_begin);
+        c_ranges[i].length = PyLong_AsLong(py_end) - c_ranges[i].offset + 1;
+        range_payload_size += c_ranges[i].length;
+      } else {
+        PyErr_SetString(PyECLibError, "Invalid range passed to pyeclib.decode");
+        goto error;
+      }
+    }
+    c_byte_range_payload = (char*)malloc(sizeof(char) * range_payload_size);  
   }
   
   c_fragments = (char **) alloc_zeroed_buffer(sizeof(char *) * num_fragments);
@@ -625,7 +662,26 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
                             &c_orig_payload,
                             &orig_data_size);
 
-  orig_payload = PY_BUILDVALUE_OBJ_LEN(c_orig_payload, orig_data_size);
+  if (num_ranges == 0) {
+    orig_payload = PY_BUILDVALUE_OBJ_LEN(c_orig_payload, orig_data_size);
+  } else {
+    range_payload_size = 0;
+    for (i = 0; i < num_ranges; i++) {
+      /* Check that range is within the original buffer */
+      if (c_ranges[i].offset + c_ranges[i].length > orig_data_size) {
+        PyErr_SetString(PyECLibError, "Invalid range passed to pyeclib.decode");
+        goto error;
+      }
+
+      /* Copy byte range into the buffer to return */
+      memcpy(c_byte_range_payload + range_payload_size, 
+             c_orig_payload + c_ranges[i].offset, 
+             c_ranges[i].length); 
+      range_payload_size += c_ranges[i].length;
+    }
+    orig_payload = PY_BUILDVALUE_OBJ_LEN(c_byte_range_payload, range_payload_size);
+  }
+
   goto exit;
 
 error:
@@ -633,6 +689,8 @@ error:
 
 exit:
   check_and_free_buffer(c_fragments);
+  check_and_free_buffer(c_ranges);
+  check_and_free_buffer(c_byte_range_payload);
   liberasurecode_decode_cleanup(pyeclib_handle->ec_desc, c_orig_payload); 
 
   return orig_payload;

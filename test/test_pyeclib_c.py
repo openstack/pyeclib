@@ -163,6 +163,52 @@ class TestPyECLib(unittest.TestCase):
               success = False
 
         return success, tsum / iterations
+    
+    def time_range_decode(self,
+                    num_data, num_parity, ec_type, hd,
+                    file_size, iterations):
+        """
+        :return 2-tuple, (success, average decode time)
+        """
+        timer = Timer()
+        tsum = 0
+        handle = pyeclib_c.init(num_data, num_parity, ec_type, hd)
+        whole_file_bytes = self.get_tmp_file(file_size).read()
+        success = True
+
+        begins = [long(random.randint(0, len(whole_file_bytes) - 1)) for i in range(3)]
+        ends = [long(random.randint(begins[i], len(whole_file_bytes))) for i in range(3)]
+
+        ranges = zip(begins, ends)
+
+        fragments = pyeclib_c.encode(handle, whole_file_bytes)
+        orig_fragments = fragments[:]
+        
+        for i in range(iterations):
+            missing_idxs = []
+            num_missing = hd - 1
+            for j in range(num_missing):
+                num_frags_left = len(fragments)
+                idx = random.randint(0, num_frags_left - 1)
+                fragments.pop(idx)
+
+            timer.start()
+            decoded_file_bytes = pyeclib_c.decode(handle,
+                                                 fragments,
+                                                 len(fragments[0]),
+                                                 ranges)
+            tsum += timer.stop_and_return()
+
+            fragments = orig_fragments[:]
+
+            offset = 0
+            for r in ranges:
+              if whole_file_bytes[r[0]:r[1]] != decoded_file_bytes[offset:offset + (r[1] - r[0])]:
+                success = False
+              offset += (r[1] - r[0] + 1)
+
+        return success, tsum / iterations
+
 
     def time_reconstruct(self,
                          num_data, num_parity, ec_type, hd,
@@ -314,6 +360,17 @@ class TestPyECLib(unittest.TestCase):
                                                          
                     self.assertTrue(success)
                     print(("Decode (%s): %s" %
+                           (size_str, self.get_throughput(avg_time, size_str))))
+            
+            for i in range(len(self.num_datas)):
+                for size_str in self.sizes:
+                    success, avg_time = self.time_range_decode(self.num_datas[i],
+                                                               self.num_parities[i],
+                                                               ec_type, self.num_parities[i] + 1,
+                                                               size_str, self.iterations)
+                                                         
+                    self.assertTrue(success)
+                    print(("Range Decode (%s): %s" %
                            (size_str, self.get_throughput(avg_time, size_str))))
 
             for i in range(len(self.num_datas)):
