@@ -261,6 +261,42 @@ class TestPyECLibDriver(unittest.TestCase):
             self.assertTrue(
                 pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == -1)
 
+    def test_get_segment_byterange_info(self):
+        pyeclib_drivers = []
+        pyeclib_drivers.append(
+            ECDriver("pyeclib.core.ECPyECLibDriver",
+                     k=12, m=2, ec_type="jerasure_rs_vand"))
+        pyeclib_drivers.append(
+            ECDriver("pyeclib.core.ECPyECLibDriver",
+                     k=11, m=2, ec_type="jerasure_rs_vand"))
+        pyeclib_drivers.append(
+            ECDriver("pyeclib.core.ECPyECLibDriver",
+                     k=10, m=2, ec_type="jerasure_rs_vand"))
+
+        file_size = 1024 * 1024
+        segment_size = 3 * 1024
+
+        ranges = [(0, 1), (1, 12), (10, 1000), (0, segment_size-1), (1, segment_size+1), (segment_size-1, 2*segment_size)]
+
+        expected_results = {}
+
+        expected_results[(0, 1)] = {0: (0, 1)}
+        expected_results[(1, 12)] = {0: (1, 12)}
+        expected_results[(10, 1000)] = {0: (10, 1000)}
+        expected_results[(0, segment_size-1)] = {0: (0, segment_size-1)}
+        expected_results[(1, segment_size+1)] = {0: (1, segment_size-1), 1: (0, 1)}
+        expected_results[(segment_size-1, 2*segment_size)] = {0: (segment_size-1, segment_size-1), 1: (0, segment_size-1), 2: (0, 0)}
+
+        results = pyeclib_drivers[0].get_segment_info_byterange(ranges, file_size, segment_size)
+
+        for exp_result_key in expected_results:
+            self.assertTrue(results.has_key(exp_result_key))
+            self.assertTrue(len(results[exp_result_key]) == len(expected_results[exp_result_key]))
+            exp_result_map = expected_results[exp_result_key]
+            for segment_key in exp_result_map:
+                self.assertTrue(results[exp_result_key].has_key(segment_key))
+                self.assertTrue(results[exp_result_key][segment_key] == expected_results[exp_result_key][segment_key])
+
     def test_get_segment_info(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(

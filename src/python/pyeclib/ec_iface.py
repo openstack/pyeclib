@@ -307,3 +307,77 @@ class ECDriver(object):
         segmenting a data stream.
         """
         return self.ec_lib_reference.get_segment_info(data_len, segment_size)
+
+    #
+    # Map of segment indexes with a list of tuples
+    #
+    def get_segment_info_byterange(self, ranges, data_len, segment_size):
+        """
+        Get segmentation info for a byterange request, given a data length and
+        segment size.
+
+        This will return a map-of-maps that represents a recipe describing 
+        the segments and ranges within each segment needed to satisfy a range
+        request.
+
+        Assume a range request is given for an object with segment size 3K and
+        a 1 MB file:
+
+        Ranges = (0, 1), (1, 12), (10, 1000), (0, segment_size-1), 
+                 (1, segment_size+1), (segment_size-1, 2*segment_size)
+
+        This will return a map keyed on the ranges, where there is a recipe
+        given for each range:
+
+        {
+         (0, 1): {0: (0, 1)}, 
+         (10, 1000): {0: (10, 1000)}, 
+         (1, 12): {0: (1, 12)}, 
+         (0, 3071): {0: (0, 3071)}, 
+         (3071, 6144): {0: (3071, 3071), 1: (0, 3071), 2: (0, 0)}, 
+         (1, 3073): {0: (1, 3071), 1: (0,0)}
+        }
+
+        """
+        
+        segment_info = self.ec_lib_reference.get_segment_info(data_len, segment_size)
+
+        segment_size = segment_info['segment_size']
+        last_segment_size = segment_info['last_segment_size']
+        fragment_size = segment_info['fragment_size']
+        last_fragment_size = segment_info['last_fragment_size']
+        num_segments = segment_info['num_segments']
+
+        sorted_ranges = ranges[:]
+        sorted_ranges.sort(lambda x, y: x[0] - y[0])
+
+        recipe = {}
+
+        for r in ranges:
+            segment_map = {}
+            begin_off = r[0]
+            end_off = r[1]
+            begin_segment = begin_off / segment_size 
+            end_segment = end_off / segment_size 
+          
+            if begin_segment == end_segment:
+                begin_relative_off = begin_off % segment_size
+                end_relative_off = end_off % segment_size
+                segment_map[begin_segment] = (begin_relative_off, end_relative_off)
+            else:
+                begin_relative_off = begin_off % segment_size
+                end_relative_off = end_off % segment_size
+                
+                segment_map[begin_segment] = (begin_relative_off, segment_size-1)
+
+                for middle_segment in range(begin_segment+1, end_segment):
+                    segment_map[middle_segment] = (0, segment_size-1)
+                
+                segment_map[end_segment] = (0, end_relative_off)
+
+            recipe[r] = segment_map
+               
+
+        return recipe
+
+
