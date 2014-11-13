@@ -117,7 +117,7 @@ Quick Start:
 
 
   As mentioned above, PyECLib depends on the installation of the liberasurecde library (liberasurecode
-  can be found at http://bitbucket.org/elambert/liberasurecode).
+  can be found at https://bitbucket.org/tsg-/liberasurecode)
 
 
   Install PyECLib::
