@@ -21,12 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import pyeclib
 from pyeclib.ec_iface import ECDriver
-import random
-import string
-import sys
-import os
 import argparse
 
 parser = argparse.ArgumentParser(description='Decoder for PyECLib.')
@@ -44,8 +39,7 @@ print("ec_type = %s" % args.ec_type)
 print("fragments = %s" % args.fragments)
 print("filename = %s" % args.filename)
 
-ec_driver = ECDriver(
-    "pyeclib.core.ECPyECLibDriver", k=args.k, m=args.m, ec_type=args.ec_type)
+ec_driver = ECDriver(k=args.k, m=args.m, ec_type=args.ec_type)
 
 fragment_list = []
 

@@ -184,7 +184,7 @@ class TestPyECLib(unittest.TestCase):
 
         fragments = pyeclib_c.encode(handle, whole_file_bytes)
         orig_fragments = fragments[:]
-        
+
         for i in range(iterations):
             missing_idxs = []
             num_missing = hd - 1
@@ -367,7 +367,7 @@ class TestPyECLib(unittest.TestCase):
                                                                self.num_parities[i],
                                                                ec_type.value, self.num_parities[i] + 1,
                                                                size_str, self.iterations)
-                                                         
+
                     self.assertTrue(success)
                     print(("Range Decode (%s): %s" %
                            (size_str, self.get_throughput(avg_time, size_str))))

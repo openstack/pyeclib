@@ -40,9 +40,7 @@ parser.add_argument('missing_fragments', type=int, metavar='missing_fragment',
 
 args = parser.parse_args()
 
-ec_driver = ECDriver(
-    "pyeclib.core.ECPyECLibDriver",
-    k=args.k, m=args.m, ec_type=args.ec_type)
+ec_driver = ECDriver(k=args.k, m=args.m, ec_type=args.ec_type)
 
 fragments_needed = ec_driver.fragments_needed(args.missing_fragments)
 
