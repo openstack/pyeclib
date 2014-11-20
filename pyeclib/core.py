@@ -65,7 +65,7 @@ class ECPyECLibDriver(object):
         self.handle = pyeclib_c.init(
             self.k,
             self.m,
-            ec_type.value, 
+            ec_type.value,
             hd,
             self.inline_chksum,
             self.algsig_chksum)
