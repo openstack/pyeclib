@@ -167,6 +167,7 @@ class ECDriver(object):
             'encode': 0,
             'reconstruct': 0,
             'fragments_needed': 0,
+            'min_parity_fragments_needed': 0,
             'get_metadata': 0,
             'verify_stripe_metadata': 0,
             'get_segment_info': 0
@@ -247,6 +248,9 @@ class ECDriver(object):
                  are not sufficient fragments to decode
         """
         return self.ec_lib_reference.fragments_needed(reconstruction_indexes, exclude_indexes)
+
+    def min_parity_fragments_needed(self):
+        return self.ec_lib_reference.min_parity_fragments_needed()
 
     def get_metadata(self, fragment):
         """

@@ -122,6 +122,10 @@ class ECPyECLibDriver(object):
         return pyeclib_c.get_required_fragments(
             self.handle, reconstruct_indexes, exclude_indexes)
 
+    def min_parity_fragments_needed(self):
+        """ FIXME - fix this to return a function of HD """
+        return 1
+
     def get_metadata(self, fragment):
         return pyeclib_c.get_metadata(self.handle, fragment)
 
@@ -156,6 +160,9 @@ class ECNullDriver(object):
         pass
 
     def get_metadata(self, fragment):
+        pass
+
+    def min_parity_fragments_needed(self):
         pass
 
     def verify_stripe_metadata(self, fragment_metadata_list):
@@ -249,6 +256,9 @@ class ECStripingDriver(object):
         :returns: missing_fragment_indexes
         """
         return missing_fragment_indexes
+
+    def min_parity_fragments_needed(self):
+        pass
 
     def get_metadata(self, fragment):
         """This driver does not include fragment metadata, so return empty
