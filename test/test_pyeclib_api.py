@@ -27,7 +27,7 @@ import sys
 import tempfile
 import unittest
 
-from pyeclib.ec_iface import ECDriver
+from pyeclib.ec_iface import ECDriver, VALID_EC_TYPES, ECDriverError
 
 
 if sys.version < '3':
@@ -101,6 +101,14 @@ class TestPyECLibDriver(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_valid_algo(self):
+        for _type in VALID_EC_TYPES:
+            # Check if this algo works
+            try:
+                _instance = ECDriver(k=10, m=5, ec_type=_type)
+            except ECDriverError:
+                self.fail("%s algorithm not supported" % _type)
 
     def test_small_encode(self):
         pyeclib_drivers = []
