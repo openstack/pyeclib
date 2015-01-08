@@ -126,8 +126,8 @@ class ECPyECLibDriver(object):
         """ FIXME - fix this to return a function of HD """
         return 1
 
-    def get_metadata(self, fragment):
-        return pyeclib_c.get_metadata(self.handle, fragment, 0)
+    def get_metadata(self, fragment, formatted = 0):
+        return pyeclib_c.get_metadata(self.handle, fragment, formatted)
 
     def verify_stripe_metadata(self, fragment_metadata_list):
         metadata_len = self._validate_and_return_fragment_size(fragment_metadata_list)
@@ -159,7 +159,7 @@ class ECNullDriver(object):
     def fragments_needed(self, missing_fragment_indexes):
         pass
 
-    def get_metadata(self, fragment):
+    def get_metadata(self, fragment, formatted = 0):
         pass
 
     def min_parity_fragments_needed(self):
@@ -260,7 +260,7 @@ class ECStripingDriver(object):
     def min_parity_fragments_needed(self):
         pass
 
-    def get_metadata(self, fragment):
+    def get_metadata(self, fragment, formatted = 0):
         """This driver does not include fragment metadata, so return empty
         string
         :param fragment: a fragment

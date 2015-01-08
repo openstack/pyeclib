@@ -882,7 +882,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
  * 
  * @param pyeclib_obj_handle
  * @param fragment_metadata_list list of fragment metadata headers
- * @return -1 if no errors, or the index of the first problem checksum
+ * @return -1 if no errors, -2 if stipe-level error, or the index of the first problem checksum
  */
 static PyObject*
 pyeclib_c_check_metadata(PyObject *self, PyObject *args)
@@ -890,6 +890,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   PyObject *pyeclib_obj_handle = NULL;
   pyeclib_t *pyeclib_handle = NULL;
   PyObject *fragment_metadata_list = NULL;                /* param, fragment metadata */
+  fragment_metadata_t *c_fragment_metadata = NULL;        /* metadata buffer for a single fragment */
   char **c_fragment_metadata_list = NULL;                 /* c version of metadata */
   int fragment_metadata_size;                             /* size of the metadata payload */
   int num_fragments;                                      /* k + m from EC algorithm */
@@ -933,7 +934,19 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   
   ret = liberasurecode_verify_stripe_metadata(pyeclib_handle->ec_desc, c_fragment_metadata_list, 
                                               num_fragments);
-        
+
+  if (ret == -EINVALIDPARAMS || ret == 0) {
+    ret = -1;
+  } else if (ret == -EBADCHKSUM) {
+    for (i = 0; i < num_fragments; i++) {
+      c_fragment_metadata = (fragment_metadata_t*)c_fragment_metadata_list[i];
+      if (c_fragment_metadata->chksum_mismatch == 1) {
+        ret = c_fragment_metadata->idx;
+        break;
+      }
+    }
+  }
+
   ret_obj = PyLong_FromLong((long)ret);
 
   goto exit;

@@ -256,7 +256,7 @@ class ECDriver(object):
     def min_parity_fragments_needed(self):
         return self.ec_lib_reference.min_parity_fragments_needed()
 
-    def get_metadata(self, fragment):
+    def get_metadata(self, fragment, formatted = 0):
         """
         Get opaque metadata for a fragment.  The metadata is opaque to the
         client, but meaningful to the underlying library.  It is used to verify
@@ -267,7 +267,7 @@ class ECDriver(object):
         :returns: an opaque buffer to be passed into verify_stripe_metadata()
         :raises: ECDriverError if there was a problem getting the metadata.
         """
-        return self.ec_lib_reference.get_metadata(fragment)
+        return self.ec_lib_reference.get_metadata(fragment, formatted)
 
     def verify_stripe_metadata(self, fragment_metadata_list):
         """
