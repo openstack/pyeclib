@@ -49,7 +49,7 @@
   #define PyInt_FromLong PyLong_FromLong
   #define PyString_FromString PyUnicode_FromString
   #define ENCODE_ARGS "Oy#"
-  #define GET_METADATA_ARGS "Oy#"
+  #define GET_METADATA_ARGS "Oy#i"
 #else
   #define MOD_ERROR_VAL
   #define MOD_SUCCESS_VAL(val)
@@ -59,7 +59,7 @@
   #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
           Py_BuildValue("s#", obj, objlen)
   #define ENCODE_ARGS "Os#"
-  #define GET_METADATA_ARGS "Os#"
+  #define GET_METADATA_ARGS "Os#i"
 #endif
 
 
@@ -698,6 +698,134 @@ exit:
 }
 
 
+static const char* chksum_type_to_str(uint8_t chksum_type)
+{
+  const char *chksum_type_str = NULL;
+  switch (chksum_type)
+  {
+    case 0: 
+      chksum_type_str = "none\0";
+      break;
+    case 1:
+      chksum_type_str = "crc32\0";
+      break;
+    case 2:
+      chksum_type_str = "md5\0";
+      break;
+    default:
+      chksum_type_str = "unknown\0";
+  }
+
+  return chksum_type_str;
+}
+
+static const char* backend_id_to_str(uint8_t backend_id)
+{
+  const char *backend_id_str = NULL;
+  switch (backend_id)
+  {
+    case 0:
+      backend_id_str = "null";
+      break;
+    case 1:
+      backend_id_str = "jerasure_rs_vand";
+      break;
+    case 2:
+      backend_id_str = "jerasure_rs_cauchy";
+      break;
+    case 3:
+      backend_id_str = "flat_xor_hd";
+      break;
+    case 4:
+      backend_id_str = "isa_l_rs_vand";
+      break;
+    default:
+      backend_id_str = "unknown";
+  }
+
+  return backend_id_str;
+}
+
+static char*
+hex_encode_string(char *buf, uint32_t buf_len)
+{
+  char *hex_encoded_buf = (char*)alloc_zeroed_buffer((buf_len * 2) + 1);
+  char *hex_encoded_ptr = hex_encoded_buf;
+  int i;
+
+  for (i = 0; i < buf_len; i++) {
+    hex_encoded_ptr += sprintf(hex_encoded_ptr, "%02x", buf[i]); 
+  }
+ 
+  return hex_encoded_buf; 
+}
+
+static PyObject*
+fragment_metadata_to_dict(fragment_metadata_t *fragment_metadata)
+{
+  PyObject* metadata_dict = NULL;
+  metadata_dict = PyDict_New();
+
+  if (metadata_dict == NULL) {
+    PyErr_SetString(PyECLibError, "Could not allocate dictionary for fragment metadata");
+    return NULL;
+  }
+
+  if (PyDict_SetItemString(metadata_dict, "index", 
+      PyLong_FromLong((unsigned long)fragment_metadata->idx)) < 0) {
+    PyErr_SetString(PyECLibError, "Error parsing index from fragment metadata");
+    return NULL;
+  }
+  
+  if (PyDict_SetItemString(metadata_dict, "size", 
+      PyLong_FromLong(fragment_metadata->size)) < 0) {
+    PyErr_SetString(PyECLibError, "Error parsing size from fragment metadata");
+    return NULL;
+  }
+  
+  if (PyDict_SetItemString(metadata_dict, "orig_data_size", 
+      PyLong_FromLong(fragment_metadata->orig_data_size)) < 0) {
+    PyErr_SetString(PyECLibError, "Error parsing orig_data_size from fragment metadata");
+    return NULL;
+  }
+  
+  const char *chksum_type_str = chksum_type_to_str(fragment_metadata->chksum_type); 
+  if (PyDict_SetItemString(metadata_dict, "chksum_type", 
+      PyString_FromString(chksum_type_str)) < 0) {
+    PyErr_SetString(PyECLibError, "Error parsing chksum_type from fragment metadata");
+    return NULL;
+  }
+
+  char *encoded_chksum = hex_encode_string((char*)fragment_metadata->chksum, sizeof(fragment_metadata->chksum));
+  if (PyDict_SetItemString(metadata_dict, "chksum", 
+      PyString_FromString(encoded_chksum)) < 0) {
+    PyErr_SetString(PyECLibError, "Error parsing chksum from fragment metadata");
+    return NULL;
+  }
+  
+  if (PyDict_SetItemString(metadata_dict, "chksum_mismatch", 
+      PyLong_FromLong((unsigned long)fragment_metadata->chksum_mismatch)) < 0) {
+
+    PyErr_SetString(PyECLibError, "Error parsing chksum mismatch from fragment metadata");
+    return NULL;
+  }
+  
+  const char *backend_id_str = backend_id_to_str(fragment_metadata->backend_id);
+  if (PyDict_SetItemString(metadata_dict, "backend_id", 
+      PyString_FromString(backend_id_str)) < 0) {
+    PyErr_SetString(PyECLibError, "Error parsing backend id from fragment metadata");
+    return NULL;
+  }
+  
+  if (PyDict_SetItemString(metadata_dict, "backend_version", 
+    PyLong_FromLong((unsigned long)fragment_metadata->backend_version)) < 0) {
+    PyErr_SetString(PyECLibError, "Error parsing backend version from fragment metadata");
+    return NULL;
+  }
+
+  return metadata_dict;
+}
+
 /**
  * Obtain the metadata from a fragment.
  * 
@@ -714,10 +842,12 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
   char *fragment = NULL;                            /* param, fragment from caller */
   fragment_metadata_t c_fragment_metadata;          /* structure to hold metadata */
   PyObject *fragment_metadata = NULL;               /* metadata object to return */
+  int fragment_len;                                 /* fragment length */
+  int formatted;                                    /* format the metadata in a dict */
   int ret;
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, GET_METADATA_ARGS, &pyeclib_obj_handle, &fragment)) {
+  if (!PyArg_ParseTuple(args, GET_METADATA_ARGS, &pyeclib_obj_handle, &fragment, &fragment_len, &formatted)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_metadata");
     return NULL;
   }
@@ -733,13 +863,16 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
     fragment_metadata = NULL;
     PyErr_SetString(PyECLibError, "Failed to get metadata in pyeclib.get_metadata");
   } else {
-    fragment_metadata = PY_BUILDVALUE_OBJ_LEN((char*)&c_fragment_metadata, 
-                                                 sizeof(fragment_metadata_t));                                                  
+    if (formatted) {
+      fragment_metadata = fragment_metadata_to_dict(&c_fragment_metadata);
+    } else {
+      fragment_metadata = PY_BUILDVALUE_OBJ_LEN((char*)&c_fragment_metadata, 
+                                                  sizeof(fragment_metadata_t));                                                  
+    }
   }
 
   return fragment_metadata;
 }
-
 
 /**
  * Confirm the health of the fragment metadata.

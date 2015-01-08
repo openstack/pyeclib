@@ -127,10 +127,10 @@ class ECPyECLibDriver(object):
         return 1
 
     def get_metadata(self, fragment):
-        return pyeclib_c.get_metadata(self.handle, fragment)
+        return pyeclib_c.get_metadata(self.handle, fragment, 0)
 
     def verify_stripe_metadata(self, fragment_metadata_list):
-        metadata_len = self._validate_and_return_fragment_size(fragment_payloads)
+        metadata_len = self._validate_and_return_fragment_size(fragment_metadata_list)
         if metadata_len < 0:
             raise ECPyECLibException("Invalid fragment payload in ECPyECLibDriver.verify_metadata")
 
