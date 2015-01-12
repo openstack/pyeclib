@@ -719,28 +719,50 @@ static const char* chksum_type_to_str(uint8_t chksum_type)
   return chksum_type_str;
 }
 
+static int chksum_length(uint8_t chksum_type)
+{
+  int length = 0;
+  switch (chksum_type)
+  {
+    case 0: 
+      // None
+      break;
+    case 1:
+      // CRC 32
+      length = 4;
+      break;
+    case 2:
+      // MD5
+      length = 16;
+      break;
+    default:
+      length = 0;
+  }
+  return length;
+}
+
 static const char* backend_id_to_str(uint8_t backend_id)
 {
   const char *backend_id_str = NULL;
   switch (backend_id)
   {
     case 0:
-      backend_id_str = "null";
+      backend_id_str = "null\0";
       break;
     case 1:
-      backend_id_str = "jerasure_rs_vand";
+      backend_id_str = "jerasure_rs_vand\0";
       break;
     case 2:
-      backend_id_str = "jerasure_rs_cauchy";
+      backend_id_str = "jerasure_rs_cauchy\0";
       break;
     case 3:
-      backend_id_str = "flat_xor_hd";
+      backend_id_str = "flat_xor_hd\0";
       break;
     case 4:
-      backend_id_str = "isa_l_rs_vand";
+      backend_id_str = "isa_l_rs_vand\0";
       break;
     default:
-      backend_id_str = "unknown";
+      backend_id_str = "unknown\0";
   }
 
   return backend_id_str;
@@ -754,8 +776,10 @@ hex_encode_string(char *buf, uint32_t buf_len)
   int i;
 
   for (i = 0; i < buf_len; i++) {
-    hex_encoded_ptr += sprintf(hex_encoded_ptr, "%02x", buf[i]); 
+    hex_encoded_ptr += sprintf(hex_encoded_ptr, "%.2x", (unsigned char)buf[i]); 
   }
+
+  hex_encoded_buf[buf_len * 2] = 0;
  
   return hex_encoded_buf; 
 }
@@ -796,7 +820,8 @@ fragment_metadata_to_dict(fragment_metadata_t *fragment_metadata)
     return NULL;
   }
 
-  char *encoded_chksum = hex_encode_string((char*)fragment_metadata->chksum, sizeof(fragment_metadata->chksum));
+  char *encoded_chksum = hex_encode_string((char*)fragment_metadata->chksum, 
+                                            chksum_length(fragment_metadata->chksum_type));
   if (PyDict_SetItemString(metadata_dict, "chksum", 
       PyString_FromString(encoded_chksum)) < 0) {
     PyErr_SetString(PyECLibError, "Error parsing chksum from fragment metadata");
@@ -935,8 +960,10 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   ret = liberasurecode_verify_stripe_metadata(pyeclib_handle->ec_desc, c_fragment_metadata_list, 
                                               num_fragments);
 
-  if (ret == -EINVALIDPARAMS || ret == 0) {
+  if (ret == 0) {
     ret = -1;
+  } else if (ret == -EINVALIDPARAMS) {
+    ret = -2;
   } else if (ret == -EBADCHKSUM) {
     for (i = 0; i < num_fragments; i++) {
       c_fragment_metadata = (fragment_metadata_t*)c_fragment_metadata_list[i];

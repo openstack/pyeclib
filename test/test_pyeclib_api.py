@@ -186,6 +186,57 @@ class TestPyECLibDriver(unittest.TestCase):
 #            self.assertTrue(
 #                pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == -1)
 #
+
+    def test_get_metadata_formatted(self):
+        pyeclib_driver = ECDriver(k=12, m=2, ec_type="jerasure_rs_vand", chksum_type="inline_crc32")
+        
+        filesize = 1024 * 1024 * 3
+        file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
+        file_bytes = file_str.encode('utf-8')
+        
+        fragments = pyeclib_driver.encode(file_bytes)
+
+        i = 0
+        for fragment in fragments:
+          metadata = pyeclib_driver.get_metadata(fragment, 1)
+          if metadata.has_key('index'):
+            self.assertEqual(metadata['index'], i)
+          else:
+            self.assertTrue(false)
+          
+          if metadata.has_key('chksum_mismatch'):
+            self.assertEqual(metadata['chksum_mismatch'], 0)
+          else:
+            self.assertTrue(false)
+          
+          if metadata.has_key('backend_id'):
+            self.assertEqual(metadata['backend_id'], 'jerasure_rs_vand')
+          else:
+            self.assertTrue(false)
+          
+          if metadata.has_key('orig_data_size'):
+            self.assertEqual(metadata['orig_data_size'], 3145728)
+          else:
+            self.assertTrue(false)
+          
+          if metadata.has_key('chksum_type'):
+            self.assertEqual(metadata['chksum_type'], 'crc32')
+          else:
+            self.assertTrue(false)
+          
+          if not metadata.has_key('backend_version'):
+            self.assertTrue(false)
+          
+          if not metadata.has_key('chksum'):
+            self.assertTrue(false)
+
+          if not metadata.has_key('size'):
+            self.assertTrue(false)
+
+          i += 1
+            
+
+
     def test_verify_fragment_inline_chksum_fail(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(
