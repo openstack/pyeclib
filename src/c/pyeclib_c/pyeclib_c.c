@@ -918,7 +918,6 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   PyObject *fragment_metadata_list = NULL;                /* param, fragment metadata */
   fragment_metadata_t *c_fragment_metadata = NULL;        /* metadata buffer for a single fragment */
   char **c_fragment_metadata_list = NULL;                 /* c version of metadata */
-  int fragment_metadata_size;                             /* size of the metadata payload */
   int num_fragments;                                      /* k + m from EC algorithm */
   int k, m;                                               /* EC algorithm params */
   int size;                                               /* size for buf allocation */
@@ -927,7 +926,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   int i = 0;                                              /* a counter */
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "OOi", &pyeclib_obj_handle, &fragment_metadata_list, &fragment_metadata_size)) {
+  if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_metadata_list)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
     return NULL;
   }
