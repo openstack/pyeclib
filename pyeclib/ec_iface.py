@@ -41,6 +41,10 @@ PYECLIB_VERSION = PyECLibVersion(PYECLIB_MAJOR, PYECLIB_MINOR,
 PYECLIB_MAX_DATA = 32
 PYECLIB_MAX_PARITY = 32
 
+VALID_EC_TYPES = ['jerasure_rs_vand',
+                  'jerasure_rs_cauchy',
+                  'flat_xor_hd']
+
 
 @unique
 class PyECLibEnum(Enum):
