@@ -907,7 +907,8 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
  * 
  * @param pyeclib_obj_handle
  * @param fragment_metadata_list list of fragment metadata headers
- * @return -1 if no errors, -2 if stipe-level error, or the index of the first problem checksum
+ * @return -1 if there were no errors, or the index of the first problem checksum
+ *         NULL if the metadata could not be checked (e.g. invalid parameters)
  */
 static PyObject*
 pyeclib_c_check_metadata(PyObject *self, PyObject *args)
@@ -963,7 +964,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   if (ret == 0) {
     ret = -1;
   } else if (ret == -EINVALIDPARAMS) {
-    ret = -2;
+    goto error; 
   } else if (ret == -EBADCHKSUM) {
     for (i = 0; i < num_fragments; i++) {
       c_fragment_metadata = (fragment_metadata_t*)c_fragment_metadata_list[i];
