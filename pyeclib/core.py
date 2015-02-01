@@ -54,13 +54,11 @@ class ECPyECLibDriver(object):
         # crc32 is the only inline checksum type currently supported
         if self.chksum_type is PyECLib_FRAGHDRCHKSUM_Types.inline_crc32:
             self.inline_chksum = 1
-        elif self.chksum_type is PyECLib_FRAGHDRCHKSUM_Types.algsig:
-            self.algsig_chksum = 1
 
         name = self.ec_type.name
 
         if name == "flat_xor_hd":
-          hd = 4 
+            hd = 4
 
         self.handle = pyeclib_c.init(
             self.k,

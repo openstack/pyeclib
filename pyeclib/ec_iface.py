@@ -102,8 +102,7 @@ class PyECLib_FRAGHDRCHKSUM_Types(PyECLibEnum):
     # Note: the Enum start value defaults to 1 as the starting value and not 0
     # 0 is False in the boolean sense but enum members evaluate to True
     none = 1
-    algsig = 2
-    inline_crc32 = 3
+    inline_crc32 = 2
 
 
 # Generic ECDriverException
