@@ -907,8 +907,9 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
  * 
  * @param pyeclib_obj_handle
  * @param fragment_metadata_list list of fragment metadata headers
- * @return -1 if there were no errors, or the index of the first problem checksum
- *         NULL if the metadata could not be checked (e.g. invalid parameters)
+ * @return dictionary containing 'status', 'reason' and 'bad_fragments', depending 
+ *         on the status
+ *         NULL if the metadata could not be checked by the liberasurecode
  */
 static PyObject*
 pyeclib_c_check_metadata(PyObject *self, PyObject *args)
@@ -924,6 +925,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   int ret = -1;                                           /* c return value */
   PyObject *ret_obj = NULL;                               /* python long to return */
   int i = 0;                                              /* a counter */
+
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_metadata_list)) {
@@ -960,21 +962,25 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   ret = liberasurecode_verify_stripe_metadata(pyeclib_handle->ec_desc, c_fragment_metadata_list, 
                                               num_fragments);
 
+  ret_obj = PyDict_New();
   if (ret == 0) {
-    ret = -1;
+    PyDict_SetItemString(ret_obj, "status", PyLong_FromLong((long)0));
   } else if (ret == -EINVALIDPARAMS) {
+    PyDict_SetItemString(ret_obj, "status", PyLong_FromLong((long)-EINVALIDPARAMS));
+    PyDict_SetItemString(ret_obj, "reason", PyString_FromString("Invalid parameters"));
     goto error; 
   } else if (ret == -EBADCHKSUM) {
+    PyDict_SetItemString(ret_obj, "status", PyLong_FromLong((long)-EINVALIDPARAMS));
+    PyDict_SetItemString(ret_obj, "reason", PyString_FromString("Bad checksum"));
+    PyObject *bad_chksums = PyList_New(0);
     for (i = 0; i < num_fragments; i++) {
       c_fragment_metadata = (fragment_metadata_t*)c_fragment_metadata_list[i];
       if (c_fragment_metadata->chksum_mismatch == 1) {
-        ret = c_fragment_metadata->idx;
-        break;
+        PyList_Append(bad_chksums, PyLong_FromLong((long)c_fragment_metadata->idx));
       }
     }
+    PyDict_SetItemString(ret_obj, "bad_fragments", bad_chksums);
   }
-
-  ret_obj = PyLong_FromLong((long)ret);
 
   goto exit;
 

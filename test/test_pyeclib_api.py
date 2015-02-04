@@ -252,7 +252,8 @@ class TestPyECLibDriver(unittest.TestCase):
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
         file_bytes = file_str.encode('utf-8')
 
-        fragment_to_corrupt = random.randint(0, 12)
+        fragments_to_corrupt = [random.randint(0, 12) for i in range(2)]
+        fragments_to_corrupt.sort()
 
         for pyeclib_driver in pyeclib_drivers:
             fragments = pyeclib_driver.encode(file_bytes)
@@ -261,7 +262,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
             i = 0
             for fragment in fragments:
-                if i == fragment_to_corrupt:
+                if i in fragments_to_corrupt:
                     corrupted_fragment = fragment[:100] +\
                         (str(chr((b2i(fragment[100]) + 0x1)
                                  % 0xff))).encode('utf-8') + fragment[101:]
@@ -271,10 +272,13 @@ class TestPyECLibDriver(unittest.TestCase):
                     fragment_metadata_list.append(
                         pyeclib_driver.get_metadata(fragment))
                 i += 1
-            
+
+            expected_ret_value = {"status": -206, 
+                                  "reason": "Bad checksum", 
+                                  "bad_fragments": fragments_to_corrupt}
             self.assertEqual(
                 pyeclib_driver.verify_stripe_metadata(fragment_metadata_list),
-                fragment_to_corrupt)
+                expected_ret_value)
 
     def test_verify_fragment_inline_chksum_succeed(self):
         pyeclib_drivers = []
@@ -299,9 +303,11 @@ class TestPyECLibDriver(unittest.TestCase):
             for fragment in fragments:
                 fragment_metadata_list.append(
                     pyeclib_driver.get_metadata(fragment))
+            
+            expected_ret_value = {"status": 0 }
 
             self.assertTrue(
-                pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == -1)
+                pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == expected_ret_value)
 
     def test_get_segment_byterange_info(self):
         pyeclib_drivers = []
