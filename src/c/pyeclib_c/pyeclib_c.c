@@ -581,6 +581,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   PyObject *fragments = NULL;             /* param, list of missing indexes */
   PyObject *ret_payload = NULL;           /* object to store original payload or ranges of payload */
   PyObject *ranges = NULL;                /* a list of tuples that represent byte ranges */
+  PyObject *metadata_checks_obj = NULL;   /* boolean specifying if headers should be validated before decode */
   pyeclib_byte_range_t *c_ranges = NULL;  /* the byte ranges */
   int num_ranges = 0;                     /* number of specified ranges */
   int fragment_len;                       /* param, size in bytes of fragment */
@@ -590,13 +591,26 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   uint64_t range_payload_size = 0;        /* length of buffer used to store byte ranges */
   uint64_t orig_data_size = 0;            /* data size in bytes ,from fragment hdr */
   int i = 0;                              /* counters */
+  int force_metadata_checks = 0;          /* validate the fragment headers before decoding */
   int ret = 0;
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "OOi|O", &pyeclib_obj_handle, &fragments, &fragment_len, &ranges)) {
+  if (!PyArg_ParseTuple(args, "OOi|Oi",&pyeclib_obj_handle, &fragments,
+    &fragment_len, &ranges, &metadata_checks_obj)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.decode");
     return NULL;
   }
+
+  /* If Python filled in None, we may get a reference.  If so, set the pointer to NULL */
+  if (NULL != ranges && ranges == Py_None) {
+    ranges = NULL;
+  }
+
+  /* Liberasurecode wants an integer, so convert the PyBool to an integer */
+  if (NULL != metadata_checks_obj && PyObject_IsTrue(metadata_checks_obj)) {
+    force_metadata_checks = 1; 
+  }
+
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
     PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.decode");
@@ -661,8 +675,14 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
                             c_fragments,
                             num_fragments,
                             fragment_len,
+                            force_metadata_checks,
                             &c_orig_payload,
                             &orig_data_size);
+
+  if (ret < 0) {
+    PyErr_SetString(PyECLibError, "Could not decode in pyeclib.decode");
+    goto error;
+  }
 
   if (num_ranges == 0) {
     ret_payload = PY_BUILDVALUE_OBJ_LEN(c_orig_payload, orig_data_size);

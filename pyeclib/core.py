@@ -82,7 +82,7 @@ class ECPyECLibDriver(object):
 
       return fragment_len
 
-    def decode(self, fragment_payloads):
+    def decode(self, fragment_payloads, ranges=None, force_metadata_checks=False):
         fragment_len = self._validate_and_return_fragment_size(fragment_payloads)
         if fragment_len < 0:
             raise ECPyECLibException("Invalid fragment payload in ECPyECLibDriver.decode")
@@ -90,7 +90,8 @@ class ECPyECLibDriver(object):
         if len(fragment_payloads) < self.k:
             raise ECPyECLibException("Not enough fragments given in ECPyECLibDriver.decode")
 
-        return pyeclib_c.decode(self.handle, fragment_payloads, fragment_len)
+        return pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
+            
             
 
     def reconstruct(self, fragment_payloads, indexes_to_reconstruct):
@@ -143,7 +144,7 @@ class ECNullDriver(object):
     def encode(self, data_bytes):
         pass
 
-    def decode(self, fragment_payloads):
+    def decode(self, fragment_payloads, ranges, force_metadata_checks):
         pass
 
     def reconstruct(self, available_fragment_payloads,
@@ -207,13 +208,22 @@ class ECStripingDriver(object):
 
         return fragments
 
-    def decode(self, fragment_payloads):
+    def decode(self, fragment_payloads, ranges=None, force_metadata_checks=False):
         """Convert a k-fragment data stripe into a string
         :param fragment_payloads: fragments (in order) to convert into a string
+        :param ranges (unsupported): this driver does not current support range 
+                                     decode
+        :param force_metadata_checks (unsupported): this driver does not support
+                                  fragment metadata
         :returns: a string containing the original data
         :raises: ECPyECLibException if there is an error during decoding
         """
-
+        if ranges is not None:
+            raise ECPyECLibException(
+                "Decode does not support range requests in the striping driver.")
+        if force_metadata_checks is not False:
+            raise ECPyECLibException(
+                "Decode does not support metadata integrity checks in the striping driver.")
         if len(fragment_payloads) != self.k:
             raise ECPyECLibException(
                 "Decode requires %d fragments, %d fragments were given" %
