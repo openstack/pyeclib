@@ -214,8 +214,8 @@ class ECDriver(object):
         :returns: a buffer
         :raises: ECDriverError if there is an error during decoding
         """
-        return self.ec_lib_reference.decode(fragment_payloads, ranges=None, 
-            force_metadata_checks=False)
+        return self.ec_lib_reference.decode(fragment_payloads, ranges,
+            force_metadata_checks)
 
     def reconstruct(self, available_fragment_payloads,
                     missing_fragment_indexes):

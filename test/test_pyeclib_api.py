@@ -251,21 +251,26 @@ class TestPyECLibDriver(unittest.TestCase):
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
         file_bytes = file_str.encode('utf-8')
-
-        fragments_to_corrupt = [random.randint(0, 12) for i in range(2)]
-        fragments_to_corrupt.sort()
+                    
 
         for pyeclib_driver in pyeclib_drivers:
             fragments = pyeclib_driver.encode(file_bytes)
 
             fragment_metadata_list = []
+        
+            first_fragment_to_corrupt = random.randint(0, len(fragments))
+            num_to_corrupt = 2
+            fragments_to_corrupt = [
+              (first_fragment_to_corrupt + i) % len(fragments) for i in range(num_to_corrupt + 1)
+            ]
+            fragments_to_corrupt.sort()
 
             i = 0
             for fragment in fragments:
                 if i in fragments_to_corrupt:
                     corrupted_fragment = fragment[:100] +\
                         (str(chr((b2i(fragment[100]) + 0x1)
-                                 % 0xff))).encode('utf-8') + fragment[101:]
+                                 % 128))).encode('utf-8') + fragment[101:]
                     fragment_metadata_list.append(
                         pyeclib_driver.get_metadata(corrupted_fragment))
                 else:
@@ -435,6 +440,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 tmp_file.seek(0)
                 whole_file_str = tmp_file.read()
                 whole_file_bytes = whole_file_str.encode('utf-8')
+                got_exception = False
 
                 encode_input = whole_file_bytes
                 orig_fragments = pyeclib_driver.encode(encode_input)
@@ -471,6 +477,28 @@ class TestPyECLibDriver(unittest.TestCase):
                     self.assertTrue(
                         reconstructed_fragments[0] == orig_fragments[
                             idxs_to_remove[0]])
+
+                    #
+                    # Test decode with integrity checks
+                    #
+                    first_fragment_to_corrupt = random.randint(0, len(fragments))
+                    num_to_corrupt = min(len(fragments), pyeclib_driver.m + 1)
+                    fragments_to_corrupt = [
+                      (first_fragment_to_corrupt + i) % len(fragments) for i in range(num_to_corrupt)
+                    ]
+
+                    i = 0
+                    for fragment in fragments:
+                      if i in fragments_to_corrupt:
+                        corrupted_fragment = ("0" * len(fragment)).encode('utf-8')
+                        fragments[i] = corrupted_fragment
+                      i += 1
+
+                    try:
+                      decoded_string = pyeclib_driver.decode(fragments[:], force_metadata_checks=True)
+                    except:
+                      got_exception = True 
+                    self.assertTrue(got_exception)
 
     def test_min_parity_fragments_needed(self):
         pyeclib_drivers = []

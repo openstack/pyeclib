@@ -595,7 +595,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   int ret = 0;
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "OOi|Oi",&pyeclib_obj_handle, &fragments,
+  if (!PyArg_ParseTuple(args, "OOi|OO",&pyeclib_obj_handle, &fragments,
     &fragment_len, &ranges, &metadata_checks_obj)) {
     PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.decode");
     return NULL;

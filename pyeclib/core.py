@@ -90,9 +90,13 @@ class ECPyECLibDriver(object):
         if len(fragment_payloads) < self.k:
             raise ECPyECLibException("Not enough fragments given in ECPyECLibDriver.decode")
 
-        return pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
-            
-            
+        ret = pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
+
+        # Was there an error decoding
+        if ret is None:
+          raise ECPyECLibException("Error decoding from fragments in ECPyECLibDriver.decode")
+
+        return ret
 
     def reconstruct(self, fragment_payloads, indexes_to_reconstruct):
         fragment_len = self._validate_and_return_fragment_size(fragment_payloads)
