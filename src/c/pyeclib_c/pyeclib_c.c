@@ -723,13 +723,13 @@ static const char* chksum_type_to_str(uint8_t chksum_type)
   const char *chksum_type_str = NULL;
   switch (chksum_type)
   {
-    case 0: 
+    case CHKSUM_NONE: 
       chksum_type_str = "none\0";
       break;
-    case 1:
+    case CHKSUM_CRC32:
       chksum_type_str = "crc32\0";
       break;
-    case 2:
+    case CHKSUM_MD5:
       chksum_type_str = "md5\0";
       break;
     default:
@@ -744,14 +744,14 @@ static int chksum_length(uint8_t chksum_type)
   int length = 0;
   switch (chksum_type)
   {
-    case 0: 
+    case CHKSUM_NONE: 
       // None
       break;
-    case 1:
+    case CHKSUM_CRC32:
       // CRC 32
       length = 4;
       break;
-    case 2:
+    case CHKSUM_MD5:
       // MD5
       length = 16;
       break;
