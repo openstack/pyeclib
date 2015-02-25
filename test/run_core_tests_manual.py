@@ -23,20 +23,17 @@
 
 import os
 import sys
-import unittest
 
 run_under_valgrind = False
 test_cmd_prefix = ""
 log_filename_prefix = ""
 
 
-class TestCore(unittest.TestCase):
+class CoreTests():
 
     def __init__(self, *args):
         self.pyeclib_core_test = "test_pyeclib_c.py"
         self.pyeclib_iface_test = "test_pyeclib_api.py"
-
-        unittest.TestCase.__init__(self, *args)
 
     def setUp(self):
         # Determine which directory we're in
@@ -55,8 +52,7 @@ class TestCore(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_core(self):
-        self.assertTrue(True)
+    def invoke_core_tests(self):
         cur_dir = os.getcwd()
         print("\n")
         for (dir, test) in self.py_test_dirs:
@@ -64,17 +60,18 @@ class TestCore(unittest.TestCase):
             sys.stdout.flush()
             os.chdir(dir)
             if os.path.isfile(test):
+                pythonpath = "PYTHONPATH=%s:%s" % \
+                    (cur_dir, os.path.dirname(cur_dir))
                 ret = os.system(
-                    "%s python %s >%s/%s.%s.out 2>&1" %
-                    (test_cmd_prefix, test, cur_dir,
+                    "%s %s python %s >%s/%s.%s.out 2>&1" %
+                    (pythonpath, test_cmd_prefix, test, cur_dir,
                      log_filename_prefix, test))
 
-                self.assertEqual(0, ret)
+                assert(0 == ret)
                 os.system("rm -f *.pyc")
                 os.chdir(cur_dir)
                 print('ok')
             else:
-                self.assertTrue(False)
                 print('failed')
 
 
@@ -89,7 +86,7 @@ if __name__ == "__main__":
         run_under_valgrind = True
         test_cmd_prefix = "valgrind --leak-check=full "
         log_filename_prefix = "valgrind"
-    if sys.version_info<(2,7,0):
-        unittest.main()
-    else:
-        unittest.main(verbosity=2)
+    coretests = CoreTests()
+    coretests.setUp()
+    coretests.invoke_core_tests()
+    coretests.tearDown()
