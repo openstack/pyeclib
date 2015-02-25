@@ -43,8 +43,7 @@ PYECLIB_MAX_PARITY = 32
 
 VALID_EC_TYPES = ['jerasure_rs_vand',
                   'jerasure_rs_cauchy',
-                  'flat_xor_hd',
-                  'isa_l_rs_vand']
+                  'flat_xor_hd']
 
 
 @unique
