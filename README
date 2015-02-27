@@ -42,6 +42,7 @@ Supported ``ec_type`` values:
   * ``jerasure_rs_cauchy`` => Cauchy Reed-Solomon encoding (Jerasure variant)
   * ``flat_xor_hd`` => Flat-XOR based HD combination codes
   * ``isa_l_rs_vand`` => SIMD-based Reed-Soloman implementation from ISA-L (Intel(R) Storage Acceleration Library)
+  * ``shss`` => NTT Lab Japan's Erasure Coding Library
 
 A configuration utility is provided to help compare available EC schemes in 
 terms of performance and redundancy:: tools/pyeclib_conf_tool.py

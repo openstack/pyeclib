@@ -26,6 +26,7 @@ from string import ascii_letters
 import tempfile
 import time
 import unittest
+from unittest import skipIf
 
 import pyeclib_c
 from pyeclib.ec_iface import PyECLib_EC_Types
@@ -80,6 +81,10 @@ class TestPyECLib(unittest.TestCase):
         self.xor_types = [(PyECLib_EC_Types.flat_xor_hd, 12, 6, 4),
                           (PyECLib_EC_Types.flat_xor_hd, 10, 5, 4),
                           (PyECLib_EC_Types.flat_xor_hd, 10, 5, 3)]
+        self.shss = [(PyECLib_EC_Types.shss, 6, 3),
+                     (PyECLib_EC_Types.shss, 10, 4),
+                     (PyECLib_EC_Types.shss, 20, 4),
+                     (PyECLib_EC_Types.shss, 11, 7)]
 
         # Input temp files for testing
         self.sizes = ["101-K", "202-K", "303-K"]
@@ -305,6 +310,38 @@ class TestPyECLib(unittest.TestCase):
 
             for size_str in self.sizes:
                 success, avg_time = self.time_reconstruct(k, m, ec_type.value, hd,
+                                                          size_str,
+                                                          self.iterations)
+                self.assertTrue(success)
+                print("Reconstruct (%s): %s" %
+                      (size_str, self.get_throughput(avg_time, size_str)))
+
+    @skipIf(PyECLib_EC_Types.shss not in _available_backends,
+            "shss backend is not available in your enviromnet")
+    def test_shss(self):
+        for (ec_type, k, m) in self.shss:
+            print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
+
+            success = self._test_get_required_fragments(k, m, ec_type)
+            self.assertTrue(success)
+
+            for size_str in self.sizes:
+                avg_time = self.time_encode(k, m, ec_type.value, 0,
+                                            size_str,
+                                            self.iterations)
+                print("Encode (%s): %s" %
+                      (size_str, self.get_throughput(avg_time, size_str)))
+
+            for size_str in self.sizes:
+                success, avg_time = self.time_decode(k, m, ec_type.value, 0,
+                                                     size_str,
+                                                     self.iterations)
+                self.assertTrue(success)
+                print("Decode (%s): %s" %
+                      (size_str, self.get_throughput(avg_time, size_str)))
+
+            for size_str in self.sizes:
+                success, avg_time = self.time_reconstruct(k, m, ec_type.value, 0,
                                                           size_str,
                                                           self.iterations)
                 self.assertTrue(success)
