@@ -137,6 +137,8 @@ class ECDriver(object):
                     raise ECDriverError(
                         "Invalid number of data fragments (m)")
             elif key == "ec_type":
+                if value in ["flat_xor_hd_3", "flat_xor_hd_4"]:
+                  value = "flat_xor_hd" 
                 if PyECLib_EC_Types.has_enum(value):
                     self.ec_type = \
                         PyECLib_EC_Types.get_by_name(value)
