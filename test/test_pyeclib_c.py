@@ -269,7 +269,7 @@ class TestPyECLib(unittest.TestCase):
 
     def test_xor_code(self):
         for (ec_type, k, m, hd) in self.xor_types:
-            print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
+            print(("\nRunning tests for %s k=%d, m=%d, hd=%d" % (ec_type, k, m, hd)))
 
             for size_str in self.sizes:
                 avg_time = self.time_encode(k, m, ec_type.value, hd,
