@@ -57,7 +57,9 @@ class ECPyECLibDriver(object):
 
         name = self.ec_type.name
 
-        if name == "flat_xor_hd":
+        if name == "flat_xor_hd" or name == "flat_xor_hd_3":
+            hd = 3
+        if name == "flat_xor_hd_4":
             hd = 4
 
         self.handle = pyeclib_c.init(
