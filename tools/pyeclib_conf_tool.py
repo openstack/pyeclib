@@ -98,14 +98,13 @@ def nCr(n, r):
 
 class ECScheme:
 
-    def __init__(self, k, m, w, ec_type):
+    def __init__(self, k, m, ec_type):
         self.k = k
         self.m = m
-        self.w = w
         self.ec_type = ec_type
 
     def __str__(self):
-        return "k=%d m=%d w=%d ec_type=%s" % (self.k, self.m, self.w, self.ec_type)
+        return "k=%d m=%d ec_type=%s" % (self.k, self.m, self.ec_type)
 
 valid_flat_xor_hd_3 = [(6, 6), (7, 6), (8, 6), (9, 6),
                     (10, 6), (11, 6), (12, 6), (13, 6),
@@ -142,17 +141,11 @@ def get_viable_schemes(
     # Iterate over EC(k, max_num_frags-k) k \in [min_k, n-min_m]
     #
     for k in range(min_k, max_num_frags - min_m + 1):
-        #
-        # RS(k, max_num_frags-k) is trivial, just add it
-        # (w=[8,16,32] for vand_rs)
-        #
-        for w in [8, 16, 32]:
-            list_of_schemes.append(
-                ECScheme(k, max_num_frags - k, w, "jerasure_rs_vand_%d" % w))
+        list_of_schemes.append(
+            ECScheme(k, max_num_frags - k, "jerasure_rs_vand"))
 
-        for w in [4, 8]:
-            list_of_schemes.append(
-                ECScheme(k, max_num_frags - k, w, "jerasure_rs_cauchy_%d" % w))
+        list_of_schemes.append(
+            ECScheme(k, max_num_frags - k, "jerasure_rs_cauchy"))
 
         #
         # The XOR codes are a little tricker
@@ -172,13 +165,13 @@ def get_viable_schemes(
             max_k = nCr(max_num_frags - k, 2)
             if k <= max_k and (k, max_num_frags - k) in valid_flat_xor_hd_3:
                 list_of_schemes.append(
-                    ECScheme(k, max_num_frags - k, 0, "flat_xor_hd_3"))
+                    ECScheme(k, max_num_frags - k, "flat_xor_hd_3"))
 
         if fault_tolerance == 3:
             max_k = nCr(max_num_frags - k, 3)
             if k <= max_k and (k, max_num_frags - k) in valid_flat_xor_hd_4:
                 list_of_schemes.append(
-                    ECScheme(k, max_num_frags - k, 0, "flat_xor_hd_4"))
+                    ECScheme(k, max_num_frags - k, "flat_xor_hd_4"))
 
     return list_of_schemes
 
@@ -252,7 +245,8 @@ for scheme in schemes:
 
     timer.reset()
 
-results.sort(key=lambda x, y: (int)((1000 * x[1]) - (1000 * y[1])))
+print results
+results.sort(lambda x, y: (int)((1000 * x[1]) - (1000 * y[1])))
 
 for i in range(len(results)):
     if i > return_limit:
