@@ -31,6 +31,21 @@ import pyeclib_c
 from pyeclib.ec_iface import PyECLib_EC_Types
 
 
+def collect_available_backends():
+    available_backends = []
+    for ec_type in PyECLib_EC_Types:
+        try:
+           if ec_type == PyECLib_EC_Types.flat_xor_hd:
+                handle = pyeclib_c.init(10, 5, ec_type.value, 3)
+           else:
+                handle = pyeclib_c.init(10, 4, ec_type.value)
+           available_backends.append(ec_type)
+        except:
+            pass
+    return available_backends
+
+_available_backends = collect_available_backends()
+
 class Timer:
 
     def __init__(self):
@@ -50,8 +65,8 @@ class Timer:
         self.end_time = time.time()
         return self.curr_delta()
 
-
 class TestPyECLib(unittest.TestCase):
+
 
     def __init__(self, *args):
         self.num_datas = [12, 12, 12]
