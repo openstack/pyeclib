@@ -38,10 +38,10 @@ PyEClib initialization::
 
 Supported ``ec_type`` values:
 
-  * ``jerasure_rs_vand`` => Vandermonde Reed-Solomon encoding
-  * ``jerasure_rs_cauchy`` => Cauchy Reed-Solomon encoding (Jerasure variant)
-  * ``flat_xor_hd`` => Flat-XOR based HD combination codes
-  * ``isa_l_rs_vand`` => SIMD-based Reed-Soloman implementation from ISA-L (Intel(R) Storage Acceleration Library)
+  * ``jerasure_rs_vand`` => Vandermonde Reed-Solomon encoding, based on Jerasure [1]
+  * ``jerasure_rs_cauchy`` => Cauchy Reed-Solomon encoding (Jerasure variant), based on Jerasure [2]
+  * ``flat_xor_hd_3``, ``flat_xor_hd_4`` => Flat-XOR based HD combination codes, liberasurecode [3]
+  * ``isa_l_rs_vand`` => Intel Storage Acceleration Library (ISA-L) - SIMD accelerated Erasure Coding backends [4]
   * ``shss`` => NTT Lab Japan's Erasure Coding Library
 
 A configuration utility is provided to help compare available EC schemes in 
@@ -146,6 +146,19 @@ Quick Start:
   and then run::
 
     $ ldconfig
+
+
+References
+
+ [1] Jerasure, C library that supports erasure coding in storage applications, http://jerasure.org
+
+ [2] Greenan, Kevin M et al, "Flat XOR-based erasure codes in storage systems", http://www.kaymgee.com/Kevin_Greenan/Publications_files/greenan-msst10.pdf
+
+ [3] liberasurecode, C API abstraction layer for erasure coding backends, https://bitbucket.org/tsg-/liberasurecode
+
+ [4] Intel(R) Storage Acceleration Library (Open Source Version), https://01.org/intel%C2%AE-storage-acceleration-library-open-source-version
+
+ [5] Kota Tsuyuzaki <tsuyuzaki.kota@lab.ntt.co.jp>, Ryuta Kon <kon.ryuta@po.ntts.co.jp>, "NTT SHSS Erasure Coding backend"
 
 --
 0.10
