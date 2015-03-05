@@ -81,11 +81,13 @@ needs to be taken when handling input to and output from the ``encode()`` and
   Reconstruct "missing_fragment_indexes" using "available_fragment_payloads"::
 
     def reconstruct(self, available_fragment_payloads, missing_fragment_indexes)
+
     
 
-- Minimum parity fragments needed for durability gurantees
+- Minimum parity fragments needed for durability gurantees::
     
     def min_parity_fragments_needed(self)
+
 
  
 - Fragments needed for EC Reconstruct
@@ -95,11 +97,13 @@ needs to be taken when handling input to and output from the ``encode()`` and
     def fragments_needed(self, missing_fragment_indexes)
 
 
+
 - Get EC Metadata
 
   Return an opaque buffer known by the underlying library::
 
     def get_metadata(self, fragment)
+
 
 
 - Verify EC Stripe Consistency
@@ -109,11 +113,13 @@ needs to be taken when handling input to and output from the ``encode()`` and
     def verify_stripe_metadata(self, fragment_metadata_list)
 
 
+
 - Get EC Segment Info
 
   Return a dict with the keys - segment_size, last_segment_size, fragment_size, last_fragment_size and num_segments::
 
     def get_segment_info(self, data_len, segment_size)
+
 
 
 Quick Start:
