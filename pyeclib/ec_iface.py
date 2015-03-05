@@ -45,7 +45,8 @@ VALID_EC_TYPES = ['jerasure_rs_vand',
                   'jerasure_rs_cauchy',
                   'flat_xor_hd_3',
                   'flat_xor_hd_4',
-                  'isa_l_rs_vand']
+                  'isa_l_rs_vand',
+                  'shss']
 
 
 @unique
@@ -92,6 +93,7 @@ class PyECLib_EC_Types(PyECLibEnum):
     jerasure_rs_cauchy = 2
     flat_xor_hd = 3
     isa_l_rs_vand = 4
+    shss = 5
 
 
 # Output of Erasure (en)Coding process are data "fragments".  Fragment data

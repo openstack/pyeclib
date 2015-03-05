@@ -27,8 +27,9 @@ import sys
 import tempfile
 import unittest
 
-from pyeclib.ec_iface import ECDriver, VALID_EC_TYPES, ECDriverError
-
+from pyeclib.ec_iface import ECDriver, VALID_EC_TYPES, ECDriverError, \
+    PyECLib_EC_Types
+from test_pyeclib_c import _available_backends
 
 if sys.version < '3':
     def b2i(b):
@@ -106,7 +107,13 @@ class TestPyECLibDriver(unittest.TestCase):
         for _type in VALID_EC_TYPES:
             # Check if this algo works
             try:
-                _instance = ECDriver(k=10, m=5, ec_type=_type)
+               if _type is 'shss':
+                   if PyECLib_EC_Types.shss in _available_backends:
+                       _instance = ECDriver(k=10, m=4, ec_type=_type)
+                   else:
+                       continue
+               else:
+                   _instance = ECDriver(k=10, m=5, ec_type=_type)
             except ECDriverError:
                 self.fail("%s algorithm not supported" % _type)
 
