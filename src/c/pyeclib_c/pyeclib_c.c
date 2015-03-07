@@ -215,8 +215,6 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   int num_segments;                        /* total number of segments */
   int fragment_size, last_fragment_size;   /* fragment sizes in bytes */
   int min_segment_size;                    /* EC algorithm's min. size (B) */
-  int aligned_segment_size;                /* size (B) adjusted for addr alignment */
-  int aligned_data_len;                    /* size (B) adjusted for addr alignment */
   
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "Oii", &pyeclib_obj_handle, &data_len, &segment_size)) {
@@ -251,13 +249,10 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      */
 
     /*
-     * This will copmpute a size algined to the number of data
-     * and the underlying wordsize of the EC algorithm.
+     * This will retrieve fragment_size calculated by liberasurecode with
+     * specified backend.
      */
-    aligned_data_len = liberasurecode_get_aligned_data_size(pyeclib_handle->ec_desc, data_len);
-
-    /* aligned_data_len is guaranteed to be divisible by k */
-    fragment_size = aligned_data_len / pyeclib_handle->ec_args.k;
+    fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, data_len);
 
     /* Segment size is the user-provided segment size */
     segment_size = data_len;
@@ -269,10 +264,7 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      * the minimum segment size.
      */
 
-    aligned_segment_size = liberasurecode_get_aligned_data_size(pyeclib_handle->ec_desc, segment_size);
-
-    /* aligned_data_len is guaranteed to be divisible by k */
-    fragment_size = aligned_segment_size / pyeclib_handle->ec_args.k;
+    fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, segment_size);
 
     last_segment_size = data_len - (segment_size * (num_segments - 1)); 
 
@@ -288,12 +280,9 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
       last_segment_size = last_segment_size + segment_size;
     } 
     
-    aligned_segment_size = liberasurecode_get_aligned_data_size(pyeclib_handle->ec_desc, last_segment_size);
-     
-    /* Compute the last fragment size from the last segment size */
-    last_fragment_size = aligned_segment_size / pyeclib_handle->ec_args.k;
+    last_fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, last_segment_size);
   }
-  
+
   /* Add header to fragment sizes */
   last_fragment_size += sizeof(fragment_header_t);
   fragment_size += sizeof(fragment_header_t);
