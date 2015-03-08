@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2013, Kevin Greenan (kmgreen2@gmail.com)
+# Copyright (c) 2013-2015, Kevin Greenan (kmgreen2@gmail.com)
+# Copyright (c) 2013-2015, Tushar Gohad (tusharsg@gmail.com)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,43 +51,113 @@ default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
                          '/lib', '/usr/lib', '/usr/local/lib']
 
-# utility routine
+# utility routines
 def _read_file_as_str(name):
     with open(name, "rt") as f:
         s = f.readline().strip()
     return s
 
+def _get_installroot(distribution):
+    install_cmd = distribution.get_command_obj('install')
+    install_lib = distribution.get_command_obj('install_lib')
+    for cmd in (install_lib, install_cmd):
+        cmd.ensure_finalized()
 
-class build(_build):
+    # ensure that the paths are absolute so we don't get lost
+    opts = {'exec_prefix': install_cmd.exec_prefix,
+            'root': install_cmd.root}
+    for optname, value in list(opts.items()):
+        if value is not None:
+            opts[optname] = os.path.abspath(value)
 
-    def check_liberasure(self):
-        missing = True
-        library_suffix = ".so"
-        if platform_str.find("Darwin") > -1:
-            library_suffix = ".dylib"
-        liberasure_file = "liberasurecode" + library_suffix
-        for dir in (default_library_paths):
-            liberasure_file_path = dir + os.sep + liberasure_file
-            if (os.path.isfile(liberasure_file_path)):
-                missing = False
-                break
-        if missing:
+    prefix = opts['exec_prefix']
+    root = opts['root']
+
+    # prefer root for installdir
+    if root is not None:
+        installroot = root
+    elif prefix is not None:
+        installroot = prefix
+    else:
+        installroot = "/"
+
+    # exception is "/usr"
+    if installroot.startswith("/usr"):
+        installroot = "/"
+
+    # patch default_library_paths
+    topdir = os.getcwd()
+    default_library_paths.insert(0, topdir + "/src/c/liberasurecode/.libs")
+    default_library_paths.insert(0, topdir + "/src/c/liberasurecode/src/.libs")
+
+    return installroot
+
+def _check_library(library, soname, library_url, mode, distribution):
+    missing = True
+    library_suffix = ".so"
+    if platform_str.find("Darwin") > -1:
+        library_suffix = ".dylib"
+    library_file = soname + library_suffix
+    for dir in (default_library_paths):
+        library_file_path = dir + os.sep + library_file
+        if (os.path.isfile(library_file_path)):
+            missing = False
+            break
+    if missing:
+        # try using an integrated copy of the library
+        locallibsrcdir = ("src/c/" + library)
+        installroot = _get_installroot(distribution)
+        if (os.path.isdir(locallibsrcdir)):
+            curdir = os.getcwd()
+            os.chdir(locallibsrcdir)
+            statefile = "." + library + "_configured"
+            if (not os.path.isfile(statefile)):
+                configure_cmd = ("./configure --prefix=%s/usr/local" % installroot)
+                retval = os.system(configure_cmd)
+                if retval == 0:
+                    touch_cmd = ("touch " + statefile)
+                    os.system(touch_cmd)
+                elif retval != 0:
+                    print("***************************************************")
+                    print("*** Error: " + library + " build failed!")
+                    print("*** Please install liberasurecode manually and retry")
+                    print("**   " + library_url)
+                    print("***************************************************")
+                    os.chdir(curdir)
+                    sys.exit(retval)
+            make_cmd = ("make")
+            if mode == "install":
+                make_cmd = ("%s && sudo make install" % make_cmd)
+            retval = os.system(make_cmd)
+            if retval != 0:
+                print("***************************************************")
+                print("*** Error: " + library + " install failed!")
+                print("** Please install liberasurecode manually and retry")
+                print("**   " + library_url)
+                print("***************************************************")
+                os.chdir(curdir)
+                sys.exit(retval)
+            os.chdir(curdir)
+        else:
             print("***************************************************")
-            print("**                                             ")
-            print("** Can not locate the liberasurecode library:  ")
-            print("**   %s" % (liberasure_file))
-            print("**                                             ")
-            print("** PyECLib requires that the liberasurecode    ")
-            print("** library be installed. The liberasurecode    ")
-            print("** library can be obtained from:               ")
-            print("** git@bitbucket.org:tsg-/liberasurecode.git")
-            print("**                                             ")
-            print("** Please install liberasurecode and try again.")
+            print("** Cannot locate the " + library + " library:  ")
+            print("**   %s" % (library_file))
+            print("**")
+            print("** PyECLib requires that " + library)
+            print("** library be installed from:")
+            print("**   " + library_url)
+            print("**")
+            print("** Please install " + library + " and try again.")
             print("***************************************************")
             sys.exit(1)
 
+
+class build(_build):
+
     def run(self):
-        self.check_liberasure()
+        _check_library("liberasurecode", "liberasurecode",
+                       "https://bitbucket.org/tsg-/liberasurecode.git",
+                       "build", self.distribution)
         _build.run(self)
 
 
@@ -99,33 +170,16 @@ class clean(_clean):
 class install(_install):
 
     def run(self):
-        install_cmd = self.distribution.get_command_obj('install')
-        install_lib = self.distribution.get_command_obj('install_lib')
-        for cmd in (install_lib, install_cmd):
-            cmd.ensure_finalized()
-
-        # ensure that the paths are absolute so we don't get lost
-        opts = {'exec_prefix': install_cmd.exec_prefix,
-                'root': install_cmd.root}
-        for optname, value in list(opts.items()):
-            if value is not None:
-                opts[optname] = os.path.abspath(value)
-
-        prefix = opts['exec_prefix']
-        root = opts['root']
-
-        # prefer root for installdir
-        if root is not None:
-            installroot = root
-        elif prefix is not None:
-            installroot = prefix
-        else:
-            installroot = "/"
-
-        # exception is "/usr"
-        if installroot.startswith("/usr"):
-            installroot = "/"
-
+        _check_library("liberasurecode", "liberasurecode",
+                       "https://bitbucket.org/tsg-/liberasurecode.git",
+                       "install", self.distribution)
+        _check_library("gf-complete", "libgf_complete",
+                       "http://lab.jerasure.org/jerasure/gf-complete.git",
+                       "install", self.distribution)
+        _check_library("jerasure", "libJerasure",
+                       "http://lab.jerasure.org/jerasure/jerasure.git",
+                       "install", self.distribution)
+        installroot = _get_installroot(self.distribution)
         default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
         _install.run(self)
 
@@ -138,8 +192,7 @@ class install(_install):
             print("***************************************************")
             print("**                                             ")
             print("** You are running on a Mac!  This means that  ")
-            print("**                                             ")
-            print("** Any user using this library must update:    ")
+            print("** any user using this library must update:    ")
             print("**   DYLD_LIBRARY_PATH                         ")
             print("**                                             ")
             print("** The best way to do this is to put this line:")
@@ -151,7 +204,6 @@ class install(_install):
             print("***************************************************")
         else:
             print("***************************************************")
-            print("**                                             ")
             print("** PyECLib libraries have been installed to:   ")
             print("**   %susr/local/lib" % installroot)
             print("**                                             ")
