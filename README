@@ -149,7 +149,7 @@ Quick Start:
 
   Standard stuff to install::
   
-    ``Python 2.6``, ``2.7`` or ``3.x`` (including development packages), ``argparse`` and ``liberasurecode``.
+    Python 2.6, 2.7 or 3.x (including development packages), argparse, liberasurecode, gf-complete and Jerasure.
 
 
   As mentioned above, PyECLib depends on the installation of the liberasurecde library (liberasurecode
@@ -162,7 +162,7 @@ Quick Start:
 
   Run test suite included::
 
-    $ sudo python setup.py test && (cd test; ./ec_pyeclib_file_test.sh)
+    $ ./.unittests
 
   If all of this works, then you should be good to go.  If not, send us an email!
 
