@@ -50,6 +50,10 @@ default_python_libdir = get_python_lib()
 default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
                          '/lib', '/usr/lib', '/usr/local/lib']
+default_include_paths = [default_python_incdir,
+                         '/usr/local/include', '/usr/local/include/jerasure',
+                         '/usr/include', 'src/c/pyeclib_c',
+                         '/usr/local/include']
 
 # utility routines
 def _read_file_as_str(name):
@@ -85,11 +89,6 @@ def _get_installroot(distribution):
     if installroot.startswith("/usr"):
         installroot = "/"
 
-    # patch default_library_paths
-    topdir = os.getcwd()
-    default_library_paths.insert(0, topdir + "/src/c/liberasurecode/.libs")
-    default_library_paths.insert(0, topdir + "/src/c/liberasurecode/src/.libs")
-
     return installroot
 
 def _check_library(library, soname, library_url, mode, distribution):
@@ -105,14 +104,35 @@ def _check_library(library, soname, library_url, mode, distribution):
             break
     if missing:
         # try using an integrated copy of the library
-        locallibsrcdir = ("src/c/" + library)
+        srcpath = "src/c/"
+        locallibsrcdir = (srcpath + library)
         installroot = _get_installroot(distribution)
+
+        retval = os.system("tar xf %s/%s.tar.gz -C %s" % (srcpath, library, srcpath))
+
         if (os.path.isdir(locallibsrcdir)):
+            # patch default include, lib paths
+            topdir = os.getcwd()
+            libdirs = [ (topdir + "/" + locallibsrcdir + "/.libs "),
+                        (topdir + "/" + locallibsrcdir + "/src/.libs ")] 
+            libflags = ""
+            for d in libdirs:
+                libflags = libflags + " -L" + d
+                default_library_paths.insert(0, d)
+
+            includeflags = " -I" + topdir + "/" + locallibsrcdir + "/include"
+            for subdir in os.walk(topdir + "/" + locallibsrcdir + "/include"):
+                if (os.path.isdir(subdir[0])):
+                    includeflags = includeflags + " -I" + subdir[0]
+
             curdir = os.getcwd()
             os.chdir(locallibsrcdir)
             statefile = "." + library + "_configured"
             if (not os.path.isfile(statefile)):
-                configure_cmd = ("./configure --prefix=%s/usr/local" % installroot)
+                configure_cmd = ("CFLAGS=\"%s\" LDFLAGS=\"%s\" " % (includeflags, libflags))
+                configure_cmd = ("%s ./configure --prefix=%s/usr/local" % \
+                    (configure_cmd, installroot))
+                print configure_cmd
                 retval = os.system(configure_cmd)
                 if retval == 0:
                     touch_cmd = ("touch " + statefile)
@@ -120,7 +140,7 @@ def _check_library(library, soname, library_url, mode, distribution):
                 elif retval != 0:
                     print("***************************************************")
                     print("*** Error: " + library + " build failed!")
-                    print("*** Please install liberasurecode manually and retry")
+                    print("*** Please install " + library + " manually and retry")
                     print("**   " + library_url)
                     print("***************************************************")
                     os.chdir(curdir)
@@ -132,7 +152,7 @@ def _check_library(library, soname, library_url, mode, distribution):
             if retval != 0:
                 print("***************************************************")
                 print("*** Error: " + library + " install failed!")
-                print("** Please install liberasurecode manually and retry")
+                print("** Please install " + library + " manually and retry")
                 print("**   " + library_url)
                 print("***************************************************")
                 os.chdir(curdir)
@@ -155,9 +175,9 @@ def _check_library(library, soname, library_url, mode, distribution):
 class build(_build):
 
     def run(self):
-        _check_library("liberasurecode", "liberasurecode",
+        _check_library("liberasurecode-1.0.1", "liberasurecode",
                        "https://bitbucket.org/tsg-/liberasurecode.git",
-                       "build", self.distribution)
+                       "install", self.distribution)
         _build.run(self)
 
 
@@ -170,15 +190,13 @@ class clean(_clean):
 class install(_install):
 
     def run(self):
-        _check_library("liberasurecode", "liberasurecode",
-                       "https://bitbucket.org/tsg-/liberasurecode.git",
-                       "install", self.distribution)
-        _check_library("gf-complete", "libgf_complete",
+        _check_library("gf-complete-1.0", "libgf_complete",
                        "http://lab.jerasure.org/jerasure/gf-complete.git",
                        "install", self.distribution)
-        _check_library("jerasure", "libJerasure",
+        _check_library("jerasure-2.0", "libJerasure",
                        "http://lab.jerasure.org/jerasure/jerasure.git",
                        "install", self.distribution)
+
         installroot = _get_installroot(self.distribution)
         default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
         _install.run(self)
@@ -223,12 +241,7 @@ class install(_install):
 module = Extension('pyeclib_c',
                    define_macros=[('MAJOR VERSION', '0'),
                                   ('MINOR VERSION', '9')],
-                   include_dirs=[default_python_incdir,
-                                 '/usr/local/include',
-                                 '/usr/local/include/jerasure',
-                                 '/usr/include',
-                                 'src/c/pyeclib_c',
-                                 '/usr/local/include'],
+                   include_dirs=default_include_paths,
                    library_dirs=default_library_paths,
                    runtime_library_dirs=default_library_paths,
                    libraries=['erasurecode'],
