@@ -39,3 +39,8 @@ test:		build
 					--cover-html --cover-html-dir=${TOPDIR}/cover \
 					$(UNITS)
 	rm -f .coverage
+
+clean:
+	-rm -f pyeclib_c.so
+	-rm -rf build
+	python setup.py clean
