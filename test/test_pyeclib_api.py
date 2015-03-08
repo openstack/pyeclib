@@ -104,14 +104,15 @@ class TestPyECLibDriver(unittest.TestCase):
         pass
 
     def test_valid_algo(self):
-        for _type in VALID_EC_TYPES:
+        print("")
+        for _type in PyECLib_EC_Types.names():
             # Check if this algo works
+            if _type not in _available_backends:
+                print("Skipping test for %s backend" % _type)
+                continue
             try:
                if _type is 'shss':
-                   if PyECLib_EC_Types.shss in _available_backends:
-                       _instance = ECDriver(k=10, m=4, ec_type=_type)
-                   else:
-                       continue
+                   _instance = ECDriver(k=10, m=4, ec_type=_type)
                else:
                    _instance = ECDriver(k=10, m=5, ec_type=_type)
             except ECDriverError:

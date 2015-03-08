@@ -40,7 +40,8 @@ def collect_available_backends():
                 handle = pyeclib_c.init(10, 5, ec_type.value, 3)
            else:
                 handle = pyeclib_c.init(10, 4, ec_type.value)
-           available_backends.append(ec_type)
+           available_backends.append(ec_type.name)
+           print ec_type.name
         except:
             pass
     return available_backends
@@ -289,6 +290,8 @@ class TestPyECLib(unittest.TestCase):
 
         return format(throughput, '.10g')
 
+    @skipIf("flat_xor_hd" not in _available_backends,
+            "xor backend is not available in your enviromnet")
     def test_xor_code(self):
         for (ec_type, k, m, hd) in self.xor_types:
             print(("\nRunning tests for %s k=%d, m=%d, hd=%d" % (ec_type, k, m, hd)))
@@ -316,7 +319,7 @@ class TestPyECLib(unittest.TestCase):
                 print("Reconstruct (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
-    @skipIf(PyECLib_EC_Types.shss not in _available_backends,
+    @skipIf("shss" not in _available_backends,
             "shss backend is not available in your enviromnet")
     def test_shss(self):
         for (ec_type, k, m) in self.shss:
@@ -386,6 +389,11 @@ class TestPyECLib(unittest.TestCase):
 
     def test_codes(self):
         for ec_type in self.rs_types:
+
+            if ec_type.name not in _available_backends:
+                print("%s backend is not available in your enviromnet, skipping test" % ec_type.name)
+                continue
+
             print(("\nRunning tests for %s" % (ec_type)))
 
             for i in range(len(self.num_datas)):
