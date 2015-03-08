@@ -142,7 +142,7 @@ class ECDriver(object):
                         "Invalid number of data fragments (m)")
             elif key == "ec_type":
                 if value in ["flat_xor_hd_3", "flat_xor_hd_4"]:
-                  value = "flat_xor_hd" 
+                  value = "flat_xor_hd"
                 if PyECLib_EC_Types.has_enum(value):
                     self.ec_type = \
                         PyECLib_EC_Types.get_by_name(value)
@@ -352,7 +352,7 @@ class ECDriver(object):
         }
 
         """
-        
+
         segment_info = self.ec_lib_reference.get_segment_info(data_len, segment_size)
 
         segment_size = segment_info['segment_size']
@@ -370,9 +370,9 @@ class ECDriver(object):
             segment_map = {}
             begin_off = r[0]
             end_off = r[1]
-            begin_segment = begin_off / segment_size 
-            end_segment = end_off / segment_size 
-          
+            begin_segment = begin_off / segment_size
+            end_segment = end_off / segment_size
+
             if begin_segment == end_segment:
                 begin_relative_off = begin_off % segment_size
                 end_relative_off = end_off % segment_size
@@ -380,17 +380,14 @@ class ECDriver(object):
             else:
                 begin_relative_off = begin_off % segment_size
                 end_relative_off = end_off % segment_size
-                
+
                 segment_map[begin_segment] = (begin_relative_off, segment_size-1)
 
                 for middle_segment in range(begin_segment+1, end_segment):
                     segment_map[middle_segment] = (0, segment_size-1)
-                
+
                 segment_map[end_segment] = (0, end_relative_off)
 
             recipe[r] = segment_map
-               
 
         return recipe
-
-
