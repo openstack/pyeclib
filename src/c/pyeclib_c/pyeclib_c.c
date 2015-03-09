@@ -82,26 +82,36 @@ static PyObject * pyeclib_c_decode(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_get_metadata(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_check_metadata(PyObject *self, PyObject *args);
 
-const char *
-liberasurecode_errstr(int ret)
+void
+liberasurecode_errstr(int ret, const char * prefix, char str[])
 {
+    strcpy(str, prefix);
     switch (ret) {
         case -EBACKENDNOTAVAIL:
-            return "Backend instance not found";
+            strcat(str, "Backend instance not found");
+            break;
         case -EINSUFFFRAGS:
-            return "Insufficient number of fragments";
+            strcat(str, "Insufficient number of fragments");
+            break;
         case -EBACKENDNOTSUPP:
-            return "Backend not supported";
+            strcat(str, "Backend not supported");
+            break;
         case -EINVALIDPARAMS:
-            return "Invalid arguments";
+            strcat(str, "Invalid arguments");
+            break;
         case -EBADCHKSUM:
-            return "Fragment integrity check failed";
+            strcat(str, "Fragment integrity check failed");
+            break;
         case -EBADHEADER:
-            return "Fragment integrity check failed";
+            strcat(str, "Fragment integrity check failed");
+            break;
         case -ENOMEM:
-            return "Out of memory";
+            strcat(str, "Out of memory");
+            break;
+        default:
+            strcat(str, "Unknown error");
+            break;
     }
-    return "Unknown error";
 }
 
 /**
@@ -361,7 +371,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
 
   if (ret < 0) {
     char err[255];
-    sprintf (err, "Encode ERROR: %s", liberasurecode_errstr(ret));
+    liberasurecode_errstr(ret, "Encode ERROR: ", err);
     PyErr_SetString(PyECLibError, err);
     return NULL; 
   }
@@ -464,7 +474,7 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
                                         c_exclude_list, fragments_needed);
   if (ret < 0) {
     char err[255];
-    sprintf (err, "Reconstruct_Fragments_Needed ERROR: %s", liberasurecode_errstr(ret));
+    liberasurecode_errstr(ret, "Reconstruct_Fragments_Needed ERROR: ", err);
     PyErr_SetString(PyECLibError, err);
     goto exit; 
   }
@@ -562,7 +572,7 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
                                             c_reconstructed); 
   if (ret < 0) {
     char err[255];
-    sprintf (err, "Reconstruct ERROR: %s", liberasurecode_errstr(ret));
+    liberasurecode_errstr(ret, "Reconstruct ERROR: ", err);
     PyErr_SetString(PyECLibError, err);
     reconstructed = NULL;
   } else {
@@ -699,7 +709,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
 
   if (ret < 0) {
     char err[255];
-    sprintf (err, "Decode ERROR: %s", liberasurecode_errstr(ret));
+    liberasurecode_errstr(ret, "Decode ERROR: ", err);
     PyErr_SetString(PyECLibError, err);
     goto error;
   }
@@ -926,7 +936,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
 
   if (ret < 0) {
     char err[255];
-    sprintf (err, "Get_Fragment_Metadata ERROR: %s", liberasurecode_errstr(ret));
+    liberasurecode_errstr(ret, "Get_Fragment_Metadata ERROR: ", err);
     PyErr_SetString(PyECLibError, err);
     fragment_metadata = NULL;
   } else {
