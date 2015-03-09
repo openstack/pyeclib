@@ -26,7 +26,6 @@ from string import ascii_letters
 import tempfile
 import time
 import unittest
-from unittest import skipIf
 
 import pyeclib_c
 from pyeclib.ec_iface import PyECLib_EC_Types
@@ -290,9 +289,11 @@ class TestPyECLib(unittest.TestCase):
 
         return format(throughput, '.10g')
 
-    @skipIf("flat_xor_hd" not in _available_backends,
-            "xor backend is not available in your enviromnet")
     def test_xor_code(self):
+        if "flat_xor_hd" not in _available_backends:
+            print("xor backend is not available in your enviromnet, skipping test")
+            return
+
         for (ec_type, k, m, hd) in self.xor_types:
             print(("\nRunning tests for %s k=%d, m=%d, hd=%d" % (ec_type, k, m, hd)))
 
@@ -319,9 +320,10 @@ class TestPyECLib(unittest.TestCase):
                 print("Reconstruct (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
-    @skipIf("shss" not in _available_backends,
-            "shss backend is not available in your enviromnet")
     def test_shss(self):
+        if "shss" not in _available_backends:
+            print("shss backend is not available in your enviromnet, skipping test")
+            return
         for (ec_type, k, m) in self.shss:
             print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
 
