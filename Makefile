@@ -31,7 +31,7 @@ build:
 install:	build
 	python setup.py install
 
-UNITS := test/test_core.py test/test_pyeclib_api.py test/test_pyeclib_c.py
+UNITS := test/test_pyeclib_api.py test/test_pyeclib_c.py
 
 test:		build
 	LD_LIBRARY_PATH=${TOPDIR}:${LD_LIBRARY_PATH} nosetests --exe --with-coverage \
