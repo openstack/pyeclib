@@ -698,7 +698,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
     Py_ssize_t len = 0;
     PyBytes_AsStringAndSize(tmp_data, &(c_fragments[i]), &len);
   }
-  
+
   ret = liberasurecode_decode(pyeclib_handle->ec_desc, 
                             c_fragments,
                             num_fragments,

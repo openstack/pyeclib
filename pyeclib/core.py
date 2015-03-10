@@ -24,6 +24,7 @@
 from ec_iface import PyECLib_FRAGHDRCHKSUM_Types
 import math
 import pyeclib_c
+from pyeclib_c import error as PyECLibError
 import sys
 
 pyver = float('%s.%s' % sys.version_info[:2])
@@ -92,7 +93,10 @@ class ECPyECLibDriver(object):
         if len(fragment_payloads) < self.k:
             raise ECPyECLibException("Not enough fragments given in ECPyECLibDriver.decode")
 
-        ret = pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
+        try:
+          ret = pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
+        except PyECLibError as e:
+          raise ECPyECLibException(e)
 
         # Was there an error decoding
         if ret is None:
@@ -116,30 +120,48 @@ class ECPyECLibDriver(object):
 
         while len(_indexes_to_reconstruct) > 0:
             index = _indexes_to_reconstruct.pop(0)
-            reconstructed = pyeclib_c.reconstruct(
-                self.handle, _fragment_payloads, fragment_len, index)
+            try:
+              reconstructed = pyeclib_c.reconstruct(
+                  self.handle, _fragment_payloads, fragment_len, index)
+            except PyECLibError as e:
+              raise ECPyECLibException(e)
             reconstructed_data.append(reconstructed)
             _fragment_payloads.append(reconstructed)
 
         return reconstructed_data
 
     def fragments_needed(self, reconstruct_indexes, exclude_indexes):
-        return pyeclib_c.get_required_fragments(
+        try:
+          required_fragments = pyeclib_c.get_required_fragments(
             self.handle, reconstruct_indexes, exclude_indexes)
+          return required_fragments
+        except PyECLibError as e:
+          raise ECPyECLibException(e)
 
     def min_parity_fragments_needed(self):
         """ FIXME - fix this to return a function of HD """
         return 1
 
     def get_metadata(self, fragment, formatted = 0):
-        return pyeclib_c.get_metadata(self.handle, fragment, formatted)
+        try:
+          fragment_metadata = pyeclib_c.get_metadata(self.handle, fragment, formatted)
+          return fragment_metadata
+        except PyECLibError as e:
+          raise ECPyECLibException(e)
 
     def verify_stripe_metadata(self, fragment_metadata_list):
-        return pyeclib_c.check_metadata(self.handle, fragment_metadata_list)
+        try:
+          success = pyeclib_c.check_metadata(self.handle, fragment_metadata_list)
+          return success
+        except PyECLibError as e:
+          raise ECPyECLibException(e)
 
     def get_segment_info(self, data_len, segment_size):
-        return pyeclib_c.get_segment_info(self.handle, data_len, segment_size)
-
+        try:
+          segment_info = pyeclib_c.get_segment_info(self.handle, data_len, segment_size)
+          return segment_info
+        except PyECLibError as e:
+          raise ECPyECLibException(e)
 
 class ECNullDriver(object):
 
