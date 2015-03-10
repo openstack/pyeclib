@@ -30,6 +30,7 @@ import unittest
 from pyeclib.ec_iface import ECDriver, VALID_EC_TYPES, ECDriverError, \
     PyECLib_EC_Types
 from test_pyeclib_c import _available_backends
+import pyeclib_c
 
 if sys.version < '3':
     def b2i(b):
@@ -206,7 +207,6 @@ class TestPyECLibDriver(unittest.TestCase):
         return ECDriver(k=k, m=m, ec_type=ec_type, chksum_type=chksum_type)
       else:
         return None
-
 
     def test_get_metadata_formatted(self):
         pyeclib_driver = self.get_available_backend(k=10, m=5, ec_type="flat_xor_hd_3", chksum_type="inline_crc32")
@@ -508,6 +508,14 @@ class TestPyECLibDriver(unittest.TestCase):
                     self.assertTrue(
                         reconstructed_fragments[0] == orig_fragments[
                             idxs_to_remove[0]])
+
+                    #
+                    # Test reconstructor with insufficient fragments
+                    #
+                    try:
+                      pyeclib_driver.reconstruct([fragments[0]], [])
+                    except pyeclib_c.error as e:
+                      self.assertTrue(e.message.find("Insufficient number of fragments") > -1) 
 
                     #
                     # Test decode with integrity checks

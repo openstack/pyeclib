@@ -390,7 +390,6 @@ class TestPyECLib(unittest.TestCase):
                 print(("Unexpected required fragments list "
                        "(exp != req): %s != %s" %
                        (expected_fragments, required_fragments)))
-                #sys.exit(2)
 
         return success
 
