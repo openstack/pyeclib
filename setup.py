@@ -49,8 +49,8 @@ default_python_incdir = get_python_inc()
 default_python_libdir = get_python_lib()
 default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
-                         '/lib', '/usr/lib', '/usr/local/lib','src/c/jerasure-2.0/src/.libs',
-                          'src/c/gf-complete-1.0/src/.libs', 'src/c/liberasurecode-1.0.1/src/.libs']
+                         '/lib', '/usr/lib', '/usr/local/lib']
+                          
 default_include_paths = [default_python_incdir,
                          '/usr/local/include', '/usr/local/include/jerasure',
                          '/usr/include', 'src/c/pyeclib_c',
