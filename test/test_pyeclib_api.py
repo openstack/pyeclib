@@ -26,6 +26,7 @@ from string import ascii_letters, ascii_uppercase, digits
 import sys
 import tempfile
 import unittest
+from pyeclib.core import ECPyECLibException
 
 from pyeclib.ec_iface import ECDriver, VALID_EC_TYPES, ECDriverError, \
     PyECLib_EC_Types
@@ -496,14 +497,6 @@ class TestPyECLibDriver(unittest.TestCase):
                             idxs_to_remove[0]])
 
                     #
-                    # Test reconstructor with insufficient fragments
-                    #
-                    try:
-                      pyeclib_driver.reconstruct([fragments[0]], [])
-                    except pyeclib_c.error as e:
-                      self.assertTrue(e.message.find("Insufficient number of fragments") > -1) 
-
-                    #
                     # Test decode with integrity checks
                     #
                     first_fragment_to_corrupt = random.randint(0, len(fragments))
@@ -524,7 +517,28 @@ class TestPyECLibDriver(unittest.TestCase):
                     except:
                       got_exception = True 
                     self.assertTrue(got_exception)
+    def test_liberasurecode_error(self):
+      pyeclib_driver = self.get_available_backend(k=10, m=5, ec_type="flat_xor_hd_3")
+      file_size = self.file_sizes[0]
+      tmp_file = self.files[file_size]
+      tmp_file.seek(0)
+      whole_file_str = tmp_file.read()
+      whole_file_bytes = whole_file_str.encode('utf-8')
+      hit_exception = False
 
+      fragments = pyeclib_driver.encode(whole_file_bytes)
+      
+      #
+      # Test reconstructor with insufficient fragments
+      #
+      try:
+        pyeclib_driver.reconstruct([fragments[0]], [1,2,3,4,5,6])
+      except ECPyECLibException as e:
+        hit_exception = True
+        self.assertTrue(e.error_str.__str__().find("Insufficient number of fragments") > -1) 
+
+      self.assertTrue(hit_exception)
+      
     def test_min_parity_fragments_needed(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
