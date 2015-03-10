@@ -49,7 +49,8 @@ default_python_incdir = get_python_inc()
 default_python_libdir = get_python_lib()
 default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
-                         '/lib', '/usr/lib', '/usr/local/lib']
+                         '/lib', '/usr/lib', '/usr/local/lib','src/c/jerasure-2.0/src/.libs',
+                          'src/c/gf-complete-1.0/src/.libs', 'src/c/liberasurecode-1.0.1/src/.libs']
 default_include_paths = [default_python_incdir,
                          '/usr/local/include', '/usr/local/include/jerasure',
                          '/usr/include', 'src/c/pyeclib_c',
@@ -177,7 +178,7 @@ class build(_build):
     def run(self):
         _check_library("liberasurecode-1.0.1", "liberasurecode",
                        "https://bitbucket.org/tsg-/liberasurecode.git",
-                       "install", self.distribution)
+                       "build", self.distribution)
         _build.run(self)
 
 
@@ -190,13 +191,15 @@ class clean(_clean):
 class install(_install):
 
     def run(self):
+        _check_library("liberasurecode-1.0.1", "liberasurecode",
+                       "https://bitbucket.org/tsg-/liberasurecode.git",
+                       "install", self.distribution)
         _check_library("gf-complete-1.0", "libgf_complete",
                        "http://lab.jerasure.org/jerasure/gf-complete.git",
                        "install", self.distribution)
         _check_library("jerasure-2.0", "libJerasure",
                        "http://lab.jerasure.org/jerasure/jerasure.git",
                        "install", self.distribution)
-
         installroot = _get_installroot(self.distribution)
         default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
         _install.run(self)

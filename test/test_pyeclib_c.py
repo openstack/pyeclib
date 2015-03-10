@@ -75,9 +75,14 @@ class TestPyECLib(unittest.TestCase):
         self.iterations = 100
 
         # EC algorithm and config parameters
-        self.rs_types = [(PyECLib_EC_Types.jerasure_rs_vand),
-                         (PyECLib_EC_Types.jerasure_rs_cauchy),
-                         (PyECLib_EC_Types.isa_l_rs_vand)]
+        self.rs_types = []
+        if "jerasure_rs_vand" in _available_backends:
+          self.rs_types.append((PyECLib_EC_Types.jerasure_rs_vand))
+        if "jerasure_rs_cauchy" in _available_backends:
+          self.rs_types.append((PyECLib_EC_Types.jerasure_rs_cauchy))
+        if "isa_l_rs_vand" in _available_backends:
+          self.rs_types.append((PyECLib_EC_Types.isa_l_rs_vand))
+
         self.xor_types = [(PyECLib_EC_Types.flat_xor_hd, 12, 6, 4),
                           (PyECLib_EC_Types.flat_xor_hd, 10, 5, 4),
                           (PyECLib_EC_Types.flat_xor_hd, 10, 5, 3)]
