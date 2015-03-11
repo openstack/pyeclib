@@ -55,11 +55,14 @@ default_python_libdir = get_python_lib()
 # and Tushar) cannot explain what is going on with
 # distutils or libtool here.
 #
+standard_library_paths = [('%s/usr/local/lib' % _exec_prefix),
+                          '/lib', '/usr/lib', '/usr/local/lib']
+
 default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
                          '/lib', '/usr/lib', '/usr/local/lib',
                          'src/c/liberasurecode-1.0.3/src/.libs']
-                          
+
 default_include_paths = [default_python_incdir,
                          '/usr/local/include', '/usr/local/include/jerasure',
                          '/usr/include', 'src/c/pyeclib_c',
@@ -107,7 +110,7 @@ def _check_library(library, soname, library_url, mode, distribution):
     if platform_str.find("Darwin") > -1:
         library_suffix = ".dylib"
     library_file = soname + library_suffix
-    for dir in (default_library_paths):
+    for dir in (standard_library_paths):
         library_file_path = dir + os.sep + library_file
         if (os.path.isfile(library_file_path)):
             missing = False
