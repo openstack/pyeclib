@@ -119,12 +119,13 @@ def _check_library(library, soname, library_url, mode, distribution):
             libflags = ""
             for d in libdirs:
                 libflags = libflags + " -L" + d
-                default_library_paths.insert(0, d)
+                default_library_paths.append(d)
 
             includeflags = " -I" + topdir + "/" + locallibsrcdir + "/include"
             for subdir in os.walk(topdir + "/" + locallibsrcdir + "/include"):
                 if (os.path.isdir(subdir[0])):
                     includeflags = includeflags + " -I" + subdir[0]
+                    default_include_paths.append(subdir[0])
 
             curdir = os.getcwd()
             os.chdir(locallibsrcdir)
