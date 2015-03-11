@@ -517,6 +517,7 @@ class TestPyECLibDriver(unittest.TestCase):
                     except:
                       got_exception = True 
                     self.assertTrue(got_exception)
+
     def test_liberasurecode_error(self):
       pyeclib_driver = self.get_available_backend(k=10, m=5, ec_type="flat_xor_hd_3")
       file_size = self.file_sizes[0]
@@ -535,6 +536,7 @@ class TestPyECLibDriver(unittest.TestCase):
         pyeclib_driver.reconstruct([fragments[0]], [1,2,3,4,5,6])
       except ECDriverError as e:
         hit_exception = True
+        print e.error_str.__str__()
         self.assertTrue(e.error_str.__str__().find("Insufficient number of fragments") > -1) 
 
       self.assertTrue(hit_exception)

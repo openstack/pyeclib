@@ -112,6 +112,8 @@ liberasurecode_errstr(int ret, const char * prefix, char str[])
             strcat(str, "Unknown error");
             break;
     }
+
+    strcat(str, ". Please inspect syslog for liberasurecode error report.");
 }
 
 /**
