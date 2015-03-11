@@ -68,6 +68,9 @@ default_include_paths = [default_python_incdir,
                          '/usr/include', 'src/c/pyeclib_c',
                          '/usr/local/include']
 
+libflags = ''
+includeflags = ''
+
 # utility routines
 def _read_file_as_str(name):
     with open(name, "rt") as f:
@@ -105,6 +108,8 @@ def _get_installroot(distribution):
     return installroot
 
 def _check_library(library, soname, library_url, mode, distribution):
+    global libflags
+    global includeflags
     missing = True
     library_suffix = ".so"
     if platform_str.find("Darwin") > -1:
@@ -128,12 +133,11 @@ def _check_library(library, soname, library_url, mode, distribution):
             topdir = os.getcwd()
             libdirs = [ (topdir + "/" + locallibsrcdir + "/.libs "),
                         (topdir + "/" + locallibsrcdir + "/src/.libs ")] 
-            libflags = ""
             for d in libdirs:
                 libflags = libflags + " -L" + d
                 default_library_paths.append(d)
 
-            includeflags = " -I" + topdir + "/" + locallibsrcdir + "/include"
+            includeflags = includeflags + " -I" + topdir + "/" + locallibsrcdir + "/include"
             for subdir in os.walk(topdir + "/" + locallibsrcdir + "/include"):
                 if (os.path.isdir(subdir[0])):
                     includeflags = includeflags + " -I" + subdir[0]
@@ -268,7 +272,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='1.0.2',
+      version='1.0.3',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
