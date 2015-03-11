@@ -34,11 +34,17 @@ install:	build
 UNITS := test/test_pyeclib_api.py test/test_pyeclib_c.py
 
 test:		build
-	LD_LIBRARY_PATH=${TOPDIR}:${LD_LIBRARY_PATH} nosetests --exe --with-coverage \
-					--cover-package pyeclib --cover-erase \
-					--cover-html --cover-html-dir=${TOPDIR}/cover \
-					$(UNITS)
-	rm -f .coverage
+	$(eval SONAMES := $(shell find $(abs_top_builddir) -name '*.so'))
+	$(eval SODIRS := $(dir $(SONAMES)))
+	$(eval LD_LIBRARY_PATH := LD_LIBRARY_PATH="$(subst / ,/:,$(SODIRS))")
+	$(eval DYLD_LIBRARY_PATH := DYLD_LIBRARY_PATH="$(subst / ,/:,$(SODIRS))")
+	$(eval DYLD_FALLBACK_LIBRARY_PATH := DYLD_FALLBACK_LIBRARY_PATH="$(subst / ,/:,$(SODIRS))")
+	rm -rf cover .coverage
+	@$(LD_LIBRARY_PATH) $(DYLD_LIBRARY_PATH) $(DYLD_FALLBACK_LIBRARY_PATH) \
+		nosetests --exe --with-coverage \
+		--cover-package pyeclib --cover-erase \
+		--cover-html --cover-html-dir=${TOPDIR}/cover \
+		$(UNITS)
 
 clean:
 	-rm -f pyeclib_c.so
