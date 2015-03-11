@@ -47,9 +47,18 @@ from setuptools.command.install import install as _install
 platform_str = platform.platform()
 default_python_incdir = get_python_inc()
 default_python_libdir = get_python_lib()
+
+#
+# ToDo: Note the hardcoded location of liberasurecode.
+# This will be removed once liberasurecode is no longer
+# packaged with PyECLib.  This is silly, but we (Kevin
+# and Tushar) cannot explain what is going on with
+# distutils or libtool here.
+#
 default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
-                         '/lib', '/usr/lib', '/usr/local/lib']
+                         '/lib', '/usr/lib', '/usr/local/lib',
+                         'src/c/liberasurecode-1.0.1/src/.libs']
                           
 default_include_paths = [default_python_incdir,
                          '/usr/local/include', '/usr/local/include/jerasure',
