@@ -168,8 +168,8 @@ class install(_install):
 
 
 module = Extension('pyeclib_c',
-                   define_macros=[('MAJOR VERSION', '0'),
-                                  ('MINOR VERSION', '9')],
+                   define_macros=[('MAJOR VERSION', '1'),
+                                  ('MINOR VERSION', '0')],
                    include_dirs=[default_python_incdir,
                                  '/usr/local/include',
                                  '/usr/local/include/jerasure',
@@ -186,7 +186,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='1.0-rc2',
+      version='1.0',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
