@@ -255,7 +255,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='1.0-rc2',
+      version='1.0i',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
