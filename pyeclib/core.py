@@ -85,7 +85,7 @@ class ECPyECLibDriver(object):
         try:
           ret = pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
         except PyECLibError as e:
-          raise ECPyECLibException(e)
+          raise ECDriverError(e)
 
         # Was there an error decoding
         if ret is None:
@@ -113,7 +113,7 @@ class ECPyECLibDriver(object):
               reconstructed = pyeclib_c.reconstruct(
                   self.handle, _fragment_payloads, fragment_len, index)
             except PyECLibError as e:
-              raise ECPyECLibException(e)
+              raise ECDriverError(e)
             reconstructed_data.append(reconstructed)
             _fragment_payloads.append(reconstructed)
 
@@ -125,7 +125,7 @@ class ECPyECLibDriver(object):
             self.handle, reconstruct_indexes, exclude_indexes)
           return required_fragments
         except PyECLibError as e:
-          raise ECPyECLibException(e)
+          raise ECDriverError(e)
 
     def min_parity_fragments_needed(self):
         """ FIXME - fix this to return a function of HD """
@@ -136,21 +136,21 @@ class ECPyECLibDriver(object):
           fragment_metadata = pyeclib_c.get_metadata(self.handle, fragment, formatted)
           return fragment_metadata
         except PyECLibError as e:
-          raise ECPyECLibException(e)
+          raise ECDriverError(e)
 
     def verify_stripe_metadata(self, fragment_metadata_list):
         try:
           success = pyeclib_c.check_metadata(self.handle, fragment_metadata_list)
           return success
         except PyECLibError as e:
-          raise ECPyECLibException(e)
+          raise ECDriverError(e)
 
     def get_segment_info(self, data_len, segment_size):
         try:
           segment_info = pyeclib_c.get_segment_info(self.handle, data_len, segment_size)
           return segment_info
         except PyECLibError as e:
-          raise ECPyECLibException(e)
+          raise ECDriverError(e)
 
 class ECNullDriver(object):
 
