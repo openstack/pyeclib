@@ -161,7 +161,7 @@ def _check_library(library, soname, library_url, mode, distribution):
                     sys.exit(retval)
             make_cmd = ("make")
             if mode == "install":
-                make_cmd = ("%s && sudo make install" % make_cmd)
+                make_cmd = ("%s && make install" % make_cmd)
             retval = os.system(make_cmd)
             if retval != 0:
                 print("***************************************************")
@@ -268,7 +268,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='1.0-rc2',
+      version='1.0.2',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
