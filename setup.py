@@ -129,42 +129,30 @@ class install(_install):
         default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
         _install.run(self)
 
-        #
         # Another Mac-ism...  If the libraries are installed
         # in a strange place, DYLD_LIRBARY_PATH needs to be
         # updated.
-        #
         if platform_str.find("Darwin") > -1:
-            print("***************************************************")
-            print("**                                             ")
-            print("** You are running on a Mac!  This means that  ")
-            print("** any user using this library must update:    ")
-            print("**   DYLD_LIBRARY_PATH                         ")
-            print("**                                             ")
-            print("** The best way to do this is to put this line:")
-            print("**   export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
-                                                      % installroot))
-            print("**                                             ")
-            print("** into .bashrc, .profile, or the appropriate")
-            print("** shell start-up script!")
-            print("***************************************************")
+            ldpath_str = "DYLD_LIBRARY_PATH"
         else:
-            print("***************************************************")
-            print("**                                             ")
-            print("** PyECLib libraries have been installed to:   ")
-            print("**   %susr/local/lib" % installroot)
-            print("**                                             ")
-            print("** Any user using this library must update:    ")
-            print("**   LD_LIBRARY_PATH                         ")
-            print("**                                             ")
-            print("** The best way to do this is to put this line:")
-            print("**   export LD_LIBRARY_PATH=%s" % ("%susr/local/lib"
-                                                      % installroot))
-            print("**                                             ")
-            print("** into .bashrc, .profile, or the appropriate shell")
-            print("** start-up script!  Also look at ldconfig(8) man")
-            print("** page for a more static LD configuration")
-            print("***************************************************")
+            ldpath_str = "LD_LIBRARY_PATH"
+        print("***************************************************")
+        print("**                                                 ")
+        print("** PyECLib libraries have been installed to:       ")
+        print("**   %susr/local/lib" % installroot)
+        print("**                                                 ")
+        print("** Any user using this library must update:        ")
+        print("**   %s" % ldpath_str)
+        print("**                                                 ")
+        print("** The best way to do this is to put this line:    ")
+        print("**   export %s=%s" % (ldpath_str, "%susr/local/lib"
+                                     % installroot))
+        print("**                                                 ")
+        print("** into .bashrc, .profile, or the appropriate shell")
+        print("** start-up script!  Also look at ldconfig(8) man  ")
+        print("** page for a more static LD configuration         ")
+        print("**                                                 ")
+        print("***************************************************")
 
 
 module = Extension('pyeclib_c',
