@@ -236,7 +236,7 @@ class install(_install):
         print("** Any user using this library must update:        ")
         print("**   %s" % ldpath_str)
         print("**                                                 ")
-        print("** The best way to do this is to put this line:    ")
+        print("** Run 'ldconfig' or place this line:              ")
         print("**   export %s=%s" % (ldpath_str, "%susr/local/lib"
                                      % installroot))
         print("**                                                 ")
