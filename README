@@ -169,9 +169,9 @@ Quick Start
 
     /etc/ld.so.conf 
 
-  and then run::
+  and then make sure to run::
 
-    $ ldconfig
+    $ sudo ldconfig
 
 
 References
