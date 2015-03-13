@@ -145,16 +145,13 @@ needs to be taken when handling input to and output from the ``encode()`` and
   }
 
 
-Quick Start:
+Quick Start
 
-  Standard stuff to install::
+  Install pre-requisites:
   
-    Python 2.6, 2.7 or 3.x (including development packages), argparse, liberasurecode, gf-complete and Jerasure.
-
-
-  As mentioned above, PyECLib depends on the installation of the liberasurecde library (liberasurecode
-  can be found at https://bitbucket.org/tsg-/liberasurecode)
-
+    * Python 2.6, 2.7 or 3.x (including development packages), argparse, setuptools
+    * liberasurecode v1.0.4 or greater [3]
+    * Erasure code backend libraries, gf-complete and Jerasure [1],[2], ISA-L [4] etc
 
   Install PyECLib::
 
