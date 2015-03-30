@@ -55,15 +55,21 @@ default_python_libdir = get_python_lib()
 # and Tushar) cannot explain what is going on with
 # distutils or libtool here.
 #
+standard_library_paths = [('%s/usr/local/lib' % _exec_prefix),
+                          '/lib', '/usr/lib', '/usr/local/lib']
+
 default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
                          '/lib', '/usr/lib', '/usr/local/lib',
-                         'src/c/liberasurecode-1.0.1/src/.libs']
-                          
+                         'src/c/liberasurecode-1.0.6/src/.libs']
+
 default_include_paths = [default_python_incdir,
                          '/usr/local/include', '/usr/local/include/jerasure',
                          '/usr/include', 'src/c/pyeclib_c',
                          '/usr/local/include']
+
+libflags = ''
+includeflags = ''
 
 # utility routines
 def _read_file_as_str(name):
@@ -102,12 +108,14 @@ def _get_installroot(distribution):
     return installroot
 
 def _check_library(library, soname, library_url, mode, distribution):
+    global libflags
+    global includeflags
     missing = True
     library_suffix = ".so"
     if platform_str.find("Darwin") > -1:
         library_suffix = ".dylib"
     library_file = soname + library_suffix
-    for dir in (default_library_paths):
+    for dir in (standard_library_paths):
         library_file_path = dir + os.sep + library_file
         if (os.path.isfile(library_file_path)):
             missing = False
@@ -125,12 +133,11 @@ def _check_library(library, soname, library_url, mode, distribution):
             topdir = os.getcwd()
             libdirs = [ (topdir + "/" + locallibsrcdir + "/.libs "),
                         (topdir + "/" + locallibsrcdir + "/src/.libs ")] 
-            libflags = ""
             for d in libdirs:
                 libflags = libflags + " -L" + d
                 default_library_paths.append(d)
 
-            includeflags = " -I" + topdir + "/" + locallibsrcdir + "/include"
+            includeflags = includeflags + " -I" + topdir + "/" + locallibsrcdir + "/include"
             for subdir in os.walk(topdir + "/" + locallibsrcdir + "/include"):
                 if (os.path.isdir(subdir[0])):
                     includeflags = includeflags + " -I" + subdir[0]
@@ -158,7 +165,7 @@ def _check_library(library, soname, library_url, mode, distribution):
                     sys.exit(retval)
             make_cmd = ("make")
             if mode == "install":
-                make_cmd = ("%s && sudo make install" % make_cmd)
+                make_cmd = ("%s && make install" % make_cmd)
             retval = os.system(make_cmd)
             if retval != 0:
                 print("***************************************************")
@@ -186,7 +193,7 @@ def _check_library(library, soname, library_url, mode, distribution):
 class build(_build):
 
     def run(self):
-        _check_library("liberasurecode-1.0.1", "liberasurecode",
+        _check_library("liberasurecode-1.0.6", "liberasurecode",
                        "https://bitbucket.org/tsg-/liberasurecode.git",
                        "build", self.distribution)
         _build.run(self)
@@ -201,7 +208,7 @@ class clean(_clean):
 class install(_install):
 
     def run(self):
-        _check_library("liberasurecode-1.0.1", "liberasurecode",
+        _check_library("liberasurecode-1.0.6", "liberasurecode",
                        "https://bitbucket.org/tsg-/liberasurecode.git",
                        "install", self.distribution)
         _check_library("gf-complete-1.0", "libgf_complete",
@@ -214,41 +221,30 @@ class install(_install):
         default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
         _install.run(self)
 
-        #
         # Another Mac-ism...  If the libraries are installed
         # in a strange place, DYLD_LIRBARY_PATH needs to be
         # updated.
-        #
         if platform_str.find("Darwin") > -1:
-            print("***************************************************")
-            print("**                                             ")
-            print("** You are running on a Mac!  This means that  ")
-            print("** any user using this library must update:    ")
-            print("**   DYLD_LIBRARY_PATH                         ")
-            print("**                                             ")
-            print("** The best way to do this is to put this line:")
-            print("**   export DYLD_LIBRARY_PATH=%s" % ("%s/usr/local/lib"
-                                                      % installroot))
-            print("**                                             ")
-            print("** into .bashrc, .profile, or the appropriate")
-            print("** shell start-up script!")
-            print("***************************************************")
+            ldpath_str = "DYLD_LIBRARY_PATH"
         else:
-            print("***************************************************")
-            print("** PyECLib libraries have been installed to:   ")
-            print("**   %susr/local/lib" % installroot)
-            print("**                                             ")
-            print("** Any user using this library must update:    ")
-            print("**   LD_LIBRARY_PATH                         ")
-            print("**                                             ")
-            print("** The best way to do this is to put this line:")
-            print("**   export LD_LIBRARY_PATH=%s" % ("%susr/local/lib"
-                                                      % installroot))
-            print("**                                             ")
-            print("** into .bashrc, .profile, or the appropriate shell")
-            print("** start-up script!  Also look at ldconfig(8) man")
-            print("** page for a more static LD configuration")
-            print("***************************************************")
+            ldpath_str = "LD_LIBRARY_PATH"
+        print("***************************************************")
+        print("**                                                 ")
+        print("** PyECLib libraries have been installed to:       ")
+        print("**   %susr/local/lib" % installroot)
+        print("**                                                 ")
+        print("** Any user using this library must update:        ")
+        print("**   %s" % ldpath_str)
+        print("**                                                 ")
+        print("** Run 'ldconfig' or place this line:              ")
+        print("**   export %s=%s" % (ldpath_str, "%susr/local/lib"
+                                     % installroot))
+        print("**                                                 ")
+        print("** into .bashrc, .profile, or the appropriate shell")
+        print("** start-up script!  Also look at ldconfig(8) man  ")
+        print("** page for a more static LD configuration         ")
+        print("**                                                 ")
+        print("***************************************************")
 
 
 module = Extension('pyeclib_c',
@@ -265,7 +261,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='1.0i',
+      version='1.0.6',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
