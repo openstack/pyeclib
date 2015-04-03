@@ -40,7 +40,7 @@ def collect_available_backends():
            else:
                 handle = pyeclib_c.init(10, 4, ec_type.value)
            available_backends.append(ec_type.name)
-           print ec_type.name
+           print(ec_type.name)
         except:
             pass
     return available_backends
