@@ -536,7 +536,7 @@ class TestPyECLibDriver(unittest.TestCase):
         pyeclib_driver.reconstruct([fragments[0]], [1,2,3,4,5,6])
       except ECDriverError as e:
         hit_exception = True
-        print e.error_str.__str__()
+        print(e.error_str.__str__())
         self.assertTrue(e.error_str.__str__().find("Insufficient number of fragments") > -1) 
 
       self.assertTrue(hit_exception)
