@@ -26,14 +26,12 @@ from string import ascii_letters, ascii_uppercase, digits
 import sys
 import tempfile
 import unittest
-import mock
 from pyeclib.ec_iface import ECDriverError
 
 from pyeclib.ec_iface import ECDriver, VALID_EC_TYPES, ECDriverError, \
     PyECLib_EC_Types
 from test_pyeclib_c import _available_backends
 import pyeclib_c
-from pyeclib_c import error as PyECLibError
 
 if sys.version < '3':
     def b2i(b):
@@ -209,7 +207,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
     def test_get_metadata_formatted(self):
         pyeclib_driver = ECDriver(k=12, m=2, ec_type="jerasure_rs_vand", chksum_type="inline_crc32")
-
+        
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
         file_bytes = file_str.encode('utf-8')
@@ -548,46 +546,6 @@ class TestPyECLibDriver(unittest.TestCase):
         pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
         self.assertTrue(
             pyeclib_drivers[0].min_parity_fragments_needed() == 1)
-
-    def test_ECDriver_error_handling(self):
-        driver = ECDriver(k=3, m=1, ec_type="jerasure_rs_vand")
-
-        class MockPyECLibError(PyECLibError):
-            def __str__(self):
-                return mock.MagicMock()
-
-        with mock.patch('pyeclib_c.decode', side_effect=MockPyECLibError()):
-            with self.assertRaises(ECDriverError) as cm:
-                driver.decode([' ' for x in xrange(4)])
-            exception = cm.exception
-            expected = 'Error retrieving the error message from MockPyECLibError'
-            self.assertEquals(expected, str(exception))
-
-    def test_ECDriverError_init(self):
-
-        class mock_class(object):
-            def __init__(self, return_str):
-                self.return_str = return_str
-
-            def __str__(self):
-                if self.return_str:
-                    return 'message'
-                else:
-                    return mock.MagicMock()
-
-        # init with str
-        error = ECDriverError('message')
-        self.assertEquals('message', str(error))
-
-        # init with instance with valid __str__
-        error = ECDriverError(mock_class(True))
-        self.assertEquals('message', str(error))
-
-        # init with instance with invalid __str__
-        error = ECDriverError(mock_class(False))
-        self.assertEquals('Error retrieving the error message from mock_class',
-                          str(error))
-
 
 if __name__ == '__main__':
     unittest.main()
