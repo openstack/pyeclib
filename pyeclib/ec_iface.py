@@ -112,12 +112,14 @@ class PyECLib_FRAGHDRCHKSUM_Types(PyECLibEnum):
 # Generic ECDriverException
 class ECDriverError(Exception):
 
-    def __init__(self, error_str):
-        self.error_str = error_str
-
+    def __init__(self, error):
+        try:
+          self.error_str = str(error)
+        except:
+          self.error_str = 'Error retrieving the error message from %s' \
+              % error.__class__.__name__
     def __str__(self):
         return self.error_str
-
 
 # Main ECDriver class
 class ECDriver(object):
