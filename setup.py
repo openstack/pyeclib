@@ -61,7 +61,7 @@ standard_library_paths = [('%s/usr/local/lib' % _exec_prefix),
 default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
                          '/lib', '/usr/lib', '/usr/local/lib',
-                         'src/c/liberasurecode-1.0.6/src/.libs']
+                         'src/c/liberasurecode-1.0.7/src/.libs']
 
 default_include_paths = [default_python_incdir,
                          '/usr/local/include', '/usr/local/include/jerasure',
@@ -193,7 +193,7 @@ def _check_library(library, soname, library_url, mode, distribution):
 class build(_build):
 
     def run(self):
-        _check_library("liberasurecode-1.0.6", "liberasurecode",
+        _check_library("liberasurecode-1.0.7", "liberasurecode",
                        "https://bitbucket.org/tsg-/liberasurecode.git",
                        "build", self.distribution)
         _build.run(self)
@@ -208,7 +208,7 @@ class clean(_clean):
 class install(_install):
 
     def run(self):
-        _check_library("liberasurecode-1.0.6", "liberasurecode",
+        _check_library("liberasurecode-1.0.7", "liberasurecode",
                        "https://bitbucket.org/tsg-/liberasurecode.git",
                        "install", self.distribution)
         _check_library("gf-complete-1.0", "libgf_complete",
@@ -261,7 +261,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='1.0.6',
+      version='1.0.7',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
