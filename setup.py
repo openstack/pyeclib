@@ -150,7 +150,7 @@ def _check_library(library, soname, library_url, mode, distribution):
                 configure_cmd = ("CFLAGS=\"%s\" LDFLAGS=\"%s\" " % (includeflags, libflags))
                 configure_cmd = ("%s ./configure --prefix=%s/usr/local" % \
                     (configure_cmd, installroot))
-                print configure_cmd
+                print(configure_cmd)
                 retval = os.system(configure_cmd)
                 if retval == 0:
                     touch_cmd = ("touch " + statefile)
