@@ -149,7 +149,7 @@ class install(_install):
         print("**   %s" % ldpath_str)
         print("**                                                 ")
         print("** Run 'ldconfig' or place this line:              ")
-        print("**   export %s=%s" % (ldpath_str, "%susr/local/lib"
+        print("**   export %s=%s" % (ldpath_str, "%s/usr/local/lib"
                                      % installroot))
         print("**                                                 ")
         print("** into .bashrc, .profile, or the appropriate shell")

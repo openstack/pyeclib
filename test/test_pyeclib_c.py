@@ -77,7 +77,8 @@ class TestPyECLib(unittest.TestCase):
         # EC algorithm and config parameters
         self.rs_types = [(PyECLib_EC_Types.jerasure_rs_vand),
                          (PyECLib_EC_Types.jerasure_rs_cauchy),
-                         (PyECLib_EC_Types.isa_l_rs_vand)]
+                         (PyECLib_EC_Types.isa_l_rs_vand),
+                         (PyECLib_EC_Types.liberasurecode_rs_vand)]
         self.xor_types = [(PyECLib_EC_Types.flat_xor_hd, 12, 6, 4),
                           (PyECLib_EC_Types.flat_xor_hd, 10, 5, 4),
                           (PyECLib_EC_Types.flat_xor_hd, 10, 5, 3)]
