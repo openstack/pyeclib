@@ -149,7 +149,7 @@ class install(_install):
         print("**   %s" % ldpath_str)
         print("**                                                 ")
         print("** Run 'ldconfig' or place this line:              ")
-        print("**   export %s=%s" % (ldpath_str, "%susr/local/lib"
+        print("**   export %s=%s" % (ldpath_str, "%s/usr/local/lib"
                                      % installroot))
         print("**                                                 ")
         print("** into .bashrc, .profile, or the appropriate shell")
@@ -163,7 +163,7 @@ module = Extension('pyeclib_c',
                    define_macros=[('MAJOR VERSION', '1'),
                                   ('MINOR VERSION', '0')],
                    include_dirs=[default_python_incdir,
-                                 '/usr/local/include',
+                                 '/usr/local/include/liberasurecode',
                                  '/usr/local/include/jerasure',
                                  '/usr/include',
                                  'src/c/pyeclib_c',
