@@ -113,13 +113,20 @@ class PyECLib_FRAGHDRCHKSUM_Types(PyECLibEnum):
 
 # Generic ECDriverException
 class ECDriverError(Exception):
-
     def __init__(self, error):
         try:
           self.error_str = str(error)
         except:
           self.error_str = 'Error retrieving the error message from %s' \
               % error.__class__.__name__
+    def __str__(self):
+        return self.error_str
+
+# Exception specifying insufficient fragments specified for
+# decode or reconstruction
+class ECDriverInsufficientFragmentError(Exception):
+    def __init__(self, *args):
+        super(ECDriverInsufficientFragmentError, self).__init__(*args)
     def __str__(self):
         return self.error_str
 

@@ -21,7 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ec_iface import PyECLib_FRAGHDRCHKSUM_Types, ECDriverError
+from ec_iface import PyECLib_FRAGHDRCHKSUM_Types, ECDriverError, ECDriverInsufficientFragmentError
 import math
 import pyeclib_c
 from pyeclib_c import error as PyECLibError
@@ -80,12 +80,15 @@ class ECPyECLibDriver(object):
             raise ECDriverError("Invalid fragment payload in ECPyECLibDriver.decode")
 
         if len(fragment_payloads) < self.k:
-            raise ECDriverError("Not enough fragments given in ECPyECLibDriver.decode")
+            raise ECDriverInsufficientFragmentError("Not enough fragments given in ECPyECLibDriver.decode")
 
         try:
           ret = pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
         except PyECLibError as e:
-          raise ECDriverError(e)
+          if e.message.find("Insufficient number of fragments") < 0:
+            raise ECDriverError(e)
+          else:
+            raise ECDriverInsufficientFragmentError(e)
 
         # Was there an error decoding
         if ret is None:
