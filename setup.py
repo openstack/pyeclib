@@ -118,19 +118,9 @@ class install(_install):
         prefix = opts['exec_prefix']
         root = opts['root']
 
-        # prefer root for installdir
-        if root is not None:
-            installroot = root
-        elif prefix is not None:
-            installroot = prefix
-        else:
-            installroot = "/"
+        installroot = install_lib.install_dir
 
-        # exception is "/usr"
-        if installroot.startswith("/usr"):
-            installroot = "/"
-
-        default_library_paths.insert(0, "%s/usr/local/lib" % installroot)
+        default_library_paths.insert(0, installroot)
         _install.run(self)
 
         # Another Mac-ism...  If the libraries are installed
@@ -143,13 +133,13 @@ class install(_install):
         print("***************************************************")
         print("**                                                 ")
         print("** PyECLib libraries have been installed to:       ")
-        print("**   %susr/local/lib" % installroot)
+        print("**   %s" % installroot)
         print("**                                                 ")
         print("** Any user using this library must update:        ")
         print("**   %s" % ldpath_str)
         print("**                                                 ")
         print("** Run 'ldconfig' or place this line:              ")
-        print("**   export %s=%s" % (ldpath_str, "%s/usr/local/lib"
+        print("**   export %s=%s" % (ldpath_str, "%s"
                                      % installroot))
         print("**                                                 ")
         print("** into .bashrc, .profile, or the appropriate shell")
