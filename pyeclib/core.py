@@ -21,13 +21,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ec_iface import PyECLib_FRAGHDRCHKSUM_Types, ECDriverError, ECDriverInsufficientFragmentError
+from ec_iface import ECDriverError
+from ec_iface import ECInsufficientFragments
+from ec_iface import PyECLib_FRAGHDRCHKSUM_Types
+
 import math
 import pyeclib_c
-from pyeclib_c import error as PyECLibError
 import sys
 
 pyver = float('%s.%s' % sys.version_info[:2])
+
 
 class ECPyECLibDriver(object):
 
@@ -80,21 +83,9 @@ class ECPyECLibDriver(object):
             raise ECDriverError("Invalid fragment payload in ECPyECLibDriver.decode")
 
         if len(fragment_payloads) < self.k:
-            raise ECDriverInsufficientFragmentError("Not enough fragments given in ECPyECLibDriver.decode")
+            raise ECInsufficientFragments("Not enough fragments given in ECPyECLibDriver.decode")
 
-        try:
-          ret = pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
-        except PyECLibError as e:
-          if e.message.find("Insufficient number of fragments") < 0:
-            raise ECDriverError(e)
-          else:
-            raise ECDriverInsufficientFragmentError(e)
-
-        # Was there an error decoding
-        if ret is None:
-          raise ECDriverError("Error decoding from fragments in ECPyECLibDriver.decode")
-
-        return ret
+        return pyeclib_c.decode(self.handle, fragment_payloads, fragment_len, ranges, force_metadata_checks)
 
     def reconstruct(self, fragment_payloads, indexes_to_reconstruct):
         fragment_len = self._validate_and_return_fragment_size(fragment_payloads)
@@ -112,48 +103,33 @@ class ECPyECLibDriver(object):
 
         while len(_indexes_to_reconstruct) > 0:
             index = _indexes_to_reconstruct.pop(0)
-            try:
-              reconstructed = pyeclib_c.reconstruct(
-                  self.handle, _fragment_payloads, fragment_len, index)
-            except PyECLibError as e:
-              raise ECDriverError(e)
+            reconstructed = pyeclib_c.reconstruct(
+                self.handle, _fragment_payloads, fragment_len, index)
             reconstructed_data.append(reconstructed)
             _fragment_payloads.append(reconstructed)
 
         return reconstructed_data
 
     def fragments_needed(self, reconstruct_indexes, exclude_indexes):
-        try:
-          required_fragments = pyeclib_c.get_required_fragments(
+        required_fragments = pyeclib_c.get_required_fragments(
             self.handle, reconstruct_indexes, exclude_indexes)
-          return required_fragments
-        except PyECLibError as e:
-          raise ECDriverError(e)
+        return required_fragments
 
     def min_parity_fragments_needed(self):
         """ FIXME - fix this to return a function of HD """
         return 1
 
     def get_metadata(self, fragment, formatted = 0):
-        try:
           fragment_metadata = pyeclib_c.get_metadata(self.handle, fragment, formatted)
           return fragment_metadata
-        except PyECLibError as e:
-          raise ECDriverError(e)
 
     def verify_stripe_metadata(self, fragment_metadata_list):
-        try:
           success = pyeclib_c.check_metadata(self.handle, fragment_metadata_list)
           return success
-        except PyECLibError as e:
-          raise ECDriverError(e)
 
     def get_segment_info(self, data_len, segment_size):
-        try:
           segment_info = pyeclib_c.get_segment_info(self.handle, data_len, segment_size)
           return segment_info
-        except PyECLibError as e:
-          raise ECDriverError(e)
 
 class ECNullDriver(object):
 
@@ -245,7 +221,7 @@ class ECStripingDriver(object):
             raise ECDriverError(
                 "Decode does not support metadata integrity checks in the striping driver.")
         if len(fragment_payloads) != self.k:
-            raise ECDriverError(
+            raise ECInsufficientFragments(
                 "Decode requires %d fragments, %d fragments were given" %
                 (len(fragment_payloads), self.k))
 

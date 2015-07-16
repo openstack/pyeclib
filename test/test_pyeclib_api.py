@@ -27,11 +27,10 @@ import sys
 import tempfile
 import unittest
 from pyeclib.ec_iface import ECDriverError
+from pyeclib.ec_iface import ECInsufficientFragments
 
-from pyeclib.ec_iface import ECDriver, VALID_EC_TYPES, ECDriverError, \
-    PyECLib_EC_Types
+from pyeclib.ec_iface import ECDriver, PyECLib_EC_Types
 from test_pyeclib_c import _available_backends
-import pyeclib_c
 
 if sys.version < '3':
     def b2i(b):
@@ -519,28 +518,27 @@ class TestPyECLibDriver(unittest.TestCase):
                     self.assertTrue(got_exception)
 
     def test_liberasurecode_error(self):
-      pyeclib_driver = self.get_available_backend(k=10, m=5, ec_type="flat_xor_hd_3")
-      file_size = self.file_sizes[0]
-      tmp_file = self.files[file_size]
-      tmp_file.seek(0)
-      whole_file_str = tmp_file.read()
-      whole_file_bytes = whole_file_str.encode('utf-8')
-      hit_exception = False
+        pyeclib_driver = self.get_available_backend(k=10, m=5, ec_type="flat_xor_hd_3")
+        file_size = self.file_sizes[0]
+        tmp_file = self.files[file_size]
+        tmp_file.seek(0)
+        whole_file_str = tmp_file.read()
+        whole_file_bytes = whole_file_str.encode('utf-8')
+        hit_exception = False
 
-      fragments = pyeclib_driver.encode(whole_file_bytes)
-      
-      #
-      # Test reconstructor with insufficient fragments
-      #
-      try:
-        pyeclib_driver.reconstruct([fragments[0]], [1,2,3,4,5,6])
-      except ECDriverError as e:
-        hit_exception = True
-        print(e.error_str.__str__())
-        self.assertTrue(e.error_str.__str__().find("Insufficient number of fragments") > -1) 
+        fragments = pyeclib_driver.encode(whole_file_bytes)
 
-      self.assertTrue(hit_exception)
-      
+        #
+        # Test reconstructor with insufficient fragments
+        #
+        try:
+            pyeclib_driver.reconstruct([fragments[0]], [1, 2, 3, 4, 5, 6])
+        except ECInsufficientFragments as e:
+            hit_exception = True
+            self.assertTrue(e.error_str.__str__().find("Insufficient number of fragments") > -1)
+
+        self.assertTrue(hit_exception)
+
     def test_min_parity_fragments_needed(self):
         pyeclib_drivers = []
         pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
