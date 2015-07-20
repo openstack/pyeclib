@@ -63,8 +63,6 @@
 #endif
 
 
-static PyObject *PyECLibError;
-
 typedef struct pyeclib_byte_range {
   uint64_t offset;
   uint64_t length;
@@ -82,38 +80,63 @@ static PyObject * pyeclib_c_decode(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_get_metadata(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_check_metadata(PyObject *self, PyObject *args);
 
-void
-liberasurecode_errstr(int ret, const char * prefix, char str[])
+static PyObject *import_class(const char *module, const char *cls)
 {
-    strcpy(str, prefix);
+    PyObject *s = PyImport_ImportModule(module);
+    return (PyObject *) PyObject_GetAttrString(s, cls);
+}
+
+void
+pyeclib_c_seterr(int ret, const char * prefix)
+{
+    char err[255];
+    PyObject *eo = NULL;
+
+    strcpy(err, prefix);
     switch (ret) {
         case -EBACKENDNOTAVAIL:
-            strcat(str, "Backend instance not found");
+            eo = import_class("pyeclib.ec_iface",
+                              "ECBackendInstanceNotAvailable");
+            strcat(err, "Backend instance not found");
             break;
         case -EINSUFFFRAGS:
-            strcat(str, "Insufficient number of fragments");
+            eo = import_class("pyeclib.ec_iface",
+                              "ECInsufficientFragments");
+            strcat(err, "Insufficient number of fragments");
             break;
         case -EBACKENDNOTSUPP:
-            strcat(str, "Backend not supported");
+            eo = import_class("pyeclib.ec_iface",
+                              "ECBackendNotSupported");
+            strcat(err, "Backend not supported");
             break;
         case -EINVALIDPARAMS:
-            strcat(str, "Invalid arguments");
+            eo = import_class("pyeclib.ec_iface",
+                              "ECInvalidParameter");
+            strcat(err, "Invalid arguments");
             break;
         case -EBADCHKSUM:
-            strcat(str, "Fragment integrity check failed");
+            eo = import_class("pyeclib.ec_iface",
+                              "ECBadFragmentChecksum");
+            strcat(err, "Fragment integrity check failed");
             break;
         case -EBADHEADER:
-            strcat(str, "Fragment integrity check failed");
+            eo = import_class("pyeclib.ec_iface",
+                              "ECInvalidFragmentMetadata");
+            strcat(err, "Fragment integrity check failed");
             break;
         case -ENOMEM:
-            strcat(str, "Out of memory");
+            eo = import_class("pyeclib.ec_iface",
+                              "ECOutOfMemory");
+            strcat(err, "Out of memory");
             break;
         default:
-            strcat(str, "Unknown error");
+            eo = import_class("pyeclib.ec_iface",
+                              "ECDriverError");
+            strcat(err, "Unknown error");
             break;
     }
-
-    strcat(str, ". Please inspect syslog for liberasurecode error report.");
+    strcat(err, ". Please inspect syslog for liberasurecode error report.");
+    PyErr_SetString(eo, err);
 }
 
 /**
@@ -136,13 +159,14 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "iii|iii", &k, &m, &backend_id, &hd, &use_inline_chksum, &use_algsig_chksum)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.init");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init ERROR: ");
     return NULL;
   }
 
   /* Allocate and initialize the pyeclib object */
   pyeclib_handle = (pyeclib_t *) alloc_zeroed_buffer(sizeof(pyeclib_t));
   if (NULL == pyeclib_handle) {
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_init ERROR: ");
     goto error;
   }
 
@@ -153,7 +177,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 
   pyeclib_handle->ec_desc = liberasurecode_instance_create(backend_id, &(pyeclib_handle->ec_args));  
   if (pyeclib_handle->ec_desc <= 0) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to liberasurecode_instance_create");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init ERROR: ");
     goto error; 
   }
 
@@ -169,7 +193,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 
   /* Clean up the allocated memory on error, or update the ref count */
   if (pyeclib_obj_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Could not encapsulate pyeclib_handle into Python object in pyeclib.init");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init ERROR: ");
     goto error;
   } else {
     Py_INCREF(pyeclib_obj_handle);
@@ -195,13 +219,13 @@ pyeclib_c_destructor(PyObject *obj)
   pyeclib_t *pyeclib_handle = NULL;  /* pyeclib object to destroy */
 
   if (!PyCapsule_CheckExact(obj)) {
-    PyErr_SetString(PyECLibError, "Attempted to free a non-Capsule object in pyeclib");
+    pyeclib_c_seterr(-1, "pyeclib_c_destructor ERROR: ");
     return;
   }
 
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(obj, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Attempted to free an invalid reference to pyeclib_handle");
+    pyeclib_c_seterr(-1, "pyeclib_c_destructor ERROR: ");
   } else {
     check_and_free_buffer(pyeclib_handle);
   }
@@ -252,12 +276,12 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "Oii", &pyeclib_obj_handle, &data_len, &segment_size)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info ERROR: ");
     return NULL;
   }
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info ERROR: ");
     return NULL;
   }
 
@@ -324,7 +348,7 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   /* Create and return the python dictionary of segment info */
   ret_dict = PyDict_New();
   if (NULL == ret_dict) {
-    PyErr_SetString(PyECLibError, "Error allocating python dict in get_segment_info");
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_segment_info ERROR: ");
   } else {
     PyDict_SetItem(ret_dict, PyString_FromString("segment_size\0"), PyInt_FromLong(segment_size));
     PyDict_SetItem(ret_dict, PyString_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
@@ -360,28 +384,25 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
 
   /* Assume binary data (force "byte array" input) */
   if (!PyArg_ParseTuple(args, ENCODE_ARGS, &pyeclib_obj_handle, &data, &data_len)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode ERROR: ");
     return NULL;
   }
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode ERROR: ");
     return NULL;
   }
 
   ret = liberasurecode_encode(pyeclib_handle->ec_desc, data, data_len, &encoded_data, &encoded_parity, &fragment_len);
-
   if (ret < 0) {
-    char err[255];
-    liberasurecode_errstr(ret, "Encode ERROR: ", err);
-    PyErr_SetString(PyECLibError, err);
+    pyeclib_c_seterr(ret, "pyeclib_c_encode ERROR: ");
     return NULL; 
   }
   
   /* Create the python list of fragments to return */
   list_of_strips = PyList_New(pyeclib_handle->ec_args.k + pyeclib_handle->ec_args.m);
   if (NULL == list_of_strips) {
-    PyErr_SetString(PyECLibError, "Error allocating python list in encode");
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_encode ERROR: ");
     return NULL; 
   }
   
@@ -431,12 +452,12 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OOO", &pyeclib_obj_handle, &reconstruct_list, &exclude_list)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_required_fragments");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_required_fragments ERROR: ");
     return NULL;
   }
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.get_required_fragments");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_required_fragments ERROR: ");
     return NULL;
   }
   k = pyeclib_handle->ec_args.k;
@@ -446,6 +467,7 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   num_missing = (int) PyList_Size(reconstruct_list);
   c_reconstruct_list = (int *) alloc_zeroed_buffer((num_missing + 1) * sizeof(int));
   if (NULL == c_reconstruct_list) {
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_required_fragments ERROR: ");
     return NULL;
   }
   c_reconstruct_list[num_missing] = -1;
@@ -458,6 +480,7 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
   num_exclude = (int) PyList_Size(exclude_list);
   c_exclude_list = (int *) alloc_zeroed_buffer((num_exclude + 1) * sizeof(int));
   if (NULL == c_exclude_list) {
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_required_fragments ERROR: ");
     goto exit; 
   }
   c_exclude_list[num_exclude] = -1;
@@ -469,21 +492,21 @@ pyeclib_c_get_required_fragments(PyObject *self, PyObject *args)
 
   fragments_needed = alloc_zeroed_buffer(sizeof(int) * (k + m));
   if (NULL == fragments_needed) {
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_required_fragments ERROR: ");
     goto exit;
   }
 
   ret = liberasurecode_fragments_needed(pyeclib_handle->ec_desc, c_reconstruct_list, 
                                         c_exclude_list, fragments_needed);
   if (ret < 0) {
-    char err[255];
-    liberasurecode_errstr(ret, "Reconstruct_Fragments_Needed ERROR: ", err);
-    PyErr_SetString(PyECLibError, err);
+    pyeclib_c_seterr(ret, "pyeclib_c_get_required_fragments ERROR: ");
     goto exit; 
   }
    
   /* Post-process into a Python list */
   fragment_idx_list = PyList_New(0);
   if (NULL == fragment_idx_list) {
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_required_fragments ERROR: ");
     goto exit;
   }
 
@@ -532,18 +555,18 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OOii", &pyeclib_obj_handle, &fragments, 
                                         &fragment_len, &destination_idx)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.reconstruct");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_reconstruct ERROR: ");
     return NULL;
   }
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.reconstruct");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_reconstruct ERROR: ");
     return NULL;
   }
 
   /* Pre-processing Python data structures */
   if (!PyList_Check(fragments)) {
-    PyErr_SetString(PyECLibError, "Invalid structure passed in for fragment list");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_reconstruct ERROR: ");
     return NULL;
   }
 
@@ -551,11 +574,13 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
 
   c_fragments = (char **) alloc_zeroed_buffer(sizeof(char *) * num_fragments);
   if (NULL == c_fragments) {
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_reconstruct ERROR: ");
     goto error;
   }
 
   c_reconstructed = (char*) alloc_zeroed_buffer(sizeof(char) * fragment_len);
   if (NULL == c_fragments) {
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_reconstruct ERROR: ");
     goto error;
   }
 
@@ -573,9 +598,7 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
                                             destination_idx, 
                                             c_reconstructed); 
   if (ret < 0) {
-    char err[255];
-    liberasurecode_errstr(ret, "Reconstruct ERROR: ", err);
-    PyErr_SetString(PyECLibError, err);
+    pyeclib_c_seterr(ret, "pyeclib_c_reconstruct ERROR: ");
     reconstructed = NULL;
   } else {
     reconstructed = PY_BUILDVALUE_OBJ_LEN(c_reconstructed, fragment_len);
@@ -627,7 +650,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OOi|OO",&pyeclib_obj_handle, &fragments,
     &fragment_len, &ranges, &metadata_checks_obj)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.decode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode ERROR: ");
     return NULL;
   }
 
@@ -643,11 +666,11 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
 
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.decode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode ERROR: ");
     return NULL;
   }
   if (!PyList_Check(fragments)) {
-    PyErr_SetString(PyECLibError, "Invalid structure passed in for available fragments in pyeclib.decode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode ERROR: ");
     return NULL;
   }
   
@@ -658,14 +681,14 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   }
 
   if (pyeclib_handle->ec_args.k > num_fragments) {
-    PyErr_SetString(PyECLibError, "The fragment list does not have enough entries in pyeclib.decode");
+    pyeclib_c_seterr(-EINSUFFFRAGS, "pyeclib_c_decode ERROR: ");
     return NULL;
   }
     
   if (num_ranges > 0) {
     c_ranges = (pyeclib_byte_range_t*)malloc(sizeof(pyeclib_byte_range_t) * num_ranges);
     if (NULL == c_ranges) {
-        PyErr_SetString(PyECLibError, "Could not allocate memory in pyeclib_c.decode");
+        pyeclib_c_seterr(-ENOMEM, "pyeclib_c_decode ERROR: ");
         goto error;
     }
     for (i = 0; i < num_ranges; i++) {
@@ -675,7 +698,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
         PyObject *py_end = PyTuple_GetItem(tuple, 1);
 
         if (!PyLong_Check(py_begin) || !PyLong_Check(py_end)) {
-          PyErr_SetString(PyECLibError, "Invalid range passed to pyeclib.decode");
+          pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range ERROR: ");
           goto error;
         }
 
@@ -683,7 +706,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
         c_ranges[i].length = PyLong_AsLong(py_end) - c_ranges[i].offset + 1;
         range_payload_size += c_ranges[i].length;
       } else {
-        PyErr_SetString(PyECLibError, "Invalid range passed to pyeclib.decode");
+        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range ERROR: ");
         goto error;
       }
     }
@@ -710,9 +733,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
                             &orig_data_size);
 
   if (ret < 0) {
-    char err[255];
-    liberasurecode_errstr(ret, "Decode ERROR: ", err);
-    PyErr_SetString(PyECLibError, err);
+    pyeclib_c_seterr(ret, "pyeclib_c_decode ERROR: ");
     goto error;
   }
 
@@ -721,14 +742,14 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
   } else {
     ret_payload = PyList_New(num_ranges);
     if (NULL == ret_payload) {
-        PyErr_SetString(PyECLibError, "Could not alloc list for range payloads in pyeclib.decode");
+        pyeclib_c_seterr(-ENOMEM, "pyeclib_c_decode ERROR: ");
         goto error;
     }
     range_payload_size = 0;
     for (i = 0; i < num_ranges; i++) {
       /* Check that range is within the original buffer */
       if (c_ranges[i].offset + c_ranges[i].length > orig_data_size) {
-        PyErr_SetString(PyECLibError, "Invalid range passed to pyeclib.decode");
+        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range ERROR: ");
         goto error;
       }
       PyList_SET_ITEM(ret_payload, i,
@@ -846,32 +867,32 @@ fragment_metadata_to_dict(fragment_metadata_t *fragment_metadata)
   metadata_dict = PyDict_New();
 
   if (metadata_dict == NULL) {
-    PyErr_SetString(PyECLibError, "Could not allocate dictionary for fragment metadata");
+    pyeclib_c_seterr(-ENOMEM, "fragment_metadata_to_dict ERROR: ");
     return NULL;
   }
 
   if (PyDict_SetItemString(metadata_dict, "index", 
       PyLong_FromLong((unsigned long)fragment_metadata->idx)) < 0) {
-    PyErr_SetString(PyECLibError, "Error parsing index from fragment metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "fragment_metadata_to_dict index ERROR: ");
     return NULL;
   }
   
   if (PyDict_SetItemString(metadata_dict, "size", 
       PyLong_FromLong(fragment_metadata->size)) < 0) {
-    PyErr_SetString(PyECLibError, "Error parsing size from fragment metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "fragment_metadata_to_dict size ERROR: ");
     return NULL;
   }
   
   if (PyDict_SetItemString(metadata_dict, "orig_data_size", 
       PyLong_FromLong(fragment_metadata->orig_data_size)) < 0) {
-    PyErr_SetString(PyECLibError, "Error parsing orig_data_size from fragment metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "fragment_metadata_to_dict orig_data_size ERROR: ");
     return NULL;
   }
   
   const char *chksum_type_str = chksum_type_to_str(fragment_metadata->chksum_type); 
   if (PyDict_SetItemString(metadata_dict, "chksum_type", 
       PyString_FromString(chksum_type_str)) < 0) {
-    PyErr_SetString(PyECLibError, "Error parsing chksum_type from fragment metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "fragment_metadata_to_dict chksum_type ERROR: ");
     return NULL;
   }
 
@@ -879,27 +900,26 @@ fragment_metadata_to_dict(fragment_metadata_t *fragment_metadata)
                                             chksum_length(fragment_metadata->chksum_type));
   if (PyDict_SetItemString(metadata_dict, "chksum", 
       PyString_FromString(encoded_chksum)) < 0) {
-    PyErr_SetString(PyECLibError, "Error parsing chksum from fragment metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "fragment_metadata_to_dict chksum ERROR: ");
     return NULL;
   }
   
   if (PyDict_SetItemString(metadata_dict, "chksum_mismatch", 
       PyLong_FromLong((unsigned long)fragment_metadata->chksum_mismatch)) < 0) {
-
-    PyErr_SetString(PyECLibError, "Error parsing chksum mismatch from fragment metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "fragment_metadata_to_dict chksum_mismatch ERROR: ");
     return NULL;
   }
   
   const char *backend_id_str = backend_id_to_str(fragment_metadata->backend_id);
   if (PyDict_SetItemString(metadata_dict, "backend_id", 
       PyString_FromString(backend_id_str)) < 0) {
-    PyErr_SetString(PyECLibError, "Error parsing backend id from fragment metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "fragment_metadata_to_dict backend_id ERROR: ");
     return NULL;
   }
   
   if (PyDict_SetItemString(metadata_dict, "backend_version", 
     PyLong_FromLong((unsigned long)fragment_metadata->backend_version)) < 0) {
-    PyErr_SetString(PyECLibError, "Error parsing backend version from fragment metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "fragment_metadata_to_dict backend_version ERROR: ");
     return NULL;
   }
 
@@ -928,28 +948,26 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, GET_METADATA_ARGS, &pyeclib_obj_handle, &fragment, &fragment_len, &formatted)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.get_metadata");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_metadata ERROR: ");
     return NULL;
   }
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.get_required_fragments");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_metadata ERROR: ");
     return NULL;
   }
 
   ret = liberasurecode_get_fragment_metadata(fragment, &c_fragment_metadata);
 
   if (ret < 0) {
-    char err[255];
-    liberasurecode_errstr(ret, "Get_Fragment_Metadata ERROR: ", err);
-    PyErr_SetString(PyECLibError, err);
+    pyeclib_c_seterr(ret, "pyeclib_c_get_metadata ERROR: ");
     fragment_metadata = NULL;
   } else {
     if (formatted) {
       fragment_metadata = fragment_metadata_to_dict(&c_fragment_metadata);
     } else {
       fragment_metadata = PY_BUILDVALUE_OBJ_LEN((char*)&c_fragment_metadata, 
-                                                  sizeof(fragment_metadata_t));                                                  
+                                                  sizeof(fragment_metadata_t));
     }
   }
 
@@ -986,19 +1004,19 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_metadata_list)) {
-    PyErr_SetString(PyECLibError, "Invalid arguments passed to pyeclib.encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode ERROR: ");
     return NULL;
   }
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    PyErr_SetString(PyECLibError, "Invalid handle passed to pyeclib.encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode ERROR: ");
     return NULL;
   }
   k = pyeclib_handle->ec_args.k;
   m = pyeclib_handle->ec_args.m;
   num_fragments = k + m;
   if (num_fragments != PyList_Size(fragment_metadata_list)) {
-    PyErr_SetString(PyECLibError, "Not enough fragment metadata to perform integrity check");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode ERROR: ");
     return NULL;
   }
   
@@ -1006,6 +1024,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   size = sizeof(char * ) * num_fragments;
   c_fragment_metadata_list = (char **) alloc_zeroed_buffer(size);
   if (NULL == c_fragment_metadata_list) {
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_encode ERROR: ");
     goto error;
   }
 
@@ -1071,14 +1090,6 @@ MOD_INIT(pyeclib_c)
 
     if (m == NULL)
       return MOD_ERROR_VAL;
-
-    PyECLibError = PyErr_NewException("pyeclib.Error", NULL, NULL);
-    if (PyECLibError == NULL) {
-      fprintf(stderr, "Could not create default PyECLib exception object!\n");
-      exit(2);
-    }
-    Py_INCREF(PyECLibError);
-    PyModule_AddObject(m, "error", PyECLibError);
 
     return MOD_SUCCESS_VAL(m);
 }
