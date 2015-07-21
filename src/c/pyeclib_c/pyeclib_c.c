@@ -37,6 +37,7 @@
 
 /* Python 3 compatibility macros */
 #if PY_MAJOR_VERSION >= 3
+  #define PYTHON3
   #define MOD_ERROR_VAL NULL
   #define MOD_SUCCESS_VAL(val) val
   #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
@@ -696,14 +697,32 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
       if (PyTuple_Size(tuple) == 2) {
         PyObject *py_begin = PyTuple_GetItem(tuple, 0);
         PyObject *py_end = PyTuple_GetItem(tuple, 1);
+        long begin, end;
 
-        if (!PyLong_Check(py_begin) || !PyLong_Check(py_end)) {
+        if (PyLong_Check(py_begin))
+            begin = PyLong_AsLong(py_begin);
+#ifndef PYTHON3
+        else if (PyInt_Check(py_begin))
+            begin = PyInt_AsLong(py_begin);
+#endif
+        else {
+          pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range ERROR: ");
+          goto error;
+        }
+        if (PyLong_Check(py_end))
+            end = PyLong_AsLong(py_end);
+#ifndef PYTHON3
+        else if (PyInt_Check(py_end))
+            end = PyInt_AsLong(py_end);
+#endif
+        else {
           pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range ERROR: ");
           goto error;
         }
 
-        c_ranges[i].offset = PyLong_AsLong(py_begin);
-        c_ranges[i].length = PyLong_AsLong(py_end) - c_ranges[i].offset + 1;
+        c_ranges[i].offset = begin;
+        c_ranges[i].length = end - begin + 1;
+
         range_payload_size += c_ranges[i].length;
       } else {
         pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range ERROR: ");
