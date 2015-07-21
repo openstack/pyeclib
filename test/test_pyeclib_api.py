@@ -31,7 +31,7 @@ from pyeclib.ec_iface import ECDriverError
 from pyeclib.ec_iface import ECInsufficientFragments
 
 from pyeclib.ec_iface import ECDriver, PyECLib_EC_Types
-from test_pyeclib_c import _available_backends
+from .test_pyeclib_c import _available_backends
 
 if sys.version < '3':
     def b2i(b):
@@ -93,8 +93,10 @@ class TestPyECLibDriver(unittest.TestCase):
 
             # Create the dictionary of files to test with
             buf = ''.join(random.choice(ascii_letters) for i in range(size))
+            if sys.version_info >= (3,):
+                buf = buf.encode('ascii')
             tmp_file = tempfile.NamedTemporaryFile()
-            tmp_file.write(buf.decode('utf-8'))
+            tmp_file.write(buf)
             self.files[size_str] = tmp_file
 
     def setUp(self):
@@ -394,11 +396,11 @@ class TestPyECLibDriver(unittest.TestCase):
         results = pyeclib_drivers[0].get_segment_info_byterange(ranges, file_size, segment_size)
 
         for exp_result_key in expected_results:
-            self.assertTrue(results.has_key(exp_result_key))
+            self.assertIn(exp_result_key, results)
             self.assertTrue(len(results[exp_result_key]) == len(expected_results[exp_result_key]))
             exp_result_map = expected_results[exp_result_key]
             for segment_key in exp_result_map:
-                self.assertTrue(results[exp_result_key].has_key(segment_key))
+                self.assertIn(segment_key, results[exp_result_key])
                 self.assertTrue(results[exp_result_key][segment_key] == expected_results[exp_result_key][segment_key])
 
     def test_get_segment_info(self):
@@ -504,8 +506,7 @@ class TestPyECLibDriver(unittest.TestCase):
             for file_size in self.file_sizes:
                 tmp_file = self.files[file_size]
                 tmp_file.seek(0)
-                whole_file_str = tmp_file.read()
-                whole_file_bytes = whole_file_str.encode('utf-8')
+                whole_file_bytes = tmp_file.read()
 
                 encode_input = whole_file_bytes
                 orig_fragments = pyeclib_driver.encode(encode_input)
@@ -576,8 +577,7 @@ class TestPyECLibDriver(unittest.TestCase):
         file_size = self.file_sizes[0]
         tmp_file = self.files[file_size]
         tmp_file.seek(0)
-        whole_file_str = tmp_file.read()
-        whole_file_bytes = whole_file_str.encode('utf-8')
+        whole_file_bytes = tmp_file.read()
         for ec_type in ['flat_xor_hd_3', 'liberasurecode_rs_vand']:
             pyeclib_driver = self.get_available_backend(
                 k=10, m=5, ec_type=ec_type)

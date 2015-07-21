@@ -23,6 +23,7 @@
 
 import random
 from string import ascii_letters
+import sys
 import tempfile
 import time
 import unittest
@@ -111,8 +112,10 @@ class TestPyECLib(unittest.TestCase):
 
             # Create the dictionary of files to test with
             buf = ''.join(random.choice(ascii_letters) for i in range(size))
-            tmp_file = tempfile.NamedTemporaryFile()
-            tmp_file.write(buf.decode('utf-8'))
+            if sys.version_info >= (3,):
+                buf = buf.encode('ascii')
+            tmp_file = tempfile.NamedTemporaryFile('w+b')
+            tmp_file.write(buf)
             self.files[size_str] = tmp_file
 
     def get_tmp_file(self, name):
@@ -200,10 +203,10 @@ class TestPyECLib(unittest.TestCase):
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
-        begins = [long(random.randint(0, len(whole_file_bytes) - 1)) for i in range(3)]
-        ends = [long(random.randint(begins[i], len(whole_file_bytes))) for i in range(3)]
+        begins = [int(random.randint(0, len(whole_file_bytes) - 1)) for i in range(3)]
+        ends = [int(random.randint(begins[i], len(whole_file_bytes))) for i in range(3)]
 
-        ranges = zip(begins, ends)
+        ranges = list(zip(begins, ends))
 
         fragments = pyeclib_c.encode(handle, whole_file_bytes)
         orig_fragments = fragments[:]
