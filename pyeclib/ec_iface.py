@@ -22,10 +22,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from enum import Enum
-from enum import unique
-from utils import create_instance
-from utils import positive_int_value
+from .enum import Enum
+from .enum import unique
+from .utils import create_instance
+from .utils import positive_int_value
 
 
 def PyECLibVersion(z, y, x):
@@ -354,7 +354,7 @@ class ECDriver(object):
         num_segments = segment_info['num_segments']
 
         sorted_ranges = ranges[:]
-        sorted_ranges.sort(lambda x, y: x[0] - y[0])
+        sorted_ranges.sort(key=lambda obj: obj[0])
 
         recipe = {}
 
@@ -362,8 +362,8 @@ class ECDriver(object):
             segment_map = {}
             begin_off = r[0]
             end_off = r[1]
-            begin_segment = begin_off / segment_size
-            end_segment = end_off / segment_size
+            begin_segment = begin_off // segment_size
+            end_segment = end_off // segment_size
 
             if begin_segment == end_segment:
                 begin_relative_off = begin_off % segment_size

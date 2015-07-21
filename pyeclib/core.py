@@ -21,9 +21,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from ec_iface import ECDriverError
-from ec_iface import ECInsufficientFragments
-from ec_iface import PyECLib_FRAGHDRCHKSUM_Types
+from .ec_iface import ECDriverError
+from .ec_iface import ECInsufficientFragments
+from .ec_iface import PyECLib_FRAGHDRCHKSUM_Types
 
 import math
 import pyeclib_c
