@@ -123,18 +123,18 @@ class ECDriver(object):
             if key == "k":
                 try:
                     self.k = positive_int_value(value)
-                except ValueError as e:
+                except ValueError:
                     raise ECDriverError(
                         "Invalid number of data fragments (k)")
             elif key == "m":
                 try:
                     self.m = positive_int_value(value)
-                except ValueError as e:
+                except ValueError:
                     raise ECDriverError(
                         "Invalid number of data fragments (m)")
             elif key == "ec_type":
                 if value in ["flat_xor_hd_3", "flat_xor_hd_4"]:
-                  value = "flat_xor_hd"
+                    value = "flat_xor_hd"
                 if PyECLib_EC_Types.has_enum(value):
                     self.ec_type = \
                         PyECLib_EC_Types.get_by_name(value)
@@ -198,7 +198,8 @@ class ECDriver(object):
         """
         return self.ec_lib_reference.encode(data_bytes)
 
-    def decode(self, fragment_payloads, ranges=None, force_metadata_checks=False):
+    def decode(self, fragment_payloads, ranges=None,
+               force_metadata_checks=False):
         """
         Decode a set of fragments into a buffer that represents the original
         buffer passed into encode().
@@ -213,7 +214,7 @@ class ECDriver(object):
         :raises: ECDriverError if there is an error during decoding
         """
         return self.ec_lib_reference.decode(fragment_payloads, ranges,
-            force_metadata_checks)
+                                            force_metadata_checks)
 
     def reconstruct(self, available_fragment_payloads,
                     missing_fragment_indexes):
@@ -236,7 +237,8 @@ class ECDriver(object):
         return self.ec_lib_reference.reconstruct(
             available_fragment_payloads, missing_fragment_indexes)
 
-    def fragments_needed(self, reconstruction_indexes, exclude_indexes = []):
+    def fragments_needed(self, reconstruction_indexes,
+                         exclude_indexes=[]):
         """
         Determine which fragments are needed to reconstruct some subset of
         missing fragments.
@@ -247,18 +249,19 @@ class ECDriver(object):
         :param exclude_indexes: a list of integers representing the
                                          indexes of the fragments to be
                                          excluded from the reconstruction
-                                         equations. 
-        :returns: a list containing fragment indexes that can be used to 
+                                         equations.
+        :returns: a list containing fragment indexes that can be used to
                   reconstruct the missing fragments.
         :raises: ECDriverError if there is an error during decoding or there
                  are not sufficient fragments to decode
         """
-        return self.ec_lib_reference.fragments_needed(reconstruction_indexes, exclude_indexes)
+        return self.ec_lib_reference.fragments_needed(reconstruction_indexes,
+                                                      exclude_indexes)
 
     def min_parity_fragments_needed(self):
         return self.ec_lib_reference.min_parity_fragments_needed()
 
-    def get_metadata(self, fragment, formatted = 0):
+    def get_metadata(self, fragment, formatted=0):
         """
         Get opaque metadata for a fragment.  The metadata is opaque to the
         client, but meaningful to the underlying library.  It is used to verify
@@ -321,37 +324,34 @@ class ECDriver(object):
         Get segmentation info for a byterange request, given a data length and
         segment size.
 
-        This will return a map-of-maps that represents a recipe describing 
+        This will return a map-of-maps that represents a recipe describing
         the segments and ranges within each segment needed to satisfy a range
         request.
 
         Assume a range request is given for an object with segment size 3K and
         a 1 MB file:
 
-        Ranges = (0, 1), (1, 12), (10, 1000), (0, segment_size-1), 
+        Ranges = (0, 1), (1, 12), (10, 1000), (0, segment_size-1),
                  (1, segment_size+1), (segment_size-1, 2*segment_size)
 
         This will return a map keyed on the ranges, where there is a recipe
         given for each range:
 
         {
-         (0, 1): {0: (0, 1)}, 
-         (10, 1000): {0: (10, 1000)}, 
-         (1, 12): {0: (1, 12)}, 
-         (0, 3071): {0: (0, 3071)}, 
-         (3071, 6144): {0: (3071, 3071), 1: (0, 3071), 2: (0, 0)}, 
+         (0, 1): {0: (0, 1)},
+         (10, 1000): {0: (10, 1000)},
+         (1, 12): {0: (1, 12)},
+         (0, 3071): {0: (0, 3071)},
+         (3071, 6144): {0: (3071, 3071), 1: (0, 3071), 2: (0, 0)},
          (1, 3073): {0: (1, 3071), 1: (0,0)}
         }
 
         """
 
-        segment_info = self.ec_lib_reference.get_segment_info(data_len, segment_size)
+        segment_info = self.ec_lib_reference.get_segment_info(
+            data_len, segment_size)
 
         segment_size = segment_info['segment_size']
-        last_segment_size = segment_info['last_segment_size']
-        fragment_size = segment_info['fragment_size']
-        last_fragment_size = segment_info['last_fragment_size']
-        num_segments = segment_info['num_segments']
 
         sorted_ranges = ranges[:]
         sorted_ranges.sort(key=lambda obj: obj[0])
@@ -368,15 +368,17 @@ class ECDriver(object):
             if begin_segment == end_segment:
                 begin_relative_off = begin_off % segment_size
                 end_relative_off = end_off % segment_size
-                segment_map[begin_segment] = (begin_relative_off, end_relative_off)
+                segment_map[begin_segment] = (begin_relative_off,
+                                              end_relative_off)
             else:
                 begin_relative_off = begin_off % segment_size
                 end_relative_off = end_off % segment_size
 
-                segment_map[begin_segment] = (begin_relative_off, segment_size-1)
+                segment_map[begin_segment] = (begin_relative_off,
+                                              segment_size - 1)
 
-                for middle_segment in range(begin_segment+1, end_segment):
-                    segment_map[middle_segment] = (0, segment_size-1)
+                for middle_segment in range(begin_segment + 1, end_segment):
+                    segment_map[middle_segment] = (0, segment_size - 1)
 
                 segment_map[end_segment] = (0, end_relative_off)
 
@@ -400,7 +402,7 @@ class ECDriverError(Exception):
         return self.error_str
 
 
-## More specific exceptions, mapped to liberasurecode error codes
+# More specific exceptions, mapped to liberasurecode error codes
 
 # Specified EC backend is not supported by PyECLib/liberasurecode
 class ECBackendNotSupported(ECDriverError):

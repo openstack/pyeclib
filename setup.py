@@ -50,6 +50,7 @@ default_library_paths = [default_python_libdir,
                          ('%s/usr/local/lib' % _exec_prefix),
                          '/lib', '/usr/lib', '/usr/local/lib']
 
+
 # utility routine
 def _read_file_as_str(name):
     with open(name, "rt") as f:
@@ -114,9 +115,6 @@ class install(_install):
         for optname, value in list(opts.items()):
             if value is not None:
                 opts[optname] = os.path.abspath(value)
-
-        prefix = opts['exec_prefix']
-        root = opts['root']
 
         installroot = install_lib.install_dir
 
