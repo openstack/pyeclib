@@ -44,11 +44,28 @@ from setuptools import Extension
 from setuptools.command.install import install as _install
 
 platform_str = platform.platform()
+platform_arch = platform.architecture()
 default_python_incdir = get_python_inc()
 default_python_libdir = get_python_lib()
-default_library_paths = [default_python_libdir,
-                         ('%s/usr/local/lib' % _exec_prefix),
-                         '/lib', '/usr/lib', '/usr/local/lib']
+  
+default_library_paths = [default_python_libdir]
+
+if platform_arch[0].startswith('64') and os.path.exists('/lib64'):
+    default_library_paths.append('/lib64')
+else:
+    default_library_paths.append('/lib')
+if platform_arch[0].startswith('64') and os.path.exists('/usr/lib64'):
+    default_library_paths.append('/usr/lib64')
+else:
+    default_library_paths.append('/usr/lib')
+if platform_arch[0].startswith('64') and os.path.exists('/usr/local/lib64'):
+    default_library_paths.append('/usr/local/lib64')
+else:
+    default_library_paths.append('/usr/local/lib')
+if platform_arch[0].startswith('64') and os.path.exists('%s/lib64' % _exec_prefix):
+    default_library_paths.append('%s/lib64' % _exec_prefix)
+else:
+    default_library_paths.append('%s/lib' % _exec_prefix)
 
 # utility routine
 def _read_file_as_str(name):
