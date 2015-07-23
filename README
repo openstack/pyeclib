@@ -190,7 +190,7 @@ needs to be taken when handling input to and output from the ``encode()`` and
       ECDriverError - if an unknown error occurs
 
 
-- Get EC Segment Info given a ranges, data length and segment size::
+- Get EC Segment Info given a list of ranges, data length and segment size::
 
     def get_segment_info_byterange(self, ranges, data_len, segment_size)
 
