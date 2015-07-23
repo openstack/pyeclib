@@ -205,23 +205,23 @@ needs to be taken when handling input to and output from the ``encode()`` and
       ECOutOfMemory - if the process has run out of memory
       ECDriverError - if an unknown error occurs
 
-  Assume a range request is given for an object with segment size 3K and
-  a 1 MB file:
-
-  Ranges = (0, 1), (1, 12), (10, 1000), (0, segment_size-1),
-                 (1, segment_size+1), (segment_size-1, 2*segment_size)
-
-  This will return a map keyed on the ranges, where there is a recipe
-  given for each range:
-
-  {
-     (0, 1): {0: (0, 1)},
-     (10, 1000): {0: (10, 1000)},
-     (1, 12): {0: (1, 12)},
-     (0, 3071): {0: (0, 3071)},
-     (3071, 6144): {0: (3071, 3071), 1: (0, 3071), 2: (0, 0)},
-     (1, 3073): {0: (1, 3071), 1: (0,0)}
-  }
+  >Assume a range request is given for an object with segment size 3K and
+  >a 1 MB file:
+  >
+  >>Ranges = (0, 1), (1, 12), (10, 1000), (0, segment_size-1),
+  >>               (1, segment_size+1), (segment_size-1, 2*segment_size)
+  >
+  >This will return a map keyed on the ranges, where there is a recipe
+  >given for each range:
+  >
+  >>{
+  >>   (0, 1): {0: (0, 1)},
+  >>   (10, 1000): {0: (10, 1000)},
+  >>   (1, 12): {0: (1, 12)},
+  >>   (0, 3071): {0: (0, 3071)},
+  >>   (3071, 6144): {0: (3071, 3071), 1: (0, 3071), 2: (0, 0)},
+  >>   (1, 3073): {0: (1, 3071), 1: (0,0)}
+  >>}
 
 
 Quick Start
