@@ -47,7 +47,7 @@ platform_str = platform.platform()
 platform_arch = platform.architecture()
 default_python_incdir = get_python_inc()
 default_python_libdir = get_python_lib()
-  
+
 default_library_paths = [default_python_libdir]
 
 if platform_arch[0].startswith('64') and os.path.exists('/lib64'):
@@ -62,7 +62,8 @@ if platform_arch[0].startswith('64') and os.path.exists('/usr/local/lib64'):
     default_library_paths.append('/usr/local/lib64')
 else:
     default_library_paths.append('/usr/local/lib')
-if platform_arch[0].startswith('64') and os.path.exists('%s/lib64' % _exec_prefix):
+if platform_arch[0].startswith('64') and os.path.exists('%s/lib64'
+                                                        % _exec_prefix):
     default_library_paths.append('%s/lib64' % _exec_prefix)
 else:
     default_library_paths.append('%s/lib' % _exec_prefix)
