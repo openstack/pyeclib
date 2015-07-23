@@ -58,7 +58,12 @@ The Python API supports the following functions:
 
     input:   data_bytes - input data object (bytes)
     returns: list of fragments (bytes)
-
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECDriverError - if an unknown error occurs
 
 - EC Decode
 
@@ -68,6 +73,14 @@ The Python API supports the following functions:
 
     input:   list of fragment_payloads (bytes)
     returns: decoded object (bytes)
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECInsufficientFragments - if an insufficient set of fragments has been provided (e.g. not enough)
+      ECInvalidFragmentMetadata - if the fragment headers appear to be corrupted
+      ECDriverError - if an unknown error occurs
 
 
 *Note*: ``bytes`` is a synonym to ``str`` in Python 2.6, 2.7.
@@ -82,12 +95,34 @@ needs to be taken when handling input to and output from the ``encode()`` and
 
     def reconstruct(self, available_fragment_payloads, missing_fragment_indexes)
 
+    input: available_fragment_payloads - list of fragment payloads
+    input: missing_fragment_indexes - list of indexes to reconstruct
+    output: list of reconstructed fragments corresponding to missing_fragment_indexes
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECInsufficientFragments - if an insufficient set of fragments has been provided (e.g. not enough)
+      ECInvalidFragmentMetadata - if the fragment headers appear to be corrupted
+      ECDriverError - if an unknown error occurs
     
 
 - Minimum parity fragments needed for durability gurantees::
     
     def min_parity_fragments_needed(self)
 
+    NOTE: Currently hard-coded to 1, so this can only be trusted for MDS codes, such as 
+          Reed-Solomon.
+
+    output: minimum number of additional fragments needed to be synchronously written to tolerate 
+            the loss of any one fragment (similar guarantees to 2 out of 3 with 3x replication)
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECDriverError - if an unknown error occurs
 
  
 - Fragments needed for EC Reconstruct
@@ -95,16 +130,32 @@ needs to be taken when handling input to and output from the ``encode()`` and
   Return the indexes of fragments needed to reconstruct "missing_fragment_indexes"::
 
     def fragments_needed(self, missing_fragment_indexes)
-
+    
+    input: list of missing_fragment_indexes
+    output: list of fragments needed to reconstruct fragments listed in missing_fragment_indexes
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECDriverError - if an unknown error occurs
 
 
 - Get EC Metadata
 
-  Return an opaque buffer known by the underlying library::
+  Return an opaque header known by the underlying library or a formatted header (Python dict)::
 
-    def get_metadata(self, fragment)
+    def get_metadata(self, fragment, formatted = 0)
 
-
+    input: raw fragment payload
+    input: boolean specifying if returned header is opaque buffer or formatted string
+    output: fragment header (opaque or formatted)
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECDriverError - if an unknown error occurs
 
 - Verify EC Stripe Consistency
 
@@ -112,6 +163,14 @@ needs to be taken when handling input to and output from the ``encode()`` and
 
     def verify_stripe_metadata(self, fragment_metadata_list)
 
+    intput: list of opaque fragment headers
+    output: formatted string containing the 'status' (0 is success) and 'reason' if verification fails
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECDriverError - if an unknown error occurs
 
 
 - Get EC Segment Info
@@ -120,11 +179,31 @@ needs to be taken when handling input to and output from the ``encode()`` and
 
     def get_segment_info(self, data_len, segment_size)
 
+    input: total data_len of the object to store
+    input: target segment size used to segment the object into multiple EC stripes
+    output: a dict with keys - segment_size, last_segment_size, fragment_size, last_fragment_size and num_segments
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECDriverError - if an unknown error occurs
 
 
-- Get EC Segment Info given a data length and segment size::
+- Get EC Segment Info given a ranges, data length and segment size::
 
     def get_segment_info_byterange(self, ranges, data_len, segment_size)
+
+    input: byte ranges
+    input: total data_len of the object to store
+    input: target segment size used to segment the object into multiple EC stripes
+    output: (see below)
+    throws:
+      ECBackendInstanceNotAvailable - if the backend library cannot be found
+      ECBackendNotSupported - if the backend is not supported by PyECLib (see ec_types above)
+      ECInvalidParameter - if invalid parameters were provided
+      ECOutOfMemory - if the process has run out of memory
+      ECDriverError - if an unknown error occurs
 
   Assume a range request is given for an object with segment size 3K and
   a 1 MB file:
