@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2013, Kevin Greenan (kmgreen2@gmail.com)
+# Copyright (c) 2013-2015, Kevin Greenan (kmgreen2@gmail.com)
+# Copyright (c) 2013-2015, Tushar Gohad (tusharsg@gmail.com)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -80,10 +81,14 @@ class build(_build):
 
     def check_liberasure(self):
         missing = True
-        library_suffix = ".so"
+        library_basename = "liberasurecode"
+        library_version = "1.0.8"
         if platform_str.find("Darwin") > -1:
-            library_suffix = ".dylib"
-        liberasure_file = "liberasurecode" + library_suffix
+            liberasure_file = \
+                library_basename + "." + library_version + ".dylib"
+        else:
+            liberasure_file = \
+                library_basename + ".so." + library_version
         for dir in (default_library_paths):
             liberasure_file_path = dir + os.sep + liberasure_file
             if (os.path.isfile(liberasure_file_path)):
@@ -98,7 +103,10 @@ class build(_build):
             print("** PyECLib requires that the liberasurecode        ")
             print("** library be installed.                           ")
             print("**                                                 ")
-            print("** Please retry after installing liberasurecode:   ")
+            print("** Trying to install using the bundled tarball. If ")
+            print("** this fails, please retry after installing       ")
+            print("** liberasurecode from:                            ")
+            print("**                                                 ")
             print("**  https://bitbucket.org/tsg-/liberasurecode.git  ")
             print("**                                                 ")
             print("** If you have liberasurecode already installed,   ")
@@ -106,6 +114,37 @@ class build(_build):
             print("** the loader cache.                               ")
             print("**                                                 ")
             print("***************************************************")
+
+            # try using an integrated copy of the library
+            library = library_basename + "-" + library_version
+            library_url = "https://bitbucket.org/tsg-/liberasurecode.git"
+
+            srcpath = "src/c/"
+            locallibsrcdir = (srcpath + library)
+            os.system("rm -r %s" % locallibsrcdir)
+            retval = os.system("tar -xzf %s/%s.tar.gz -C %s" %
+                               (srcpath, library, srcpath))
+            if (os.path.isdir(locallibsrcdir)):
+                curdir = os.getcwd()
+                os.chdir(locallibsrcdir)
+                configure_cmd = ("./configure --prefix=/usr/local")
+                print(configure_cmd)
+                retval = os.system(configure_cmd)
+                if retval != 0:
+                    print("*** Error: " + library + " build failed!      ")
+                    print("*** Please install " + library + " manually.  ")
+                    print("*** project url: %s" % library_url)
+                    os.chdir(curdir)
+                    sys.exit(retval)
+                make_cmd = ("make && make install")
+                retval = os.system(make_cmd)
+                if retval != 0:
+                    print("*** Error: " + library + " install failed!    ")
+                    print("*** Please install " + library + " manually.  ")
+                    print("*** project url: %s" % library_url)
+                    os.chdir(curdir)
+                    sys.exit(retval)
+                os.chdir(curdir)
             sys.exit(1)
 
     def run(self):
