@@ -120,7 +120,7 @@ class build(_build):
             if (os.path.isdir(locallibsrcdir)):
                 curdir = os.getcwd()
                 os.chdir(locallibsrcdir)
-                configure_cmd = ("./configure --prefix=/usr/local")
+                configure_cmd = ("./configure --prefix=/usr")
                 print(configure_cmd)
                 retval = os.system(configure_cmd)
                 if retval != 0:
