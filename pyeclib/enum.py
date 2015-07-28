@@ -666,8 +666,8 @@ del __str__
 
 def __dir__(self):
     added_behavior = [m for m in self.__class__.__dict__ if m[0] != '_']
-    return (['__class__', '__doc__', '__module__', 'name', 'value']
-            + added_behavior)
+    return (['__class__', '__doc__', '__module__', 'name', 'value'] +
+            added_behavior)
 temp_enum_dict['__dir__'] = __dir__
 del __dir__
 
