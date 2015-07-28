@@ -69,7 +69,6 @@ class Timer:
 
 class TestPyECLib(unittest.TestCase):
 
-
     def __init__(self, *args):
         self.num_datas = [12, 12, 12]
         self.num_parities = [2, 3, 4]
@@ -328,6 +327,7 @@ class TestPyECLib(unittest.TestCase):
         if "shss" not in _available_backends:
             print("shss backend is not available in your enviromnet, skipping test")
             return
+
         for (ec_type, k, m) in self.shss:
             print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
 
@@ -367,7 +367,8 @@ class TestPyECLib(unittest.TestCase):
         #
         # MDS codes need any k fragments
         #
-        if ec_type in ["jerasure_rs_vand", "jerasure_rs_cauchy"]:
+        if ec_type in ["jerasure_rs_vand", "jerasure_rs_cauchy",
+                       "liberasurecode_rs_vand"]:
             expected_fragments = [i for i in range(num_data + num_parity)]
             missing_fragments = []
 
@@ -394,7 +395,6 @@ class TestPyECLib(unittest.TestCase):
 
     def test_codes(self):
         for ec_type in self.rs_types:
-
             if ec_type.name not in _available_backends:
                 print("%s backend is not available in your enviromnet, skipping test" % ec_type.name)
                 continue
