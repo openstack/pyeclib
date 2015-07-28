@@ -38,6 +38,7 @@ PyEClib initialization::
 
 Supported ``ec_type`` values:
 
+  * ``liberasurecode_rs_vand`` => Vandermonde Reed-Solomon encoding, native software-only backend
   * ``jerasure_rs_vand`` => Vandermonde Reed-Solomon encoding, based on Jerasure [1]
   * ``jerasure_rs_cauchy`` => Cauchy Reed-Solomon encoding (Jerasure variant), based on Jerasure [2]
   * ``flat_xor_hd_3``, ``flat_xor_hd_4`` => Flat-XOR based HD combination codes, liberasurecode [3]
@@ -229,7 +230,7 @@ Quick Start
   Install pre-requisites:
   
     * Python 2.6, 2.7 or 3.x (including development packages), argparse, setuptools
-    * liberasurecode v1.0.4 or greater [3]
+    * liberasurecode v1.0.8 or greater [3]
     * Erasure code backend libraries, gf-complete and Jerasure [1],[2], ISA-L [4] etc
 
   Install PyECLib::
