@@ -6,7 +6,7 @@ which is a C based erasure code library.  Please let us know if you have any
 other issues building or installing (email: kmgreen2@gmail.com or
 tusharsg@gmail.com).
 
-This library makes use of Jesasure for Reed-Solomon as implemented by the
+This library makes use of Jerasure for Reed-Solomon as implemented by the
 liberasurecode library and provides its' own flat XOR-based erasure code
 encoder and decoder.  Currently, it implements a specific class of HD
 Combination Codes (see "Flat XOR-based erasure codes in storage systems:
