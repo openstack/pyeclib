@@ -153,10 +153,10 @@ class TestPyECLibDriver(unittest.TestCase):
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3,
                                    chksum_type=csum))
-	return pyeclib_drivers
+        return pyeclib_drivers
 
     def test_small_encode(self):
-	pyeclib_drivers = self.get_pyeclib_testspec()
+        pyeclib_drivers = self.get_pyeclib_testspec()
         encode_strs = [b"a", b"hello", b"hellohyhi", b"yo"]
 
         for pyeclib_driver in pyeclib_drivers:
@@ -344,7 +344,7 @@ class TestPyECLibDriver(unittest.TestCase):
             for fragment in fragments:
                 fragment_metadata_list.append(
                     pyeclib_driver.get_metadata(fragment))
-            
+
             expected_ret_value = {"status": 0 }
 
             self.assertTrue(
