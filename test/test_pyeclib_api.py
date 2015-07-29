@@ -297,7 +297,6 @@ class TestPyECLibDriver(unittest.TestCase):
         file_bytes = file_str.encode('utf-8')
 
         for pyeclib_driver in pyeclib_drivers:
-            print "%r" % pyeclib_driver.ec_type
             fragments = pyeclib_driver.encode(file_bytes)
 
             fragment_metadata_list = []
