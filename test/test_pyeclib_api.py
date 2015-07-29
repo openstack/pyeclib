@@ -125,22 +125,28 @@ class TestPyECLibDriver(unittest.TestCase):
         self.assertRaises(ECBackendNotSupported, ECDriver, k=10, m=5,
                           ec_type="invalid_algo")
 
-    def test_small_encode(self):
+    def get_pyeclib_testspec(self):
         pyeclib_drivers = []
-        pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type="jerasure_rs_vand"))
+        _type1 = 'jerasure_rs_vand'
+        if _type1 in _available_backends:
+            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type1))
+            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type1))
+            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type1))
+            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type1))
+        _type2 = 'liberasurecode_rs_vand'
+        if _type2 in _available_backends:
+            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type2))
+            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type2))
+            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type2))
+            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type2))
+        _type3 = 'flat_xor_hd'
+        if _type3 in _available_backends:
+            pyeclib_drivers.append(ECDriver(k=12, m=6, ec_type=_type3))
+            pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3))
+	return pyeclib_drivers
 
-        pyeclib_drivers.append(ECDriver(k=12, m=2,
-                                        ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(ECDriver(k=11, m=2,
-                                        ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(ECDriver(k=10, m=2,
-                                        ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(ECDriver(k=8, m=4,
-                                        ec_type="liberasurecode_rs_vand"))
-
+    def test_small_encode(self):
+	pyeclib_drivers = self.get_pyeclib_testspec()
         encode_strs = [b"a", b"hello", b"hellohyhi", b"yo"]
 
         for pyeclib_driver in pyeclib_drivers:
@@ -214,6 +220,9 @@ class TestPyECLibDriver(unittest.TestCase):
 
     def check_metadata_formatted(self, k, m, ec_type, chksum_type):
 
+        if ec_type not in _available_backends:
+            return
+
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters)
                            for i in range(filesize))
@@ -272,33 +281,7 @@ class TestPyECLibDriver(unittest.TestCase):
                                       "inline_crc32")
 
     def test_verify_fragment_inline_chksum_fail(self):
-        pyeclib_drivers = []
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="jerasure_rs_vand",
-                     chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=3, ec_type="jerasure_rs_vand",
-                     chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=4, ec_type="jerasure_rs_vand",
-                     chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="jerasure_rs_cauchy",
-                     chksum_type="inline_crc32"))
-
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="liberasurecode_rs_vand",
-                     chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=3, ec_type="liberasurecode_rs_vand",
-                     chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=4, ec_type="liberasurecode_rs_vand",
-                     chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="liberasurecode_rs_vand",
-                     chksum_type="inline_crc32"))
-
+        pyeclib_drivers = self.get_pyeclib_testspec()
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
         file_bytes = file_str.encode('utf-8')
@@ -336,15 +319,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 expected_ret_value)
 
     def test_verify_fragment_inline_chksum_succeed(self):
-        pyeclib_drivers = []
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="jerasure_rs_vand", chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=3, ec_type="jerasure_rs_vand", chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=4, ec_type="jerasure_rs_vand", chksum_type="inline_crc32"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="jerasure_rs_cauchy", chksum_type="inline_crc32"))
+        pyeclib_drivers = self.get_pyeclib_testspec()
 
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
@@ -365,19 +340,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 pyeclib_driver.verify_stripe_metadata(fragment_metadata_list) == expected_ret_value)
 
     def test_get_segment_byterange_info(self):
-        pyeclib_drivers = []
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=11, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=10, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=11, m=2, ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=10, m=2, ec_type="liberasurecode_rs_vand"))
+        pyeclib_drivers = self.get_pyeclib_testspec()
 
         file_size = 1024 * 1024
         segment_size = 3 * 1024
@@ -404,19 +367,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 self.assertTrue(results[exp_result_key][segment_key] == expected_results[exp_result_key][segment_key])
 
     def test_get_segment_info(self):
-        pyeclib_drivers = []
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=11, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=10, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=11, m=2, ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=10, m=2, ec_type="liberasurecode_rs_vand"))
+        pyeclib_drivers = self.get_pyeclib_testspec()
 
         file_sizes = [
             1024 * 1024,
@@ -482,25 +433,7 @@ class TestPyECLibDriver(unittest.TestCase):
                                 encoded_fragments[0]))
 
     def test_rs(self):
-        pyeclib_drivers = []
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="jerasure_rs_cauchy"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=3, ec_type="jerasure_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=3, ec_type="jerasure_rs_cauchy"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=6, ec_type="flat_xor_hd"))
-        pyeclib_drivers.append(
-            ECDriver(k=10, m=5, ec_type="flat_xor_hd"))
-        pyeclib_drivers.append(
-            ECDriver(k=12, m=2, ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=8, m=6, ec_type="liberasurecode_rs_vand"))
-        pyeclib_drivers.append(
-            ECDriver(k=10, m=4, ec_type="liberasurecode_rs_vand"))
+        pyeclib_drivers = self.get_pyeclib_testspec()
 
         for pyeclib_driver in pyeclib_drivers:
             for file_size in self.file_sizes:
@@ -516,7 +449,8 @@ class TestPyECLibDriver(unittest.TestCase):
                     idxs_to_remove = []
                     fragments = orig_fragments[:]
                     for j in range(num_missing):
-                        idx = random.randint(0, 13)
+                        idx = random.randint(0, (pyeclib_driver.k +
+                                                 pyeclib_driver.m - 1))
                         if idx not in idxs_to_remove:
                             idxs_to_remove.append(idx)
 
@@ -588,7 +522,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
     def test_min_parity_fragments_needed(self):
         pyeclib_drivers = []
-        pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="jerasure_rs_vand"))
+        pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="liberasurecode_rs_vand"))
         self.assertTrue(
             pyeclib_drivers[0].min_parity_fragments_needed() == 1)
 
