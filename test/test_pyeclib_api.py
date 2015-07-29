@@ -125,24 +125,34 @@ class TestPyECLibDriver(unittest.TestCase):
         self.assertRaises(ECBackendNotSupported, ECDriver, k=10, m=5,
                           ec_type="invalid_algo")
 
-    def get_pyeclib_testspec(self):
+    def get_pyeclib_testspec(self, csum="none"):
         pyeclib_drivers = []
         _type1 = 'jerasure_rs_vand'
         if _type1 in _available_backends:
-            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type1))
-            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type1))
-            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type1))
-            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type1))
+            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type1,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type1,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type1,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type1,
+                                   chksum_type=csum))
         _type2 = 'liberasurecode_rs_vand'
         if _type2 in _available_backends:
-            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type2))
-            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type2))
-            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type2))
-            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type2))
+            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type2,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type2,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type2,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type2,
+                                   chksum_type=csum))
         _type3 = 'flat_xor_hd'
         if _type3 in _available_backends:
-            pyeclib_drivers.append(ECDriver(k=12, m=6, ec_type=_type3))
-            pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3))
+            pyeclib_drivers.append(ECDriver(k=12, m=6, ec_type=_type3,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3,
+                                   chksum_type=csum))
 	return pyeclib_drivers
 
     def test_small_encode(self):
@@ -281,12 +291,13 @@ class TestPyECLibDriver(unittest.TestCase):
                                       "inline_crc32")
 
     def test_verify_fragment_inline_chksum_fail(self):
-        pyeclib_drivers = self.get_pyeclib_testspec()
+        pyeclib_drivers = self.get_pyeclib_testspec("inline_crc32")
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
         file_bytes = file_str.encode('utf-8')
 
         for pyeclib_driver in pyeclib_drivers:
+            print "%r" % pyeclib_driver.ec_type
             fragments = pyeclib_driver.encode(file_bytes)
 
             fragment_metadata_list = []
@@ -319,7 +330,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 expected_ret_value)
 
     def test_verify_fragment_inline_chksum_succeed(self):
-        pyeclib_drivers = self.get_pyeclib_testspec()
+        pyeclib_drivers = self.get_pyeclib_testspec("inline_crc32")
 
         filesize = 1024 * 1024 * 3
         file_str = ''.join(random.choice(ascii_letters) for i in range(filesize))
