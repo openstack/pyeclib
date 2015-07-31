@@ -29,6 +29,7 @@ import platform
 import sys
 
 from ctypes import *
+from ctypes.util import *
 from distutils.command.build import build as _build
 from distutils.command.clean import clean as _clean
 from distutils.sysconfig import EXEC_PREFIX as _exec_prefix
@@ -89,7 +90,7 @@ def _read_file_as_str(name):
     return s
 
 
-def _liberasurecode_install_error():
+def _liberasurecode_install_error(library, library_url):
     print("**********************************************")
     print("**                                            ")
     print("*** Error: " + library + " build failed!      ")
@@ -102,28 +103,33 @@ def _liberasurecode_install_error():
 class build(_build):
 
     def check_liberasure(self):
-        library_basename = "erasurecode"
+        library_basename = "liberasurecode"
         library_version = "1.0.8"
         notfound = True
         found_path = _find_library(library_basename)
+
+        if platform_str.find("Darwin") > -1:
+            liberasure_file = \
+                library_basename + "." + library_version + ".dylib"
+        else:
+            liberasure_file = \
+                library_basename + ".so." + library_version
+
         if found_path:
             if found_path.endswith(library_version) or \
                     found_path.find(library_version + ".") > -1:
                 # call 1.0.8 the only compatible version for now
                 notfound = False
-        else:
+
+        if found_path and notfound:
             # look harder
-            if platform_str.find("Darwin") > -1:
-                liberasure_file = \
-                    "lib" + library_basename + "." + library_version + ".dylib"
-            else:
-                liberasure_file = \
-                    "lib" + library_basename + ".so." + library_version
+            _build_default_lib_search_path()
             for dir in (default_library_paths):
                 liberasure_file_path = dir + os.sep + liberasure_file
                 if (os.path.isfile(liberasure_file_path)):
                     notfound = False
                     break
+
         if notfound:
             print("***************************************************")
             print("**                                                 ")
@@ -157,19 +163,18 @@ class build(_build):
                 print(configure_cmd)
                 retval = os.system(configure_cmd)
                 if retval != 0:
-                    _liberasurecode_install_error()
+                    _liberasurecode_install_error(library, library_url)
                     os.chdir(curdir)
                     sys.exit(retval)
                 make_cmd = ("make && make install")
                 retval = os.system(make_cmd)
                 if retval != 0:
-                    _liberasurecode_install_error()
+                    _liberasurecode_install_error(library, library_url)
                     os.chdir(curdir)
                     sys.exit(retval)
                 os.chdir(curdir)
             else:
-                _liberasurecode_install_error()
-                os.chdir(curdir)
+                _liberasurecode_install_error(library, library_url)
                 sys.exit(-1)
 
     def run(self):
