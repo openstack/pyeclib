@@ -28,6 +28,7 @@ import os
 import platform
 import sys
 
+from ctypes import *
 from distutils.command.build import build as _build
 from distutils.command.clean import clean as _clean
 from distutils.sysconfig import EXEC_PREFIX as _exec_prefix
@@ -48,53 +49,82 @@ platform_str = platform.platform()
 platform_arch = platform.architecture()
 default_python_incdir = get_python_inc()
 default_python_libdir = get_python_lib()
-
 default_library_paths = [default_python_libdir]
 
-if platform_arch[0].startswith('64') and os.path.exists('/lib64'):
-    default_library_paths.append('/lib64')
-else:
-    default_library_paths.append('/lib')
-if platform_arch[0].startswith('64') and os.path.exists('/usr/lib64'):
-    default_library_paths.append('/usr/lib64')
-else:
-    default_library_paths.append('/usr/lib')
-if platform_arch[0].startswith('64') and os.path.exists('/usr/local/lib64'):
-    default_library_paths.append('/usr/local/lib64')
-else:
-    default_library_paths.append('/usr/local/lib')
-if platform_arch[0].startswith('64') and os.path.exists('%s/lib64'
-                                                        % _exec_prefix):
-    default_library_paths.append('%s/lib64' % _exec_prefix)
-else:
-    default_library_paths.append('%s/lib' % _exec_prefix)
+
+# utility routines
+def _find_library(name):
+    target_lib = None
+    if os.name == 'posix' and sys.platform.startswith('linux'):
+        target_lib = ctypes.util._findLib_gcc(name)
+    else:
+        target_lib = find_library(name)
+    if target_lib:
+        target_lib = os.path.abspath(target_lib)
+        if os.path.islink(target_lib):
+            p = os.readlink(target_lib)
+            if os.path.isabs(p):
+                target_lib = p
+            else:
+                target_lib = os.path.join(os.path.dirname(target_lib), p)
+    # return absolute path to the library if found
+    return target_lib
 
 
-# utility routine
+def _build_default_lib_search_path():
+    arch64 = platform_arch[0].startswith('64')
+    for prefix in ('/', '/usr', '/usr/local', _exec_prefix):
+        libdir = os.path.join(prefix, 'lib')
+        libdir64 = os.path.join(prefix, 'lib64')
+        if arch64 and os.path.exists(libdir64):
+            default_library_paths.append(libdir64)
+        else:
+            default_library_paths.append(libdir)
+    return default_library_paths
+
+
 def _read_file_as_str(name):
     with open(name, "rt") as f:
         s = f.readline().strip()
     return s
 
 
+def _liberasurecode_install_error():
+    print("**********************************************")
+    print("**                                            ")
+    print("*** Error: " + library + " build failed!      ")
+    print("*** Please install " + library + " manually.  ")
+    print("*** project url: %s" % library_url)
+    print("**                                            ")
+    print("**********************************************")
+
+
 class build(_build):
 
     def check_liberasure(self):
-        missing = True
-        library_basename = "liberasurecode"
+        library_basename = "erasurecode"
         library_version = "1.0.8"
-        if platform_str.find("Darwin") > -1:
-            liberasure_file = \
-                library_basename + "." + library_version + ".dylib"
+        notfound = True
+        found_path = _find_library(library_basename)
+        if found_path:
+            if found_path.endswith(library_version) or \
+                    found_path.find(library_version + ".") > -1:
+                # call 1.0.8 the only compatible version for now
+                notfound = False
         else:
-            liberasure_file = \
-                library_basename + ".so." + library_version
-        for dir in (default_library_paths):
-            liberasure_file_path = dir + os.sep + liberasure_file
-            if (os.path.isfile(liberasure_file_path)):
-                missing = False
-                break
-        if missing:
+            # look harder
+            if platform_str.find("Darwin") > -1:
+                liberasure_file = \
+                    "lib" + library_basename + "." + library_version + ".dylib"
+            else:
+                liberasure_file = \
+                    "lib" + library_basename + ".so." + library_version
+            for dir in (default_library_paths):
+                liberasure_file_path = dir + os.sep + liberasure_file
+                if (os.path.isfile(liberasure_file_path)):
+                    notfound = False
+                    break
+        if notfound:
             print("***************************************************")
             print("**                                                 ")
             print("** Can not locate %s" % (liberasure_file))
@@ -121,32 +151,26 @@ class build(_build):
                 curdir = os.getcwd()
                 os.chdir(locallibsrcdir)
                 configure_cmd = ("./configure --prefix=/usr")
+                if platform_arch[0].startswith('64'):
+                    if os.path.exists('/usr/lib64'):
+                        configure_cmd = configure_cmd + " --libdir=/usr/lib64"
                 print(configure_cmd)
                 retval = os.system(configure_cmd)
                 if retval != 0:
-                    print("**********************************************")
-                    print("**                                            ")
-                    print("*** Error: " + library + " build failed!      ")
-                    print("*** Please install " + library + " manually.  ")
-                    print("*** project url: %s" % library_url)
-                    print("**                                            ")
-                    print("**********************************************")
+                    _liberasurecode_install_error()
                     os.chdir(curdir)
                     sys.exit(retval)
                 make_cmd = ("make && make install")
                 retval = os.system(make_cmd)
                 if retval != 0:
-                    print("**********************************************")
-                    print("**                                            ")
-                    print("*** Error: " + library + " install failed!    ")
-                    print("*** Please install " + library + " manually.  ")
-                    print("*** project url: %s" % library_url)
-                    print("**                                            ")
-                    print("**********************************************")
+                    _liberasurecode_install_error()
                     os.chdir(curdir)
                     sys.exit(retval)
                 os.chdir(curdir)
-            sys.exit(1)
+            else:
+                _liberasurecode_install_error()
+                os.chdir(curdir)
+                sys.exit(-1)
 
     def run(self):
         self.check_liberasure()
