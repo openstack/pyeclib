@@ -57,7 +57,7 @@ default_library_paths = [default_python_libdir]
 def _find_library(name):
     target_lib = None
     if os.name == 'posix' and sys.platform.startswith('linux'):
-        target_lib = ctypes.util._findLib_gcc(name)
+        target_lib = _findLib_gcc(name)
     else:
         target_lib = find_library(name)
     if target_lib:
