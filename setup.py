@@ -57,16 +57,16 @@ default_library_paths = [default_python_libdir]
 #
 configure_prefix="/usr"
 if platform_str.find("Darwin") > -1:
-  #
-  # There appears to be a bug with OS 10.9 and later where
-  # specifying -L/usr/lib to the linker *will not* search
-  # /usr/lib, but will resolve to a directory in the Xcode
-  # tree.
-  #
-  mac_major = int(platform.mac_ver()[0].split(".")[0])
-  mac_minor = int(platform.mac_ver()[0].split(".")[1])
-  if mac_major == 10 and mac_minor > 9:
-    configure_prefix="/usr/local"
+    #
+    # There appears to be a bug with OS 10.9 and later where
+    # specifying -L/usr/lib to the linker *will not* search
+    # /usr/lib, but will resolve to a directory in the Xcode
+    # tree.
+    #
+    mac_major = int(platform.mac_ver()[0].split(".")[0])
+    mac_minor = int(platform.mac_ver()[0].split(".")[1])
+    if mac_major == 10 and mac_minor > 9:
+        configure_prefix="/usr/local"
 
 # utility routines
 def _find_library(name):
