@@ -29,7 +29,7 @@ import platform
 import sys
 
 from ctypes import *
-from ctypes.util import *
+from ctypes.util import _findLib_gcc
 from distutils.command.build import build as _build
 from distutils.command.clean import clean as _clean
 from distutils.sysconfig import EXEC_PREFIX as _exec_prefix
@@ -105,15 +105,15 @@ class build(_build):
     def check_liberasure(self):
         library_basename = "liberasurecode"
         library_version = "1.0.8"
-        notfound = True
-        found_path = _find_library(library_basename)
-
         if platform_str.find("Darwin") > -1:
             liberasure_file = \
                 library_basename + "." + library_version + ".dylib"
         else:
             liberasure_file = \
                 library_basename + ".so." + library_version
+
+        notfound = True
+        found_path = _find_library("erasurecode")
 
         if found_path:
             if found_path.endswith(library_version) or \
