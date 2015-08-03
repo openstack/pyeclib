@@ -52,10 +52,11 @@ default_python_incdir = get_python_inc()
 default_python_libdir = get_python_lib()
 default_library_paths = [default_python_libdir]
 
+
 #
 # Prefix directory for ./configure
 #
-configure_prefix="/usr"
+configure_prefix = "/usr"
 if platform_str.find("Darwin") > -1:
     #
     # There appears to be a bug with OS 10.9 and later where
@@ -66,7 +67,8 @@ if platform_str.find("Darwin") > -1:
     mac_major = int(platform.mac_ver()[0].split(".")[0])
     mac_minor = int(platform.mac_ver()[0].split(".")[1])
     if mac_major == 10 and mac_minor > 9:
-        configure_prefix="/usr/local"
+        configure_prefix = "/usr/local"
+
 
 # utility routines
 def _find_library(name):

@@ -1,0 +1,23 @@
+New in 1.0.8
+------------
+
+ * Support for a new Reed-Soloman backend (liberasurecode_rs_vand)
+   - naive, non-accelerated version, native to liberasurecode
+
+ * Single version, with liberasurecode distributed in the package,
+   installed if necessary.  No versions going forward with Jerasure
+   included.  Use 'liberasurecode_rs_vand' for default test backend.
+
+ * Test code refactor for eliminating duplicated code, add cases
+   for liberasurecode_rs_vand and making jerasure/isa_l test cases
+   conditional.
+
+ * Better Python3 support
+
+ * setup.py enhancements
+   - improved library path detection on Mac OS X (and Linux) including
+     workarounds for Mac OS X dyld bugs for library search paths
+   - handling installroot better for optional liberasurecode installs
+
+ * tox support for automated py27 and py34 testing
+
