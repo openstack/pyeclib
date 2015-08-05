@@ -47,6 +47,6 @@ test:		build
 		$(UNITS)
 
 clean:
-	-rm -f pyeclib_c.so
+	-rm -f pyeclib_c*.so
 	-rm -rf build
 	python setup.py clean
