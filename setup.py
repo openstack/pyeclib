@@ -222,8 +222,6 @@ class install(_install):
                 opts[optname] = os.path.abspath(value)
 
         installroot = install_lib.install_dir
-
-        default_library_paths.insert(0, installroot)
         _install.run(self)
 
         # Another Mac-ism...  If the libraries are installed
@@ -262,13 +260,10 @@ module = Extension('pyeclib_c',
                                  '/usr/include',
                                  'src/c/pyeclib_c',
                                  '/usr/local/include'],
-                   library_dirs=default_library_paths,
                    runtime_library_dirs=default_library_paths,
                    libraries=['erasurecode'],
                    # The extra arguments are for debugging
                    # extra_compile_args=['-g', '-O0'],
-                   extra_link_args=['-Wl,-rpath,%s' %
-                                    l for l in default_library_paths],
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
