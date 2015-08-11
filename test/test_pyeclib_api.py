@@ -31,7 +31,10 @@ from pyeclib.ec_iface import ECDriverError
 from pyeclib.ec_iface import ECInsufficientFragments
 
 from pyeclib.ec_iface import ECDriver, PyECLib_EC_Types
-from .test_pyeclib_c import _available_backends
+if sys.version < '3':
+    from test_pyeclib_c import _available_backends
+else:
+    from .test_pyeclib_c import _available_backends
 
 if sys.version < '3':
     def b2i(b):

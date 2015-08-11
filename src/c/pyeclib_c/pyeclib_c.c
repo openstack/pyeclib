@@ -46,7 +46,7 @@
               PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
           ob = PyModule_Create(&moduledef);
   #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
-          Py_BuildValue("y#", obj, objlen)
+          Py_BuildValue("y#", obj, (Py_ssize_t)objlen)
   #define PyInt_FromLong PyLong_FromLong
   #define PyString_FromString PyUnicode_FromString
   #define ENCODE_ARGS "Oy#"
@@ -58,7 +58,7 @@
   #define MOD_DEF(ob, name, doc, methods) \
           ob = Py_InitModule3(name, methods, doc);
   #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
-          Py_BuildValue("s#", obj, objlen)
+          Py_BuildValue("s#", obj, (Py_ssize_t)objlen)
   #define ENCODE_ARGS "Os#"
   #define GET_METADATA_ARGS "Os#i"
 #endif
