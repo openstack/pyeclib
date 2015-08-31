@@ -109,20 +109,33 @@ def _read_file_as_str(name):
 
 
 def _liberasurecode_install_error(library, library_url):
-    print("**********************************************")
-    print("**                                            ")
-    print("*** Error: " + library + " build failed!      ")
-    print("*** Please install " + library + " manually.  ")
+    print("***                                                ")
+    print("*** Please install " + library + " manually.       ")
     print("*** project url: %s" % library_url)
-    print("**                                            ")
-    print("**********************************************")
+
+
+install_libec = True
 
 
 class build(_build):
 
+    boolean_options = _build.boolean_options + ['install-liberasurecode']
+    user_options = _build.user_options + [
+        ('install-liberasurecode=', None,
+         'Install liberasurecode dependency (yes/no) [default: yes].')
+    ]
+
+    def initialize_options(self):
+        self.install_liberasurecode = True
+        _build.initialize_options(self)
+
     def check_liberasure(self):
         library_basename = "liberasurecode"
         library_version = "1.0.8"
+        # try using an integrated copy of the library
+        library = library_basename + "-" + library_version
+        library_url = "https://bitbucket.org/tsg-/liberasurecode.git"
+
         if platform_str.find("Darwin") > -1:
             liberasure_file = \
                 library_basename + "." + library_version + ".dylib"
@@ -148,10 +161,16 @@ class build(_build):
                     notfound = False
                     break
 
-        if notfound:
-            print("***************************************************")
-            print("**                                                 ")
-            print("** Can not locate %s" % (liberasure_file))
+        if not notfound:
+            return
+
+        install_status = 0
+
+        print("**************************************************************")
+        print("***                                                           ")
+        print("*** Can not locate %s" % (liberasure_file))
+
+        if install_libec:
             print("**                                                 ")
             print("** PyECLib requires liberasurecode.  Trying to     ")
             print("** install using bundled tarball.                  ")
@@ -159,12 +178,6 @@ class build(_build):
             print("** If you have liberasurecode already installed,   ")
             print("** you may need to run 'sudo ldconfig' to update   ")
             print("** the loader cache.                               ")
-            print("**                                                 ")
-            print("***************************************************")
-
-            # try using an integrated copy of the library
-            library = library_basename + "-" + library_version
-            library_url = "https://bitbucket.org/tsg-/liberasurecode.git"
 
             srcpath = "src/c/"
             locallibsrcdir = (srcpath + library)
@@ -179,23 +192,32 @@ class build(_build):
                     if os.path.exists('/usr/lib64'):
                         configure_cmd = configure_cmd + " --libdir=/usr/lib64"
                 print(configure_cmd)
-                retval = os.system(configure_cmd)
-                if retval != 0:
+                install_status = os.system(configure_cmd)
+                if install_status != 0:
                     _liberasurecode_install_error(library, library_url)
                     os.chdir(curdir)
-                    sys.exit(retval)
                 make_cmd = ("make && make install")
-                retval = os.system(make_cmd)
-                if retval != 0:
+                install_status = os.system(make_cmd)
+                if install_status != 0:
                     _liberasurecode_install_error(library, library_url)
                     os.chdir(curdir)
-                    sys.exit(retval)
                 os.chdir(curdir)
-            else:
-                _liberasurecode_install_error(library, library_url)
-                sys.exit(-1)
+        else:
+            _liberasurecode_install_error(library, library_url)
+            install_status = -1
+
+        print("***                                                           ")
+        print("**************************************************************")
+
+        if install_status != 0:
+            sys.exit(install_status)
 
     def run(self):
+        global install_libec
+
+        if not self.install_liberasurecode:
+            install_libec = False
+
         self.check_liberasure()
         _build.run(self)
 
@@ -208,7 +230,22 @@ class clean(_clean):
 
 class install(_install):
 
+    boolean_options = _install.boolean_options + ['install-liberasurecode']
+    user_options = _install.user_options + [
+        ('install-liberasurecode=', None,
+         'Install liberasurecode dependency (yes/no) [default: yes].')
+    ]
+
+    def initialize_options(self):
+        self.install_liberasurecode = True
+        _install.initialize_options(self)
+
     def run(self):
+        global install_libec
+
+        if not self.install_liberasurecode:
+            install_libec = False
+
         install_cmd = self.distribution.get_command_obj('install')
         install_lib = self.distribution.get_command_obj('install_lib')
         for cmd in (install_lib, install_cmd):
