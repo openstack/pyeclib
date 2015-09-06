@@ -1,3 +1,21 @@
+New in 1.0.9
+------------
+
+ * Eliminate rpath handling in setup.py
+
+ * Clean py34 shared libraries created during build
+
+ * Fix integer truncation issue with PyBuildValue on Big Endian
+   systems by explicitly casting the size argument passed in to
+   Py_ssize_t.  Also fix import issue with the API test where
+   older versions of Python fail to import.
+
+ * Add --install-liberasurecode option to setup.py.  Requested
+   by Red Hat/Debian package maintainers.
+
+ * Update bundled liberasurecode version to 1.0.9
+
+
 New in 1.0.8
 ------------
 
