@@ -131,7 +131,7 @@ class build(_build):
 
     def check_liberasure(self):
         library_basename = "liberasurecode"
-        library_version = "1.0.8"
+        library_version = "1.0.9"
         # try using an integrated copy of the library
         library = library_basename + "-" + library_version
         library_url = "https://bitbucket.org/tsg-/liberasurecode.git"
@@ -149,7 +149,7 @@ class build(_build):
         if found_path:
             if found_path.endswith(library_version) or \
                     found_path.find(library_version + ".") > -1:
-                # call 1.0.8 the only compatible version for now
+                # call 1.0.9 the only compatible version for now
                 notfound = False
 
         if found_path and notfound:
