@@ -156,6 +156,14 @@ class TestPyECLibDriver(unittest.TestCase):
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3,
                                    chksum_type=csum))
+        _type4 = 'shss'
+        if _type4 in _available_backends:
+            pyeclib_drivers.append(ECDriver(k=10, m=4, ec_type=_type4,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=20, m=4, ec_type=_type4,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=7, ec_type=_type4,
+                                   chksum_type=csum))
         return pyeclib_drivers
 
     def test_small_encode(self):
@@ -538,6 +546,7 @@ class TestPyECLibDriver(unittest.TestCase):
         pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="liberasurecode_rs_vand"))
         self.assertTrue(
             pyeclib_drivers[0].min_parity_fragments_needed() == 1)
+
 
 if __name__ == '__main__':
     unittest.main()
