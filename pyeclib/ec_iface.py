@@ -117,6 +117,7 @@ class ECDriver(object):
     def __init__(self, *args, **kwargs):
         self.k = -1
         self.m = -1
+        self.hd = -1
         self.ec_type = None
         self.chksum_type = None
         for (key, value) in kwargs.items():
@@ -133,11 +134,14 @@ class ECDriver(object):
                     raise ECDriverError(
                         "Invalid number of data fragments (m)")
             elif key == "ec_type":
-                if value in ["flat_xor_hd_3", "flat_xor_hd_4"]:
+                if value in ["flat_xor_hd", "flat_xor_hd_3", "flat_xor_hd_4"]:
+                    if value == "flat_xor_hd" or value == "flat_xor_hd_3":
+                        self.hd = 3
+                    elif value == "flat_xor_hd_4":
+                        self.hd = 4
                     value = "flat_xor_hd"
                 if PyECLib_EC_Types.has_enum(value):
-                    self.ec_type = \
-                        PyECLib_EC_Types.get_by_name(value)
+                    self.ec_type = PyECLib_EC_Types.get_by_name(value)
                 else:
                     raise ECBackendNotSupported(
                         "%s is not a valid EC type for PyECLib!" % value)
@@ -149,6 +153,9 @@ class ECDriver(object):
                     raise ECDriverError(
                         "%s is not a valid checksum type for PyECLib!" % value)
 
+        if self.hd == -1:
+            self.hd = self.m
+
         self.library_import_str = kwargs.pop('library_import_str',
                                              'pyeclib.core.ECPyECLibDriver')
         #
@@ -158,6 +165,7 @@ class ECDriver(object):
             self.library_import_str,
             k=self.k,
             m=self.m,
+            hd=self.hd,
             ec_type=self.ec_type,
             chksum_type=self.chksum_type)
         #

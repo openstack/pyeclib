@@ -34,13 +34,13 @@ pyver = float('%s.%s' % sys.version_info[:2])
 
 class ECPyECLibDriver(object):
 
-    def __init__(self, k, m, ec_type,
+    def __init__(self, k, m, hd, ec_type,
                  chksum_type=PyECLib_FRAGHDRCHKSUM_Types.none):
         self.k = k
         self.m = m
+        self.hd = hd
         self.ec_type = ec_type
         self.chksum_type = chksum_type
-        hd = m
 
         self.inline_chksum = 0
         self.algsig_chksum = 0
@@ -50,16 +50,11 @@ class ECPyECLibDriver(object):
 
         name = self.ec_type.name
 
-        if name == "flat_xor_hd" or name == "flat_xor_hd_3":
-            hd = 3
-        if name == "flat_xor_hd_4":
-            hd = 4
-
         self.handle = pyeclib_c.init(
             self.k,
             self.m,
             ec_type.value,
-            hd,
+            self.hd,
             self.inline_chksum,
             self.algsig_chksum)
 
@@ -141,9 +136,10 @@ class ECPyECLibDriver(object):
 
 class ECNullDriver(object):
 
-    def __init__(self, k, m, ec_type=None, chksum_type=None):
+    def __init__(self, k, m, hd, ec_type=None, chksum_type=None):
         self.k = k
         self.m = m
+        self.hd = hd
 
     def encode(self, data_bytes):
         pass
@@ -177,7 +173,7 @@ class ECNullDriver(object):
 #
 class ECStripingDriver(object):
 
-    def __init__(self, k, m, ec_type=None, chksum_type=None):
+    def __init__(self, k, m, hd, ec_type=None, chksum_type=None):
         """Stripe an arbitrary-sized string into k fragments
         :param k: the number of data fragments to stripe
         :param m: the number of parity fragments to stripe
@@ -189,6 +185,7 @@ class ECStripingDriver(object):
             raise ECDriverError("This driver only supports m=0")
 
         self.m = m
+        self.hd = hd
 
     def encode(self, data_bytes):
         """Stripe an arbitrary-sized string into k fragments

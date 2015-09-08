@@ -150,11 +150,17 @@ class TestPyECLibDriver(unittest.TestCase):
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type2,
                                    chksum_type=csum))
-        _type3 = 'flat_xor_hd'
-        if _type3 in _available_backends:
-            pyeclib_drivers.append(ECDriver(k=12, m=6, ec_type=_type3,
+        _type3_1 = 'flat_xor_hd'
+        if _type3_1 in _available_backends:
+            pyeclib_drivers.append(ECDriver(k=12, m=6, ec_type=_type3_1,
                                    chksum_type=csum))
-            pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3,
+            pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3_1,
+                                   chksum_type=csum))
+        _type3_2 = 'flat_xor_hd_4'
+        if _type3_2 in _available_backends:
+            pyeclib_drivers.append(ECDriver(k=12, m=6, ec_type=_type3_2,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3_2,
                                    chksum_type=csum))
         _type4 = 'shss'
         if _type4 in _available_backends:
