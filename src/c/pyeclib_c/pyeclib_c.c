@@ -25,14 +25,14 @@
  */
 
 #include <Python.h>
+#include <math.h>
+#include <bytesobject.h>
+#include <liberasurecode/erasurecode.h>
 
 /* Compat layer for python <= 2.6 */
 #include "capsulethunk.h"
 
-#include <erasurecode.h>
-#include <math.h>
 #include <pyeclib_c.h>
-#include <bytesobject.h>
 
 /* Python 3 compatibility macros */
 #if PY_MAJOR_VERSION >= 3
