@@ -1,3 +1,13 @@
+New in 1.1.0
+------------
+
+ * Eliminate pyeclib dependency on alloc functions internal to
+   liberasurecode
+
+ * Update include subdirs to be explicit
+
+ * Update internal liberasurecode version to 1.1.0
+
 New in 1.0.9
 ------------
 
