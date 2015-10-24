@@ -53,23 +53,6 @@ default_python_libdir = get_python_lib()
 default_library_paths = [default_python_libdir]
 
 
-#
-# Prefix directory for ./configure
-#
-configure_prefix = "/usr"
-if platform_str.find("Darwin") > -1:
-    #
-    # There appears to be a bug with OS 10.9 and later where
-    # specifying -L/usr/lib to the linker *will not* search
-    # /usr/lib, but will resolve to a directory in the Xcode
-    # tree.
-    #
-    mac_major = int(platform.mac_ver()[0].split(".")[0])
-    mac_minor = int(platform.mac_ver()[0].split(".")[1])
-    if mac_major == 10 and mac_minor > 9:
-        configure_prefix = "/usr/local"
-
-
 # utility routines
 def _find_library(name):
     target_lib = None
@@ -91,6 +74,7 @@ def _find_library(name):
 
 
 def _build_default_lib_search_path():
+    default_library_paths.append('/usr/local/lib')
     arch64 = platform_arch[0].startswith('64')
     for prefix in ('/', '/usr', '/usr/local', _exec_prefix):
         libdir = os.path.join(prefix, 'lib')
@@ -187,10 +171,7 @@ class build(_build):
             if (os.path.isdir(locallibsrcdir)):
                 curdir = os.getcwd()
                 os.chdir(locallibsrcdir)
-                configure_cmd = ("./configure --prefix=%s" % configure_prefix)
-                if platform_arch[0].startswith('64'):
-                    if os.path.exists('/usr/lib64'):
-                        configure_cmd = configure_cmd + " --libdir=/usr/lib64"
+                configure_cmd = ("./configure --prefix=/usr/local")
                 print(configure_cmd)
                 install_status = os.system(configure_cmd)
                 if install_status != 0:
@@ -304,7 +285,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='1.1.0',
+      version='1.1.1',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
