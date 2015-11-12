@@ -31,9 +31,9 @@ from .utils import positive_int_value
 def PyECLibVersion(z, y, x):
     return (((z) << 16) + ((y) << 8) + (x))
 
-PYECLIB_MAJOR = 0
-PYECLIB_MINOR = 9
-PYECLIB_REV = 4
+PYECLIB_MAJOR = 1
+PYECLIB_MINOR = 1
+PYECLIB_REV = 2
 PYECLIB_VERSION = PyECLibVersion(PYECLIB_MAJOR, PYECLIB_MINOR,
                                  PYECLIB_REV)
 

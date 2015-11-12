@@ -270,7 +270,7 @@ class install(_install):
 
 module = Extension('pyeclib_c',
                    define_macros=[('MAJOR VERSION', '1'),
-                                  ('MINOR VERSION', '0')],
+                                  ('MINOR VERSION', '1')],
                    include_dirs=[default_python_incdir,
                                  '/usr/local/include/liberasurecode',
                                  '/usr/local/include/jerasure',
