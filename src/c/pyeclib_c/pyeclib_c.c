@@ -29,6 +29,10 @@
 #include <bytesobject.h>
 #include <liberasurecode/erasurecode.h>
 
+#if ( LIBERASURECODE_VERSION < _VERSION(1,1,0) )
+#include <liberasurecode/erasurecode_helpers.h>
+#endif
+
 /* Compat layer for python <= 2.6 */
 #include "capsulethunk.h"
 
