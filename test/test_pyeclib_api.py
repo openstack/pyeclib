@@ -540,18 +540,21 @@ class TestPyECLibDriver(unittest.TestCase):
         tmp_file.seek(0)
         whole_file_bytes = tmp_file.read()
         for ec_type in ['flat_xor_hd_3', 'liberasurecode_rs_vand']:
-            pyeclib_driver = self.get_available_backend(
-                k=10, m=5, ec_type=ec_type)
-            fragments = pyeclib_driver.encode(whole_file_bytes)
-            self.assertRaises(ECInsufficientFragments,
-                              pyeclib_driver.reconstruct,
-                              [fragments[0]], [1, 2, 3, 4, 5, 6])
+            if ec_type in _available_backends:
+                pyeclib_driver = self.get_available_backend(
+                    k=10, m=5, ec_type=ec_type)
+                fragments = pyeclib_driver.encode(whole_file_bytes)
+                self.assertRaises(ECInsufficientFragments,
+                                  pyeclib_driver.reconstruct,
+                                  [fragments[0]], [1, 2, 3, 4, 5, 6])
 
     def test_min_parity_fragments_needed(self):
         pyeclib_drivers = []
-        pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type="liberasurecode_rs_vand"))
-        self.assertTrue(
-            pyeclib_drivers[0].min_parity_fragments_needed() == 1)
+        for ec_type in ['flat_xor_hd_3', 'liberasurecode_rs_vand']:
+            if ec_type in _available_backends:
+                pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=ec_type))
+                self.assertTrue(
+                    pyeclib_drivers[0].min_parity_fragments_needed() == 1)
 
 
 if __name__ == '__main__':
