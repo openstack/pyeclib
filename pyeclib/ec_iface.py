@@ -41,14 +41,6 @@ PYECLIB_VERSION = PyECLibVersion(PYECLIB_MAJOR, PYECLIB_MINOR,
 PYECLIB_MAX_DATA = 32
 PYECLIB_MAX_PARITY = 32
 
-VALID_EC_TYPES = ['jerasure_rs_vand',
-                  'jerasure_rs_cauchy',
-                  'flat_xor_hd_3',
-                  'flat_xor_hd_4',
-                  'isa_l_rs_vand',
-                  'shss',
-                  'liberasurecode_rs_vand']
-
 
 @unique
 class PyECLibEnum(Enum):
@@ -460,3 +452,32 @@ class ECInsufficientFragments(ECDriverError):
 # Out of memory
 class ECOutOfMemory(ECDriverError):
     pass
+
+
+# PyECLib helper for "available" EC types
+ALL_EC_TYPES = [
+    'jerasure_rs_vand',
+    'jerasure_rs_cauchy',
+    'flat_xor_hd_3',
+    'flat_xor_hd_4',
+    'isa_l_rs_vand',
+    'shss',
+    'liberasurecode_rs_vand',
+]
+
+
+def _PyECLibValidECTypes():
+    available_ec_types = []
+    for _type in ALL_EC_TYPES:
+        try:
+            if _type is 'shss':
+                ECDriver(k=10, m=4, ec_type=_type)
+            else:
+                ECDriver(k=10, m=5, ec_type=_type)
+            available_ec_types.append(_type)
+        except Exception:
+            pass
+    return available_ec_types
+
+
+VALID_EC_TYPES = _PyECLibValidECTypes()

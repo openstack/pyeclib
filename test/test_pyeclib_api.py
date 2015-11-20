@@ -27,14 +27,11 @@ import sys
 import tempfile
 import unittest
 from pyeclib.ec_iface import ECBackendNotSupported
+from pyeclib.ec_iface import ECDriver
 from pyeclib.ec_iface import ECDriverError
 from pyeclib.ec_iface import ECInsufficientFragments
-
-from pyeclib.ec_iface import ECDriver, PyECLib_EC_Types
-if sys.version < '3':
-    from test_pyeclib_c import _available_backends
-else:
-    from .test_pyeclib_c import _available_backends
+from pyeclib.ec_iface import PyECLib_EC_Types
+from pyeclib.ec_iface import VALID_EC_TYPES
 
 if sys.version < '3':
     def b2i(b):
@@ -114,7 +111,7 @@ class TestPyECLibDriver(unittest.TestCase):
         print("")
         for _type in PyECLib_EC_Types.names():
             # Check if this algo works
-            if _type not in _available_backends:
+            if _type not in VALID_EC_TYPES:
                 print("Skipping test for %s backend" % _type)
                 continue
             try:
@@ -131,7 +128,7 @@ class TestPyECLibDriver(unittest.TestCase):
     def get_pyeclib_testspec(self, csum="none"):
         pyeclib_drivers = []
         _type1 = 'jerasure_rs_vand'
-        if _type1 in _available_backends:
+        if _type1 in VALID_EC_TYPES:
             pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type1,
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type1,
@@ -141,7 +138,7 @@ class TestPyECLibDriver(unittest.TestCase):
             pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type1,
                                    chksum_type=csum))
         _type2 = 'liberasurecode_rs_vand'
-        if _type2 in _available_backends:
+        if _type2 in VALID_EC_TYPES:
             pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type2,
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type2,
@@ -151,19 +148,19 @@ class TestPyECLibDriver(unittest.TestCase):
             pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type2,
                                    chksum_type=csum))
         _type3_1 = 'flat_xor_hd'
-        if _type3_1 in _available_backends:
+        if _type3_1 in VALID_EC_TYPES:
             pyeclib_drivers.append(ECDriver(k=12, m=6, ec_type=_type3_1,
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3_1,
                                    chksum_type=csum))
         _type3_2 = 'flat_xor_hd_4'
-        if _type3_2 in _available_backends:
+        if _type3_2 in VALID_EC_TYPES:
             pyeclib_drivers.append(ECDriver(k=12, m=6, ec_type=_type3_2,
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=_type3_2,
                                    chksum_type=csum))
         _type4 = 'shss'
-        if _type4 in _available_backends:
+        if _type4 in VALID_EC_TYPES:
             pyeclib_drivers.append(ECDriver(k=10, m=4, ec_type=_type4,
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=20, m=4, ec_type=_type4,
@@ -247,7 +244,7 @@ class TestPyECLibDriver(unittest.TestCase):
 
     def check_metadata_formatted(self, k, m, ec_type, chksum_type):
 
-        if ec_type not in _available_backends:
+        if ec_type not in VALID_EC_TYPES:
             return
 
         filesize = 1024 * 1024 * 3
@@ -529,7 +526,7 @@ class TestPyECLibDriver(unittest.TestCase):
         if ec_type[:11] == "flat_xor_hd":
             return ECDriver(k=k, m=m, ec_type="flat_xor_hd",
                             chksum_type=chksum_type)
-        elif ec_type in _available_backends:
+        elif ec_type in VALID_EC_TYPES:
             return ECDriver(k=k, m=m, ec_type=ec_type, chksum_type=chksum_type)
         else:
             return None
@@ -540,7 +537,7 @@ class TestPyECLibDriver(unittest.TestCase):
         tmp_file.seek(0)
         whole_file_bytes = tmp_file.read()
         for ec_type in ['flat_xor_hd_3', 'liberasurecode_rs_vand']:
-            if ec_type in _available_backends:
+            if ec_type in VALID_EC_TYPES:
                 pyeclib_driver = self.get_available_backend(
                     k=10, m=5, ec_type=ec_type)
                 fragments = pyeclib_driver.encode(whole_file_bytes)
@@ -551,7 +548,7 @@ class TestPyECLibDriver(unittest.TestCase):
     def test_min_parity_fragments_needed(self):
         pyeclib_drivers = []
         for ec_type in ['flat_xor_hd_3', 'liberasurecode_rs_vand']:
-            if ec_type in _available_backends:
+            if ec_type in VALID_EC_TYPES:
                 pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=ec_type))
                 self.assertTrue(
                     pyeclib_drivers[0].min_parity_fragments_needed() == 1)

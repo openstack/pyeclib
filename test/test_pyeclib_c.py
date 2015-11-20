@@ -30,23 +30,8 @@ import unittest
 
 import pyeclib_c
 from pyeclib.ec_iface import PyECLib_EC_Types
+from pyeclib.ec_iface import VALID_EC_TYPES
 
-
-def collect_available_backends():
-    available_backends = []
-    for ec_type in PyECLib_EC_Types:
-        try:
-           if ec_type == PyECLib_EC_Types.flat_xor_hd:
-                handle = pyeclib_c.init(10, 5, ec_type.value, 3)
-           else:
-                handle = pyeclib_c.init(10, 4, ec_type.value)
-           available_backends.append(ec_type.name)
-           print(ec_type.name)
-        except:
-            pass
-    return available_backends
-
-_available_backends = collect_available_backends()
 
 class Timer:
 
@@ -293,7 +278,7 @@ class TestPyECLib(unittest.TestCase):
         return format(throughput, '.10g')
 
     def test_xor_code(self):
-        if "flat_xor_hd" not in _available_backends:
+        if "flat_xor_hd" not in VALID_EC_TYPES:
             print("xor backend is not available in your enviromnet, skipping test")
             return
 
@@ -324,7 +309,7 @@ class TestPyECLib(unittest.TestCase):
                       (size_str, self.get_throughput(avg_time, size_str)))
 
     def test_shss(self):
-        if "shss" not in _available_backends:
+        if "shss" not in VALID_EC_TYPES:
             print("shss backend is not available in your enviromnet, skipping test")
             return
 
@@ -395,7 +380,7 @@ class TestPyECLib(unittest.TestCase):
 
     def test_codes(self):
         for ec_type in self.rs_types:
-            if ec_type.name not in _available_backends:
+            if ec_type.name not in VALID_EC_TYPES:
                 print("%s backend is not available in your enviromnet, skipping test" % ec_type.name)
                 continue
 
