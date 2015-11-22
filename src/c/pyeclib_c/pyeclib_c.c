@@ -24,6 +24,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
+#include <paths.h>
 #include <Python.h>
 #include <math.h>
 #include <bytesobject.h>
@@ -188,13 +190,39 @@ pyeclib_c_seterr(int ret, const char * prefix)
     PyErr_SetString(eo, err);
 }
 
+static int stderr_fd;
+static fpos_t stderr_fpos;
+#ifndef _PATH_DEVNULL
+#define _PATH_DEVNULL "/dev/null"
+#endif
+
+static void redirect_stderr(void)
+{
+    fflush(stderr);
+    fgetpos(stderr, &stderr_fpos);
+    stderr_fd = dup(fileno(stderr));
+    freopen(_PATH_DEVNULL, "w", stderr);
+}
+
+static void restore_stderr(void)
+{
+    fflush(stderr);
+    dup2(stderr_fd, fileno(stderr));
+    close(stderr_fd);
+    clearerr(stderr);
+    fsetpos(stderr, &stderr_fpos);        /* for C9X */
+}
+
 /**
  * Constructor method for creating a new pyeclib object using the given parameters.
  *
  * @param k integer number of data elements
  * @param m integer number of checksum elements
- * @param w integer word size in bytes
+ * @param hd hamming distance
  * @param backend_id erasure coding backend
+ * @param use_inline_chksum type of inline fragment header checksum
+ * @param use_algsig_chksum use algorithmic signature for fragment header checksum
+ * @param validate only validate backend and params, close handle immediately
  * @return pointer to PyObject or NULL on error
  */
 static PyObject *
@@ -202,12 +230,14 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 {
   pyeclib_t *pyeclib_handle = NULL;
   PyObject *pyeclib_obj_handle = NULL;
-  int k, m, hd=0;
+  int k, m, hd = 0, validate = 0;
   int use_inline_chksum = 0, use_algsig_chksum = 0;
   const ec_backend_id_t backend_id;
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, "iii|iii", &k, &m, &backend_id, &hd, &use_inline_chksum, &use_algsig_chksum)) {
+  if (!PyArg_ParseTuple(args, "iii|iiiii",
+                        &k, &m, &backend_id, &hd, &use_inline_chksum,
+                        &use_algsig_chksum, &validate)) {
     pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init ERROR: ");
     return NULL;
   }
@@ -216,7 +246,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_handle = (pyeclib_t *) alloc_zeroed_buffer(sizeof(pyeclib_t));
   if (NULL == pyeclib_handle) {
     pyeclib_c_seterr(-ENOMEM, "pyeclib_c_init ERROR: ");
-    goto error;
+    goto cleanup;
   }
 
   pyeclib_handle->ec_args.k = k;
@@ -224,10 +254,13 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_handle->ec_args.hd = hd;
   pyeclib_handle->ec_args.ct = use_inline_chksum ? CHKSUM_CRC32 : CHKSUM_NONE;
 
+  if (validate)
+    redirect_stderr();
+
   pyeclib_handle->ec_desc = liberasurecode_instance_create(backend_id, &(pyeclib_handle->ec_args));  
   if (pyeclib_handle->ec_desc <= 0) {
     pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init ERROR: ");
-    goto error; 
+    goto cleanup;
   }
 
   /* Prepare the python object to return */
@@ -235,27 +268,28 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME,
                                      pyeclib_c_destructor);
 #else
-  pyeclib_obj_handle = PyCObject_FromVoidPtrAndDesc(pyeclib_handle,
-                         (void *) PYECC_HANDLE_NAME,
-             pyeclib_c_destructor);
+  pyeclib_obj_handle = PyCObject_FromVoidPtrAndDesc(
+                                     pyeclib_handle, (void *) PYECC_HANDLE_NAME,
+                                     pyeclib_c_destructor);
 #endif /* Py_CAPSULE_H */
 
   /* Clean up the allocated memory on error, or update the ref count */
   if (pyeclib_obj_handle == NULL) {
     pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init ERROR: ");
-    goto error;
+    goto cleanup;
   } else {
     Py_INCREF(pyeclib_obj_handle);
   }
   
-  goto exit;
+exit:
+  if (validate)
+    restore_stderr();
+  return pyeclib_obj_handle;
 
-error:
+cleanup:
   check_and_free_buffer(pyeclib_handle);
   pyeclib_obj_handle = NULL;
-
-exit:  
-  return pyeclib_obj_handle;
+  goto exit;
 }
 
 

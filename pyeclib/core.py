@@ -35,7 +35,8 @@ pyver = float('%s.%s' % sys.version_info[:2])
 class ECPyECLibDriver(object):
 
     def __init__(self, k, m, hd, ec_type,
-                 chksum_type=PyECLib_FRAGHDRCHKSUM_Types.none):
+                 chksum_type=PyECLib_FRAGHDRCHKSUM_Types.none,
+                 validate=False):
         self.k = k
         self.m = m
         self.hd = hd
@@ -56,7 +57,8 @@ class ECPyECLibDriver(object):
             ec_type.value,
             self.hd,
             self.inline_chksum,
-            self.algsig_chksum)
+            self.algsig_chksum,
+            validate)
 
     def encode(self, data_bytes):
         return pyeclib_c.encode(self.handle, data_bytes)
@@ -136,7 +138,8 @@ class ECPyECLibDriver(object):
 
 class ECNullDriver(object):
 
-    def __init__(self, k, m, hd, ec_type=None, chksum_type=None):
+    def __init__(self, k, m, hd, ec_type=None, chksum_type=None,
+                 validate=False):
         self.k = k
         self.m = m
         self.hd = hd
@@ -173,7 +176,8 @@ class ECNullDriver(object):
 #
 class ECStripingDriver(object):
 
-    def __init__(self, k, m, hd, ec_type=None, chksum_type=None):
+    def __init__(self, k, m, hd, ec_type=None, chksum_type=None,
+                 validate=False):
         """Stripe an arbitrary-sized string into k fragments
         :param k: the number of data fragments to stripe
         :param m: the number of parity fragments to stripe

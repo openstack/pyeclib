@@ -112,6 +112,7 @@ class ECDriver(object):
         self.hd = -1
         self.ec_type = None
         self.chksum_type = None
+        self.validate = False
         for (key, value) in kwargs.items():
             if key == "k":
                 try:
@@ -144,6 +145,9 @@ class ECDriver(object):
                 else:
                     raise ECDriverError(
                         "%s is not a valid checksum type for PyECLib!" % value)
+            elif key == "validate":
+                # validate if the ec type is available (runtime check)
+                self.validate = value
 
         if self.hd == -1:
             self.hd = self.m
@@ -159,7 +163,10 @@ class ECDriver(object):
             m=self.m,
             hd=self.hd,
             ec_type=self.ec_type,
-            chksum_type=self.chksum_type)
+            chksum_type=self.chksum_type,
+            validate=int(self.validate)
+        )
+
         #
         # Verify that the imported library implements the required functions
         #
@@ -471,12 +478,14 @@ def _PyECLibValidECTypes():
     for _type in ALL_EC_TYPES:
         try:
             if _type is 'shss':
-                ECDriver(k=10, m=4, ec_type=_type)
+                _m = 4
             else:
-                ECDriver(k=10, m=5, ec_type=_type)
+                _m = 5
+            driver = ECDriver(k=10, m=_m, ec_type=_type, validate=True)
             available_ec_types.append(_type)
-        except Exception:
-            pass
+        except:
+            # ignore any errors, assume backend not available
+            continue
     return available_ec_types
 
 
