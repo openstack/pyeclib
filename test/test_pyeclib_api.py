@@ -31,6 +31,7 @@ from pyeclib.ec_iface import ECDriver
 from pyeclib.ec_iface import ECDriverError
 from pyeclib.ec_iface import ECInsufficientFragments
 from pyeclib.ec_iface import PyECLib_EC_Types
+from pyeclib.ec_iface import ALL_EC_TYPES
 from pyeclib.ec_iface import VALID_EC_TYPES
 
 if sys.version < '3':
@@ -107,9 +108,25 @@ class TestPyECLibDriver(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_valid_ec_types(self):
+        # Build list of available types and compare to VALID_EC_TYPES
+        available_ec_types = []
+        for _type in ALL_EC_TYPES:
+            try:
+                if _type is 'shss':
+                    _m = 4
+                else:
+                    _m = 5
+                driver = ECDriver(k=10, m=_m, ec_type=_type, validate=True)
+                available_ec_types.append(_type)
+            except Exception as e:
+                # ignore any errors, assume backend not available
+                continue
+        self.assertEqual(available_ec_types, VALID_EC_TYPES)
+
     def test_valid_algo(self):
         print("")
-        for _type in PyECLib_EC_Types.names():
+        for _type in ALL_EC_TYPES:
             # Check if this algo works
             if _type not in VALID_EC_TYPES:
                 print("Skipping test for %s backend" % _type)
