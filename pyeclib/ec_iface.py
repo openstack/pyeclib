@@ -476,13 +476,15 @@ ALL_EC_TYPES = [
 def _PyECLibValidECTypes():
     available_ec_types = []
     for _type in ALL_EC_TYPES:
+        driver = None
         try:
             if _type is 'shss':
                 _m = 4
             else:
                 _m = 5
             driver = ECDriver(k=10, m=_m, ec_type=_type, validate=True)
-            available_ec_types.append(_type)
+            if driver:
+                available_ec_types.append(_type)
         except:
             # ignore any errors, assume backend not available
             continue
