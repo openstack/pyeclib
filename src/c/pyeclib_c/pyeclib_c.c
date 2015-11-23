@@ -259,7 +259,7 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 
   pyeclib_handle->ec_desc = liberasurecode_instance_create(backend_id, &(pyeclib_handle->ec_args));  
   if (pyeclib_handle->ec_desc <= 0) {
-    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init ERROR: ");
+    pyeclib_c_seterr(pyeclib_handle->ec_desc, "pyeclib_c_init ERROR: ");
     goto cleanup;
   }
 
