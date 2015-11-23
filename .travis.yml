@@ -9,4 +9,6 @@ branches:
 before_install:
   - echo "deb http://archive.ubuntu.com/ubuntu precise-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get update
-  - sudo apt-get install -y liberasurecode-dev libffi-dev
+  - sudo apt-get install -y liberasurecode-dev libffi-dev python-setuptools
+  - sudo easy_install pip
+  - pip install tox
