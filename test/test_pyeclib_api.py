@@ -382,6 +382,8 @@ class TestPyECLibDriver(unittest.TestCase):
 
     def test_get_segment_byterange_info(self):
         pyeclib_drivers = self.get_pyeclib_testspec()
+        if not pyeclib_drivers:
+            return
 
         file_size = 1024 * 1024
         segment_size = 3 * 1024
