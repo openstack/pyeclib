@@ -49,8 +49,6 @@ from setuptools.command.install import install as _install
 platform_str = platform.platform()
 platform_arch = platform.architecture()
 default_python_incdir = get_python_inc()
-default_python_libdir = get_python_lib()
-default_library_paths = [default_python_libdir]
 
 
 # utility routines
@@ -71,19 +69,6 @@ def _find_library(name):
                 target_lib = os.path.join(os.path.dirname(target_lib), p)
     # return absolute path to the library if found
     return target_lib
-
-
-def _build_default_lib_search_path():
-    default_library_paths.append('/usr/local/lib')
-    arch64 = platform_arch[0].startswith('64')
-    for prefix in ('/', '/usr', '/usr/local', _exec_prefix):
-        libdir = os.path.join(prefix, 'lib')
-        libdir64 = os.path.join(prefix, 'lib64')
-        if arch64 and os.path.exists(libdir64):
-            default_library_paths.append(libdir64)
-        else:
-            default_library_paths.append(libdir)
-    return default_library_paths
 
 
 def _read_file_as_str(name):
@@ -135,15 +120,6 @@ class build(_build):
                     found_path.find(library_version + ".") > -1:
                 # call 1.1.0 the only compatible version for now
                 notfound = False
-
-        if found_path and notfound:
-            # look harder
-            _build_default_lib_search_path()
-            for dir in (default_library_paths):
-                liberasure_file_path = dir + os.sep + liberasure_file
-                if (os.path.isfile(liberasure_file_path)):
-                    notfound = False
-                    break
 
         if not notfound:
             return
@@ -278,7 +254,6 @@ module = Extension('pyeclib_c',
                                  '/usr/include',
                                  'src/c/pyeclib_c',
                                  '/usr/local/include'],
-                   runtime_library_dirs=default_library_paths,
                    libraries=['erasurecode'],
                    # The extra arguments are for debugging
                    # extra_compile_args=['-g', '-O0'],
