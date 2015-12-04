@@ -52,6 +52,12 @@ default_python_incdir = get_python_inc()
 
 
 # utility routines
+def _read_file_as_str(name):
+    with open(name, "rt") as f:
+        s = f.readline().strip()
+    return s
+
+
 def _find_library(name):
     target_lib = None
     if os.name == 'posix' and sys.platform.startswith('linux'):
@@ -71,37 +77,11 @@ def _find_library(name):
     return target_lib
 
 
-def _read_file_as_str(name):
-    with open(name, "rt") as f:
-        s = f.readline().strip()
-    return s
-
-
-def _liberasurecode_install_error(library, library_url):
-    print("***                                                ")
-    print("*** Please install " + library + " manually.       ")
-    print("*** project url: %s" % library_url)
-
-
-install_libec = True
-
-
 class build(_build):
-
-    boolean_options = _build.boolean_options + ['install-liberasurecode']
-    user_options = _build.user_options + [
-        ('install-liberasurecode=', None,
-         'Install liberasurecode dependency (yes/no) [default: yes].')
-    ]
-
-    def initialize_options(self):
-        self.install_liberasurecode = True
-        _build.initialize_options(self)
 
     def check_liberasure(self):
         library_basename = "liberasurecode"
-        library_version = "1.1.0"
-        # try using an integrated copy of the library
+        library_version = "1"
         library = library_basename + "-" + library_version
         library_url = "https://bitbucket.org/tsg-/liberasurecode.git"
 
@@ -112,69 +92,27 @@ class build(_build):
             liberasure_file = \
                 library_basename + ".so." + library_version
 
-        notfound = True
         found_path = _find_library("erasurecode")
-
         if found_path:
             if found_path.endswith(library_version) or \
                     found_path.find(library_version + ".") > -1:
-                # call 1.1.0 the only compatible version for now
-                notfound = False
-
-        if not notfound:
-            return
-
-        install_status = 0
+                # call 1.x.x the only compatible version for now
+                return
 
         print("**************************************************************")
         print("***                                                           ")
         print("*** Can not locate %s" % (liberasure_file))
-
-        if install_libec:
-            print("**                                                 ")
-            print("** PyECLib requires liberasurecode.  Trying to     ")
-            print("** install using bundled tarball.                  ")
-            print("**                                                 ")
-            print("** If you have liberasurecode already installed,   ")
-            print("** you may need to run 'sudo ldconfig' to update   ")
-            print("** the loader cache.                               ")
-
-            srcpath = "src/c/"
-            locallibsrcdir = (srcpath + library)
-            os.system("rm -r %s" % locallibsrcdir)
-            retval = os.system("tar -xzf %s/%s.tar.gz -C %s" %
-                               (srcpath, library, srcpath))
-            if (os.path.isdir(locallibsrcdir)):
-                curdir = os.getcwd()
-                os.chdir(locallibsrcdir)
-                configure_cmd = ("./configure --prefix=/usr/local")
-                print(configure_cmd)
-                install_status = os.system(configure_cmd)
-                if install_status != 0:
-                    _liberasurecode_install_error(library, library_url)
-                    os.chdir(curdir)
-                make_cmd = ("make && make install")
-                install_status = os.system(make_cmd)
-                if install_status != 0:
-                    _liberasurecode_install_error(library, library_url)
-                    os.chdir(curdir)
-                os.chdir(curdir)
-        else:
-            _liberasurecode_install_error(library, library_url)
-            install_status = -1
-
+        print("***                                                ")
+        print("*** Install - ")
+        print("***   Manual: %s" % library_url)
+        print("***   Fedora/Red Hat variants: liberasurecode-devel")
+        print("***   Debian/Ubuntu variants: liberasurecode-dev")
         print("***                                                           ")
         print("**************************************************************")
 
-        if install_status != 0:
-            sys.exit(install_status)
+        sys.exit(-1)
 
     def run(self):
-        global install_libec
-
-        if not self.install_liberasurecode:
-            install_libec = False
-
         self.check_liberasure()
         _build.run(self)
 
@@ -187,21 +125,7 @@ class clean(_clean):
 
 class install(_install):
 
-    boolean_options = _install.boolean_options + ['install-liberasurecode']
-    user_options = _install.user_options + [
-        ('install-liberasurecode=', None,
-         'Install liberasurecode dependency (yes/no) [default: yes].')
-    ]
-
-    def initialize_options(self):
-        self.install_liberasurecode = True
-        _install.initialize_options(self)
-
     def run(self):
-        global install_libec
-
-        if not self.install_liberasurecode:
-            install_libec = False
 
         install_cmd = self.distribution.get_command_obj('install')
         install_lib = self.distribution.get_command_obj('install_lib')
