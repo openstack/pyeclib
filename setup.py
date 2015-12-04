@@ -47,7 +47,6 @@ from setuptools import Extension
 from setuptools.command.install import install as _install
 
 platform_str = platform.platform()
-platform_arch = platform.architecture()
 default_python_incdir = get_python_inc()
 
 
