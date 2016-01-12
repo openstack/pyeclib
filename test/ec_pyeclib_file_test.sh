@@ -37,7 +37,14 @@ if [ ! -d ${FRAGMENT_DIR} ]; then
   mkdir ${FRAGMENT_DIR}
 fi
 
-TYPES="flat_xor_hd jerasure_rs_vand jerasure_rs_cauchy liberasurecode_rs_vand"
+TYPES="
+jerasure_rs_vand
+jerasure_rs_cauchy
+flat_xor_hd_3
+flat_xor_hd_4
+isa_l_rs_vand
+liberasurecode_rs_vand
+"
 NUM_DATAS="10 11 12"
 RS_NUM_PARITIES="2 3 4"
 XOR_NUM_PARITIES="6"
@@ -51,13 +58,13 @@ for TYPE in ${TYPES}; do
     rm ${DECODED_DIR}/*
     rm ${FRAGMENT_DIR}/*
     NUM_PARITIES=${RS_NUM_PARITIES}
-    if [[ `echo flat_xor_hd | grep ${TYPE}` ]]; then
+    if [[ ${TYPE} == "flat_xor_hd"* ]]; then
       NUM_PARITIES=${XOR_NUM_PARITIES}
     fi
     for NUM_PARITY in ${NUM_PARITIES}; do
       let NUM_TOTAL=$(( NUM_DATA + NUM_PARITY))
       FAULT_TOL=${NUM_PARITY}
-      if [[ ${TYPE} == "flat_xor_hd" ]]; then
+      if [[ ${TYPE} == "flat_xor_hd"* ]]; then
         FAULT_TOL="2"
       fi 
       for file in `cd ${FILES}; echo *; cd ..`; do
