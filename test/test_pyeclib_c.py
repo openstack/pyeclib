@@ -278,12 +278,12 @@ class TestPyECLib(unittest.TestCase):
         return format(throughput, '.10g')
 
     def test_xor_code(self):
-        if "flat_xor_hd" not in VALID_EC_TYPES:
+        if "flat_xor_hd_3" not in VALID_EC_TYPES:
             print("xor backend is not available in your enviromnet, skipping test")
             return
 
         for (ec_type, k, m, hd) in self.xor_types:
-            print(("\nRunning tests for %s k=%d, m=%d, hd=%d" % (ec_type, k, m, hd)))
+            print(("\nRunning tests for flat_xor_hd k=%d, m=%d, hd=%d" % (k, m, hd)))
 
             for size_str in self.sizes:
                 avg_time = self.time_encode(k, m, ec_type.value, hd,
