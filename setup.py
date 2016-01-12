@@ -169,7 +169,7 @@ class install(_install):
 
 module = Extension('pyeclib_c',
                    define_macros=[('MAJOR VERSION', '1'),
-                                  ('MINOR VERSION', '1')],
+                                  ('MINOR VERSION', '2')],
                    include_dirs=[default_python_incdir,
                                  'src/c/pyeclib_c',
                                  '/usr/include',
@@ -182,7 +182,7 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='PyECLib',
-      version='1.1.1',
+      version='1.2.0',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',

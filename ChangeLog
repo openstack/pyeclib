@@ -1,3 +1,22 @@
+New in 1.2.0
+------------
+
+ * Remove integrated liberasurecode - the prereq library is now 
+   available in major deb/rpm based distros
+
+ * Eliminate liberasurecode-related rpath checks, library searches
+   and architecture validation
+
+ * Changes for compatibility with liberasurecode versions prior to
+   1.1.0
+
+ * Make VALID_EC_TYPES a runtime property - dynamically look for 
+   liberasurecode EC schemes available at runtime
+
+ * More comprehensive unit test coverage 
+
+ * Add travis-ci build config for automated build/tests
+
 New in 1.1.0
 ------------
 
