@@ -50,6 +50,8 @@ platform_str = platform.platform()
 default_python_incdir = get_python_inc()
 
 
+# this is to be used only for library existence/version checks,
+# not for rpath handling
 def _find_library(name):
     target_lib = find_library(name)
     if platform_str.find("Darwin") > -1:
