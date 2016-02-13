@@ -58,13 +58,8 @@ def _read_file_as_str(name):
 
 
 def _find_library(name):
-    target_lib = None
-    if os.name == 'posix' and sys.platform.startswith('linux'):
-        from ctypes.util import _findLib_gcc
-        target_lib = _findLib_gcc(name)
-    else:
-        target_lib = find_library(name)
-    if target_lib:
+    target_lib = find_library(name)
+    if platform_str.find("Darwin") > -1:
         target_lib = os.path.abspath(target_lib)
         if os.path.islink(target_lib):
             p = os.readlink(target_lib)
@@ -84,19 +79,19 @@ class build(_build):
         library = library_basename + "-" + library_version
         library_url = "https://bitbucket.org/tsg-/liberasurecode.git"
 
-        if platform_str.find("Darwin") > -1:
-            liberasure_file = \
-                library_basename + "." + library_version + ".dylib"
-        else:
-            liberasure_file = \
-                library_basename + ".so." + library_version
-
         found_path = _find_library("erasurecode")
         if found_path:
             if found_path.endswith(library_version) or \
                     found_path.find(library_version + ".") > -1:
                 # call 1.x.x the only compatible version for now
                 return
+
+        if platform_str.find("Darwin") > -1:
+            liberasure_file = \
+                library_basename + "." + library_version + ".dylib"
+        else:
+            liberasure_file = \
+                library_basename + ".so." + library_version
 
         print("**************************************************************")
         print("***                                                           ")
