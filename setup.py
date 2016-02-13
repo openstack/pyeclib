@@ -50,13 +50,6 @@ platform_str = platform.platform()
 default_python_incdir = get_python_inc()
 
 
-# utility routines
-def _read_file_as_str(name):
-    with open(name, "rt") as f:
-        s = f.readline().strip()
-    return s
-
-
 def _find_library(name):
     target_lib = find_library(name)
     if platform_str.find("Darwin") > -1:
