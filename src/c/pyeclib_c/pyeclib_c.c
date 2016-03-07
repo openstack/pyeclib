@@ -1172,6 +1172,22 @@ exit:
   return ret_obj;
 }
 
+static PyObject*
+pyeclib_c_check_backend_available(PyObject *self, PyObject *args)
+{
+    const ec_backend_id_t backend_id;
+
+    if (!PyArg_ParseTuple(args, "i", &backend_id)) {
+        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_check_backend_available ERROR: ");
+        return NULL;
+    }
+
+    if (liberasurecode_backend_available(backend_id)) {
+        Py_RETURN_TRUE;
+    }
+
+    Py_RETURN_FALSE;
+}
 
 static PyMethodDef PyECLibMethods[] = {
     {"init",  pyeclib_c_init, METH_VARARGS, "Initialize a new erasure encoder/decoder"},
@@ -1182,6 +1198,7 @@ static PyMethodDef PyECLibMethods[] = {
     {"get_segment_info", pyeclib_c_get_segment_info, METH_VARARGS, "Return segment and fragment size information needed when encoding a segmented stream"},
     {"get_metadata", pyeclib_c_get_metadata, METH_VARARGS, "Get the integrity checking metadata for a fragment"},
     {"check_metadata", pyeclib_c_check_metadata, METH_VARARGS, "Check the integrity checking metadata for a set of fragments"},
+    {"check_backend_available", pyeclib_c_check_backend_available, METH_VARARGS, "Check if a backend is available"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
