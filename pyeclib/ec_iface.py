@@ -26,6 +26,7 @@ from .enum import Enum
 from .enum import unique
 from .utils import create_instance
 from .utils import positive_int_value
+from pyeclib_c import check_backend_available
 
 
 def PyECLibVersion(z, y, x):
@@ -476,18 +477,14 @@ ALL_EC_TYPES = [
 def _PyECLibValidECTypes():
     available_ec_types = []
     for _type in ALL_EC_TYPES:
-        driver = None
-        try:
-            if _type is 'shss':
-                _m = 4
-            else:
-                _m = 5
-            driver = ECDriver(k=10, m=_m, ec_type=_type, validate=True)
-            if driver:
-                available_ec_types.append(_type)
-        except:
-            # ignore any errors, assume backend not available
+        if _type.startswith('flat_xor_hd'):
+            int_type = PyECLib_EC_Types.get_by_name('flat_xor_hd')
+        else:
+            int_type = PyECLib_EC_Types.get_by_name(_type)
+        if not int_type:
             continue
+        if check_backend_available(int_type.value):
+            available_ec_types.append(_type)
     return available_ec_types
 
 
