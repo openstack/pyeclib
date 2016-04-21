@@ -30,6 +30,7 @@ from pyeclib.ec_iface import ECBackendNotSupported
 from pyeclib.ec_iface import ECDriver
 from pyeclib.ec_iface import ECDriverError
 from pyeclib.ec_iface import ECInsufficientFragments
+from pyeclib.ec_iface import ECInvalidFragmentMetadata
 from pyeclib.ec_iface import PyECLib_EC_Types
 from pyeclib.ec_iface import ALL_EC_TYPES
 from pyeclib.ec_iface import VALID_EC_TYPES
@@ -537,7 +538,7 @@ class TestPyECLibDriver(unittest.TestCase):
                         fragments[i] = corrupted_fragment
                       i += 1
 
-                    self.assertRaises(ECInsufficientFragments,
+                    self.assertRaises(ECInvalidFragmentMetadata,
                                       pyeclib_driver.decode,
                                       fragments[:], force_metadata_checks=True)
 
