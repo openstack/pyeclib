@@ -264,6 +264,3 @@ References
  [4] Intel(R) Storage Acceleration Library (Open Source Version), https://01.org/intel%C2%AE-storage-acceleration-library-open-source-version
 
  [5] Kota Tsuyuzaki <tsuyuzaki.kota@lab.ntt.co.jp>, Ryuta Kon <kon.ryuta@po.ntts.co.jp>, "NTT SHSS Erasure Coding backend"
-
---
-1.2
