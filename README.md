@@ -229,7 +229,7 @@ Quick Start
   Install pre-requisites:
   
     * Python 2.6, 2.7 or 3.x (including development packages), argparse, setuptools
-    * liberasurecode v1.1.0 or greater [3]
+    * liberasurecode v1.2.0 or greater [3]
     * Erasure code backend libraries, gf-complete and Jerasure [1],[2], ISA-L [4] etc
 
   Install PyECLib::
