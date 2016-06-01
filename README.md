@@ -259,7 +259,7 @@ References
 
  [2] Greenan, Kevin M et al, "Flat XOR-based erasure codes in storage systems", http://www.kaymgee.com/Kevin_Greenan/Publications_files/greenan-msst10.pdf
 
- [3] liberasurecode, C API abstraction layer for erasure coding backends, https://bitbucket.org/tsg-/liberasurecode
+ [3] liberasurecode, C API abstraction layer for erasure coding backends, https://github.com/openstack/liberasurecode
 
  [4] Intel(R) Storage Acceleration Library (Open Source Version), https://01.org/intel%C2%AE-storage-acceleration-library-open-source-version
 
