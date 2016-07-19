@@ -38,6 +38,8 @@ from pyeclib.ec_iface import PyECLib_EC_Types
 from pyeclib.ec_iface import ALL_EC_TYPES
 from pyeclib.ec_iface import VALID_EC_TYPES
 from pyeclib.ec_iface import LIBERASURECODE_VERSION
+import resource
+
 
 if sys.version < '3':
     def b2i(b):
@@ -609,6 +611,28 @@ class TestPyECLibDriver(unittest.TestCase):
                 pyeclib_drivers.append(ECDriver(k=10, m=5, ec_type=ec_type))
                 self.assertTrue(
                     pyeclib_drivers[0].min_parity_fragments_needed() == 1)
+
+    def test_get_segment_info_memory_usage(self):
+        for ec_driver in self.get_pyeclib_testspec():
+            self._test_get_segment_info_memory_usage(ec_driver)
+
+    def _test_get_segment_info_memory_usage(self, ec_driver):
+        # 1. Preapre the expected memory allocation
+        info = ec_driver.get_segment_info(1024*1024, 1024*1024)
+        info = None
+        loop_range = range(1000)
+
+        # 2. Get current memory usage
+        usage = resource.getrusage(resource.RUSAGE_SELF)[2]
+
+        # 3. Loop to call get_segment_info
+        for x in loop_range:
+            ec_driver.get_segment_info(1024*1024, 1024*1024)
+
+        # 4. memory usage shoudln't be increased
+        self.assertEqual(usage, resource.getrusage(resource.RUSAGE_SELF)[2],
+                         'Memory usage is increased unexpectedly %s - %s' %
+                         (usage, resource.getrusage(resource.RUSAGE_SELF)[2]))
 
 
 if __name__ == '__main__':

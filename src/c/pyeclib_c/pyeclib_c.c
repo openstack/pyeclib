@@ -354,6 +354,19 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   PyObject *pyeclib_obj_handle = NULL;
   pyeclib_t *pyeclib_handle = NULL;
   PyObject *ret_dict = NULL;               /* python dictionary to return */
+
+  // Prepare variables for return dict to cleanup on exit
+  PyObject *segment_size_key = NULL;
+  PyObject *segment_size_value = NULL;
+  PyObject *last_segment_size_key = NULL;
+  PyObject *last_segment_size_value = NULL;
+  PyObject *fragment_size_key = NULL;
+  PyObject *fragment_size_value = NULL;
+  PyObject *last_fragment_size_key = NULL;
+  PyObject *last_fragment_size_value = NULL;
+  PyObject *num_segments_key = NULL;
+  PyObject *num_segments_value = NULL;
+
   int data_len;                            /* data length from user in bytes */
   int segment_size, last_segment_size;     /* segment sizes in bytes */
   int num_segments;                        /* total number of segments */
@@ -451,16 +464,49 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   /* Create and return the python dictionary of segment info */
   ret_dict = PyDict_New();
   if (NULL == ret_dict) {
-    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_segment_info ERROR: ");
+    goto error;
   } else {
-    PyDict_SetItem(ret_dict, PyString_FromString("segment_size\0"), PyInt_FromLong(segment_size));
-    PyDict_SetItem(ret_dict, PyString_FromString("last_segment_size\0"), PyInt_FromLong(last_segment_size));
-    PyDict_SetItem(ret_dict, PyString_FromString("fragment_size\0"), PyInt_FromLong(fragment_size));
-    PyDict_SetItem(ret_dict, PyString_FromString("last_fragment_size\0"), PyInt_FromLong(last_fragment_size));
-    PyDict_SetItem(ret_dict, PyString_FromString("num_segments\0"), PyInt_FromLong(num_segments));
+    if((segment_size_key = PyString_FromString("segment_size\0")) == NULL ||
+       (segment_size_value = PyInt_FromLong(segment_size)) == NULL ||
+       PyDict_SetItem(ret_dict, segment_size_key, segment_size_value)) goto error;
+
+    if((last_segment_size_key = PyString_FromString("last_segment_size\0")) == NULL ||
+       (last_segment_size_value = PyInt_FromLong(last_segment_size)) == NULL ||
+       PyDict_SetItem(ret_dict, last_segment_size_key, last_segment_size_value)) goto error;
+
+    if((fragment_size_key = PyString_FromString("fragment_size\0")) == NULL ||
+       (fragment_size_value = PyInt_FromLong(fragment_size)) == NULL ||
+       PyDict_SetItem(ret_dict, fragment_size_key, fragment_size_value)) goto error;
+
+    if((last_fragment_size_key = PyString_FromString("last_fragment_size\0")) == NULL ||
+       (last_fragment_size_value = PyInt_FromLong(last_fragment_size)) == NULL ||
+        PyDict_SetItem(ret_dict, last_fragment_size_key, last_fragment_size_value)) goto error;
+
+    if((num_segments_key = PyString_FromString("num_segments\0")) == NULL ||
+       (num_segments_value = PyInt_FromLong(num_segments)) == NULL ||
+       PyDict_SetItem(ret_dict, num_segments_key, num_segments_value)) goto error;
   }
-  
-  return ret_dict;
+
+exit:
+    Py_XDECREF(segment_size_key);
+    Py_XDECREF(segment_size_value);
+    Py_XDECREF(last_segment_size_key);
+    Py_XDECREF(last_segment_size_value);
+    Py_XDECREF(fragment_size_key);
+    Py_XDECREF(fragment_size_value);
+    Py_XDECREF(last_fragment_size_key);
+    Py_XDECREF(last_fragment_size_value);
+    Py_XDECREF(num_segments_key);
+    Py_XDECREF(num_segments_value);
+    return ret_dict;
+
+error:
+    // To prevent unexpected call, this is placed after return call
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_segment_info ERROR: ");
+    Py_XDECREF(ret_dict);
+    ret_dict = NULL;
+    goto exit;
+
 }
 
 
