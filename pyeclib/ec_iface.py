@@ -26,7 +26,35 @@ from .enum import Enum
 from .enum import unique
 from .utils import create_instance
 from .utils import positive_int_value
-from pyeclib_c import check_backend_available
+from pyeclib_c import get_liberasurecode_version
+
+
+def check_backend_available(backend_name):
+    try:
+        from pyeclib_c import check_backend_available
+
+        if backend_name.startswith('flat_xor_hd'):
+            int_type = PyECLib_EC_Types.get_by_name('flat_xor_hd')
+        else:
+            int_type = PyECLib_EC_Types.get_by_name(backend_name)
+        if not int_type:
+            return False
+        return check_backend_available(int_type.value)
+    except ImportError:
+        # check_backend_available has been supported since
+        # liberasurecode>=1.2.0 so we need to define the func for older
+        # liberasurecode version
+
+        # select available k, m values
+        if backend_name.startswith('flat_xor_hd'):
+            k, m = (10, 5)
+        else:
+            k, m = (10, 4)
+        try:
+            driver = ECDriver(ec_type=backend_name, k=k, m=m)
+        except ECDriverError:
+            return False
+        return True
 
 
 def PyECLibVersion(z, y, x):
@@ -477,15 +505,22 @@ ALL_EC_TYPES = [
 def _PyECLibValidECTypes():
     available_ec_types = []
     for _type in ALL_EC_TYPES:
-        if _type.startswith('flat_xor_hd'):
-            int_type = PyECLib_EC_Types.get_by_name('flat_xor_hd')
-        else:
-            int_type = PyECLib_EC_Types.get_by_name(_type)
-        if not int_type:
-            continue
-        if check_backend_available(int_type.value):
+        if check_backend_available(_type):
             available_ec_types.append(_type)
     return available_ec_types
 
 
 VALID_EC_TYPES = _PyECLibValidECTypes()
+
+
+def _liberasurecode_version():
+    version_int = get_liberasurecode_version()
+    version_hex_str = hex(version_int)
+    version_hex_str = version_hex_str.lstrip('0x')
+    major = str(int(version_hex_str[-6:-4]))
+    minor = str(int(version_hex_str[-4:-2]))
+    rev = str(int(version_hex_str[-2:]))
+    version_str = '.'.join([major, minor, rev])
+    return version_str
+
+LIBERASURECODE_VERSION = _liberasurecode_version()

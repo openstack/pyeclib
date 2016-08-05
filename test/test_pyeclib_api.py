@@ -26,6 +26,9 @@ from string import ascii_letters, ascii_uppercase, digits
 import sys
 import tempfile
 import unittest
+
+from distutils.version import StrictVersion
+
 from pyeclib.ec_iface import ECBackendNotSupported
 from pyeclib.ec_iface import ECDriver
 from pyeclib.ec_iface import ECDriverError
@@ -34,6 +37,7 @@ from pyeclib.ec_iface import ECInvalidFragmentMetadata
 from pyeclib.ec_iface import PyECLib_EC_Types
 from pyeclib.ec_iface import ALL_EC_TYPES
 from pyeclib.ec_iface import VALID_EC_TYPES
+from pyeclib.ec_iface import LIBERASURECODE_VERSION
 
 if sys.version < '3':
     def b2i(b):
@@ -531,6 +535,11 @@ class TestPyECLibDriver(unittest.TestCase):
                       (first_fragment_to_corrupt + i) % len(fragments) for i in range(num_to_corrupt)
                     ]
 
+                    if StrictVersion(LIBERASURECODE_VERSION) < \
+                            StrictVersion('1.2.0'):
+                        # if liberasurecode is older than the version supports
+                        # fragment integrity check, skip following test
+                        continue
                     i = 0
                     for fragment in fragments:
                       if i in fragments_to_corrupt:

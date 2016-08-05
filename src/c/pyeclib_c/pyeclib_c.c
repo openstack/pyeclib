@@ -85,6 +85,7 @@ static PyObject * pyeclib_c_reconstruct(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_decode(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_get_metadata(PyObject *self, PyObject *args);
 static PyObject * pyeclib_c_check_metadata(PyObject *self, PyObject *args);
+static PyObject * pyeclib_c_liberasurecode_version(PyObject *self, PyObject *args);
 
 static PyObject *import_class(const char *module, const char *cls)
 {
@@ -1189,6 +1190,11 @@ pyeclib_c_check_backend_available(PyObject *self, PyObject *args)
     Py_RETURN_FALSE;
 }
 
+static PyObject*
+pyeclib_c_liberasurecode_version(PyObject *self, PyObject *args){
+    return PyInt_FromLong(LIBERASURECODE_VERSION);
+}
+
 static PyMethodDef PyECLibMethods[] = {
     {"init",  pyeclib_c_init, METH_VARARGS, "Initialize a new erasure encoder/decoder"},
     {"encode",  pyeclib_c_encode, METH_VARARGS, "Create parity using source data"},
@@ -1198,7 +1204,10 @@ static PyMethodDef PyECLibMethods[] = {
     {"get_segment_info", pyeclib_c_get_segment_info, METH_VARARGS, "Return segment and fragment size information needed when encoding a segmented stream"},
     {"get_metadata", pyeclib_c_get_metadata, METH_VARARGS, "Get the integrity checking metadata for a fragment"},
     {"check_metadata", pyeclib_c_check_metadata, METH_VARARGS, "Check the integrity checking metadata for a set of fragments"},
+    {"get_liberasurecode_version", pyeclib_c_liberasurecode_version, METH_NOARGS, "Get libersaurecode version in use"},
+#if ( LIBERASURECODE_VERSION >= _VERSION(1,2,0) )
     {"check_backend_available", pyeclib_c_check_backend_available, METH_VARARGS, "Check if a backend is available"},
+#endif
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
