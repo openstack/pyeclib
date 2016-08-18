@@ -72,7 +72,7 @@ class build(_build):
         library_basename = "liberasurecode"
         library_version = "1"
         library = library_basename + "-" + library_version
-        library_url = "https://bitbucket.org/tsg-/liberasurecode.git"
+        library_url = "https://github.com/openstack/liberasurecode"
 
         found_path = _find_library("erasurecode")
         if found_path:
