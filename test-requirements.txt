@@ -2,5 +2,6 @@
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
 
+coverage
 nose
 sphinx>=1.1.2,!=1.2.0,!=1.3b1,<1.3  # BSD

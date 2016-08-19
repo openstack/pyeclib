@@ -3,5 +3,8 @@
 
 build-essential [platform:dpkg]
 gcc [platform:rpm]
+make [platform:rpm]
 liberasurecode-dev [platform:dpkg]
 liberasurecode-devel [platform:rpm]
+python-dev [platform:dpkg]
+python-devel [platform:rpm]

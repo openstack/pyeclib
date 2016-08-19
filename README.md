@@ -232,8 +232,19 @@ Quick Start
     * liberasurecode v1.2.0 or greater [3]
     * Erasure code backend libraries, gf-complete and Jerasure [1],[2], ISA-L [4] etc
 
-  Install PyECLib::
+    An example for ubuntu to install dependency packages:
+      $ sudo apt-get install build-essential python-dev python-pip liberasurecode-dev
+      $ sudo pip install -U bindep -r test-requirement.txt
 
+    If you want to confirm all dependency packages installed succuessfully, try:
+      $ sudo bindep -f bindep.txt
+
+    That shows missing dependency packages for you, http://docs.openstack.org/infra/bindep/
+
+    *Note*: currently liberasurecode-dev/liberasurecode-devel in package repo is older
+            than v1.2.0
+
+  Install PyECLib::
     $ sudo python setup.py install
 
   Run test suite included::
