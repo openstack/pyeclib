@@ -113,6 +113,34 @@ class TestPyECLibDriver(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_invalid_km_args(self):
+        for ec_type in VALID_EC_TYPES:
+            # missing k
+            with self.assertRaises(ECDriverError) as err_context:
+                ECDriver(ec_type=ec_type, m=1)
+
+            self.assertEqual(str(err_context.exception),
+                             "Invalid Argument: k is required")
+
+            # missing m
+            with self.assertRaises(ECDriverError) as err_context:
+                ECDriver(ec_type=ec_type, k=1)
+
+            self.assertEqual(str(err_context.exception),
+                             "Invalid Argument: m is required")
+
+            with self.assertRaises(ECDriverError) as err_context:
+                # m is smaller than 1
+                ECDriver(ec_type=ec_type, k=-100, m=1)
+            self.assertEqual(str(err_context.exception),
+                             "Invalid number of data fragments (k)")
+
+            with self.assertRaises(ECDriverError) as err_context:
+                # m is smaller than 1
+                ECDriver(ec_type=ec_type, k=1, m=-100)
+            self.assertEqual(str(err_context.exception),
+                             "Invalid number of data fragments (m)")
+
     def test_valid_ec_types(self):
         # Build list of available types and compare to VALID_EC_TYPES
         available_ec_types = []

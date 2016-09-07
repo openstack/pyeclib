@@ -142,6 +142,12 @@ class ECDriver(object):
         self.ec_type = None
         self.chksum_type = None
         self.validate = False
+
+        for required in ('k', 'm'):
+            if required not in kwargs:
+                raise ECDriverError(
+                    "Invalid Argument: %s is required" % required)
+
         for (key, value) in kwargs.items():
             if key == "k":
                 try:
