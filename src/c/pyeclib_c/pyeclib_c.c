@@ -373,6 +373,10 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 
   /* The minimum segment size depends on the EC algorithm */
   min_segment_size = liberasurecode_get_minimum_encode_size(pyeclib_handle->ec_desc);
+  if (min_segment_size < 0) {
+      pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info ERROR: ");
+      return NULL;
+  }
 
   /* Get the number of segments */
   num_segments = (int)ceill((double)data_len / segment_size);
@@ -396,7 +400,12 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      * This will retrieve fragment_size calculated by liberasurecode with
      * specified backend.
      */
+
     fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, data_len);
+    if (fragment_size < 0) {
+        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info ERROR: ");
+	return NULL;
+    }
 
     /* Segment size is the user-provided segment size */
     segment_size = data_len;
@@ -409,6 +418,10 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
      */
 
     fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, segment_size);
+    if (fragment_size < 0) {
+        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info ERROR: ");
+	return NULL;
+    }
 
     last_segment_size = data_len - (segment_size * (num_segments - 1)); 
 
@@ -425,6 +438,10 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
     } 
     
     last_fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, last_segment_size);
+    if (fragment_size < 0) {
+        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info ERROR: ");
+	return NULL;
+    }
   }
 
   /* Add header to fragment sizes */
@@ -1191,7 +1208,7 @@ pyeclib_c_check_backend_available(PyObject *self, PyObject *args)
 }
 
 static PyObject*
-pyeclib_c_liberasurecode_version(PyObject *self, PyObject *args){
+pyeclib_c_liberasurecode_version(PyObject *self, PyObject *args) {
     return PyInt_FromLong(LIBERASURECODE_VERSION);
 }
 
