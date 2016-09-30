@@ -171,8 +171,8 @@ module = Extension('pyeclib_c',
                    # extra_compile_args=['-g', '-O0'],
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
-setup(name='PyECLib',
-      version='1.3.0',
+setup(name='pyeclib',
+      version='1.3.1',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
