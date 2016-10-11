@@ -31,11 +31,13 @@ import unittest
 from distutils.version import StrictVersion
 from itertools import combinations
 
+import pyeclib.ec_iface
 from pyeclib.ec_iface import ECBackendNotSupported
 from pyeclib.ec_iface import ECDriver
 from pyeclib.ec_iface import ECDriverError
 from pyeclib.ec_iface import ECInsufficientFragments
 from pyeclib.ec_iface import ECInvalidFragmentMetadata
+from pyeclib.ec_iface import ECInvalidParameter
 from pyeclib.ec_iface import PyECLib_EC_Types
 from pyeclib.ec_iface import ALL_EC_TYPES
 from pyeclib.ec_iface import VALID_EC_TYPES
@@ -268,6 +270,45 @@ class TestPyECLibDriver(unittest.TestCase):
                 decoded_str = pyeclib_driver.decode(encoded_fragments)
 
                 self.assertTrue(decoded_str == encode_str)
+
+    def test_encode_invalid_params(self):
+        pyeclib_drivers = self.get_pyeclib_testspec()
+        encode_args = [u'\U0001F0A1', 3, object(), None, {}, []]
+
+        for pyeclib_driver in pyeclib_drivers:
+            for encode_str in encode_args:
+                with self.assertRaises(ECInvalidParameter):
+                    pyeclib_driver.encode(encode_str)
+
+    def test_attribute_error_in_the_error_handling(self):
+        pyeclib_drivers = self.get_pyeclib_testspec()
+        self.assertGreater(len(pyeclib_drivers), 0)
+        pyeclib_driver = pyeclib_drivers[0]
+
+        del pyeclib.ec_iface.ECInvalidParameter
+        try:
+            with self.assertRaises(AttributeError):  # !!
+                pyeclib_driver.encode(3)
+        finally:
+            pyeclib.ec_iface.ECInvalidParameter = ECInvalidParameter
+
+    def test_import_error_in_the_error_handling(self):
+        pyeclib_drivers = self.get_pyeclib_testspec()
+        self.assertGreater(len(pyeclib_drivers), 0)
+        pyeclib_driver = pyeclib_drivers[0]
+
+        from six.moves import builtins
+        real_import = builtins.__import__
+
+        def fake_import(*a, **kw):
+            raise ImportError
+
+        builtins.__import__ = fake_import
+        try:
+            with self.assertRaises(ImportError):  # !!
+                pyeclib_driver.encode(3)
+        finally:
+            builtins.__import__ = real_import
 
     def test_decode_reconstruct_with_fragment_iterator(self):
         pyeclib_drivers = self.get_pyeclib_testspec()
