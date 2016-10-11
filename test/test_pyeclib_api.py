@@ -727,6 +727,30 @@ class TestPyECLibDriver(unittest.TestCase):
                 "ECDriver(ec_type='%s', k=%s, m=%s)" %
                 (name, driver.k, driver.m), repr(driver))
 
+    def test_get_metadata_memory_usage(self):
+        for ec_driver in self.get_pyeclib_testspec():
+            self._test_get_metadata_memory_usage(ec_driver)
+
+    def _test_get_metadata_memory_usage(self, ec_driver):
+        # 1. Prepare the expected memory allocation
+        encoded = ec_driver.encode(b'aaa')
+        info = ec_driver.get_metadata(encoded[0], formatted=True)
+        info = None
+        loop_range = range(1000)
+
+        # 2. Get current memory usage
+        baseline_usage = resource.getrusage(resource.RUSAGE_SELF)[2]
+
+        # 3. Loop to call get_metadata
+        for x in loop_range:
+            ec_driver.get_metadata(encoded[0], formatted=True)
+
+        # 4. memory usage shouldn't increase
+        new_usage = resource.getrusage(resource.RUSAGE_SELF)[2]
+        self.assertEqual(baseline_usage, new_usage,
+                         'Memory usage is increased unexpectedly %s -> %s' %
+                         (baseline_usage, new_usage))
+
 
 if __name__ == '__main__':
     unittest.main()
