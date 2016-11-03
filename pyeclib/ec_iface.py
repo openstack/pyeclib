@@ -123,6 +123,7 @@ class PyECLib_EC_Types(PyECLibEnum):
     isa_l_rs_vand = 4
     shss = 5
     liberasurecode_rs_vand = 6
+    isa_l_rs_cauchy = 7
 
 
 # Output of Erasure (en)Coding process are data "fragments".  Fragment data
@@ -519,6 +520,7 @@ ALL_EC_TYPES = [
     'isa_l_rs_vand',
     'shss',
     'liberasurecode_rs_vand',
+    'isa_l_rs_cauchy',
 ]
 
 
