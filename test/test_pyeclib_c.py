@@ -52,6 +52,12 @@ class Timer:
         self.end_time = time.time()
         return self.curr_delta()
 
+
+def require_backend(backend):
+    return unittest.skipIf(backend not in VALID_EC_TYPES,
+                           "%s backend is not available" % backend)
+
+
 class TestPyECLib(unittest.TestCase):
 
     def __init__(self, *args):
@@ -122,6 +128,18 @@ class TestPyECLib(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def iter_available_types(self, ec_types):
+        found_one = False
+        for ec_type in ec_types:
+            if ec_type.name not in VALID_EC_TYPES:
+                continue
+            found_one = True
+            yield ec_type
+        if not found_one:
+            type_list = ', '.join(t.name for t in ec_types)
+            raise unittest.SkipTest('No backend available in types: %r' %
+                                    type_list)
+
     def time_encode(self, num_data, num_parity, ec_type, hd,
                     file_size, iterations):
         """
@@ -134,7 +152,7 @@ class TestPyECLib(unittest.TestCase):
 
         timer.start()
         for l in range(iterations):
-            fragments = pyeclib_c.encode(handle, whole_file_bytes)
+            pyeclib_c.encode(handle, whole_file_bytes)
         tsum = timer.stop_and_return()
 
         return tsum / iterations
@@ -155,7 +173,6 @@ class TestPyECLib(unittest.TestCase):
         orig_fragments = fragments[:]
 
         for i in range(iterations):
-            missing_idxs = []
             num_missing = hd - 1
             for j in range(num_missing):
                 num_frags_left = len(fragments)
@@ -164,20 +181,20 @@ class TestPyECLib(unittest.TestCase):
 
             timer.start()
             decoded_file_bytes = pyeclib_c.decode(handle,
-                                                 fragments,
-                                                 len(fragments[0]))
+                                                  fragments,
+                                                  len(fragments[0]))
             tsum += timer.stop_and_return()
 
             fragments = orig_fragments[:]
 
             if whole_file_bytes != decoded_file_bytes:
-              success = False
+                success = False
 
         return success, tsum / iterations
-    
+
     def time_range_decode(self,
-                    num_data, num_parity, ec_type, hd,
-                    file_size, iterations):
+                          num_data, num_parity, ec_type, hd,
+                          file_size, iterations):
         """
         :return 2-tuple, (success, average decode time)
         """
@@ -187,8 +204,10 @@ class TestPyECLib(unittest.TestCase):
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
-        begins = [int(random.randint(0, len(whole_file_bytes) - 1)) for i in range(3)]
-        ends = [int(random.randint(begins[i], len(whole_file_bytes))) for i in range(3)]
+        begins = [int(random.randint(0, len(whole_file_bytes) - 1))
+                  for i in range(3)]
+        ends = [int(random.randint(begins[i], len(whole_file_bytes)))
+                for i in range(3)]
 
         ranges = list(zip(begins, ends))
 
@@ -196,7 +215,6 @@ class TestPyECLib(unittest.TestCase):
         orig_fragments = fragments[:]
 
         for i in range(iterations):
-            missing_idxs = []
             num_missing = hd - 1
             for j in range(num_missing):
                 num_frags_left = len(fragments)
@@ -214,12 +232,12 @@ class TestPyECLib(unittest.TestCase):
 
             range_offset = 0
             for r in ranges:
-              if whole_file_bytes[r[0]:r[1]+1] != decoded_file_ranges[range_offset]:
-                success = False
-              range_offset += 1
+                if whole_file_bytes[
+                        r[0]: r[1] + 1] != decoded_file_ranges[range_offset]:
+                    success = False
+                range_offset += 1
 
         return success, tsum / iterations
-
 
     def time_reconstruct(self,
                          num_data, num_parity, ec_type, hd,
@@ -243,7 +261,7 @@ class TestPyECLib(unittest.TestCase):
                 num_frags_left = len(fragments)
                 idx = random.randint(0, num_frags_left - 1)
                 while idx in missing_idxs:
-                  idx = random.randint(0, num_frags_left - 1)
+                    idx = random.randint(0, num_frags_left - 1)
                 missing_idxs.append(idx)
                 fragments.pop(idx)
 
@@ -261,7 +279,7 @@ class TestPyECLib(unittest.TestCase):
                     fd_orig.write(orig_fragments[missing_idxs[0]])
                 with open("decoded_fragments", "wb") as fd_decoded:
                     fd_decoded.write(reconstructed_fragment)
-                print(("Fragment %d was not reconstructed!!!" % missing_idxs[0]))
+                print("Fragment %d was not reconstructed!!!" % missing_idxs[0])
                 sys.exit(2)
 
         return success, tsum / iterations
@@ -277,13 +295,11 @@ class TestPyECLib(unittest.TestCase):
 
         return format(throughput, '.10g')
 
+    @require_backend("flat_xor_hd_3")
     def test_xor_code(self):
-        if "flat_xor_hd_3" not in VALID_EC_TYPES:
-            print("xor backend is not available in your enviromnet, skipping test")
-            return
-
         for (ec_type, k, m, hd) in self.xor_types:
-            print(("\nRunning tests for flat_xor_hd k=%d, m=%d, hd=%d" % (k, m, hd)))
+            print("\nRunning tests for flat_xor_hd k=%d, m=%d, hd=%d" %
+                  (k, m, hd))
 
             for size_str in self.sizes:
                 avg_time = self.time_encode(k, m, ec_type.value, hd,
@@ -301,18 +317,14 @@ class TestPyECLib(unittest.TestCase):
                       (size_str, self.get_throughput(avg_time, size_str)))
 
             for size_str in self.sizes:
-                success, avg_time = self.time_reconstruct(k, m, ec_type.value, hd,
-                                                          size_str,
-                                                          self.iterations)
+                success, avg_time = self.time_reconstruct(
+                    k, m, ec_type.value, hd, size_str, self.iterations)
                 self.assertTrue(success)
                 print("Reconstruct (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
 
+    @require_backend("shss")
     def test_shss(self):
-        if "shss" not in VALID_EC_TYPES:
-            print("shss backend is not available in your enviromnet, skipping test")
-            return
-
         for (ec_type, k, m) in self.shss:
             print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
 
@@ -335,9 +347,8 @@ class TestPyECLib(unittest.TestCase):
                       (size_str, self.get_throughput(avg_time, size_str)))
 
             for size_str in self.sizes:
-                success, avg_time = self.time_reconstruct(k, m, ec_type.value, 0,
-                                                          size_str,
-                                                          self.iterations)
+                success, avg_time = self.time_reconstruct(
+                    k, m, ec_type.value, 0, size_str, self.iterations)
                 self.assertTrue(success)
                 print("Reconstruct (%s): %s" %
                       (size_str, self.get_throughput(avg_time, size_str)))
@@ -372,68 +383,56 @@ class TestPyECLib(unittest.TestCase):
 
             if expected_fragments != required_fragments:
                 success = False
-                print(("Unexpected required fragments list "
-                       "(exp != req): %s != %s" %
-                       (expected_fragments, required_fragments)))
+                print("Unexpected required fragments list "
+                      "(exp != req): %s != %s" % (
+                          expected_fragments, required_fragments))
 
         return success
 
     def test_codes(self):
-        for ec_type in self.rs_types:
-            if ec_type.name not in VALID_EC_TYPES:
-                print("%s backend is not available in your enviromnet, skipping test" % ec_type.name)
-                continue
-
-            print(("\nRunning tests for %s" % (ec_type)))
-
+        for ec_type in self.iter_available_types(self.rs_types):
             for i in range(len(self.num_datas)):
-                success = self._test_get_required_fragments(self.num_datas[i],
-                                                            self.num_parities[i],
-                                                            ec_type)
+                success = self._test_get_required_fragments(
+                    self.num_datas[i], self.num_parities[i], ec_type)
                 self.assertTrue(success)
 
             for i in range(len(self.num_datas)):
                 for size_str in self.sizes:
-                    avg_time = self.time_encode(self.num_datas[i],
-                                                self.num_parities[i],
-                                                ec_type.value, self.num_parities[i] + 1,
-                                                size_str, self.iterations)
+                    avg_time = self.time_encode(
+                        self.num_datas[i], self.num_parities[i], ec_type.value,
+                        self.num_parities[i] + 1, size_str, self.iterations)
 
-                    print(("Encode (%s): %s" %
-                           (size_str, self.get_throughput(avg_time, size_str))))
-
-            for i in range(len(self.num_datas)):
-                for size_str in self.sizes:
-                    success, avg_time = self.time_decode(self.num_datas[i],
-                                                         self.num_parities[i],
-                                                         ec_type.value, self.num_parities[i] + 1,
-                                                         size_str, self.iterations)
-
-                    self.assertTrue(success)
-                    print(("Decode (%s): %s" %
-                           (size_str, self.get_throughput(avg_time, size_str))))
-            
-            for i in range(len(self.num_datas)):
-                for size_str in self.sizes:
-                    success, avg_time = self.time_range_decode(self.num_datas[i],
-                                                               self.num_parities[i],
-                                                               ec_type.value, self.num_parities[i] + 1,
-                                                               size_str, self.iterations)
-
-                    self.assertTrue(success)
-                    print(("Range Decode (%s): %s" %
-                           (size_str, self.get_throughput(avg_time, size_str))))
+                    print("Encode (%s): %s" %
+                          (size_str, self.get_throughput(avg_time, size_str)))
 
             for i in range(len(self.num_datas)):
                 for size_str in self.sizes:
-                    success, avg_time = self.time_reconstruct(self.num_datas[i],
-                                                              self.num_parities[i],
-                                                              ec_type.value, self.num_parities[i] + 1,
-                                                              size_str,
-                                                              self.iterations)
+                    success, avg_time = self.time_decode(
+                        self.num_datas[i], self.num_parities[i], ec_type.value,
+                        self.num_parities[i] + 1, size_str, self.iterations)
+
                     self.assertTrue(success)
-                    print(("Reconstruct (%s): %s" %
-                           (size_str, self.get_throughput(avg_time, size_str))))
+                    print("Decode (%s): %s" %
+                          (size_str, self.get_throughput(avg_time, size_str)))
+
+            for i in range(len(self.num_datas)):
+                for size_str in self.sizes:
+                    success, avg_time = self.time_range_decode(
+                        self.num_datas[i], self.num_parities[i], ec_type.value,
+                        self.num_parities[i] + 1, size_str, self.iterations)
+
+                    self.assertTrue(success)
+                    print("Range Decode (%s): %s" %
+                          (size_str, self.get_throughput(avg_time, size_str)))
+
+            for i in range(len(self.num_datas)):
+                for size_str in self.sizes:
+                    success, avg_time = self.time_reconstruct(
+                        self.num_datas[i], self.num_parities[i], ec_type.value,
+                        self.num_parities[i] + 1, size_str, self.iterations)
+                    self.assertTrue(success)
+                    print("Reconstruct (%s): %s" %
+                          (size_str, self.get_throughput(avg_time, size_str)))
 
 
 if __name__ == "__main__":
