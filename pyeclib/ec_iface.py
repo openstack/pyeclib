@@ -236,6 +236,14 @@ class ECDriver(object):
                 "The following required methods are not implemented "
                 "in %s: %s" % (self.library_import_str, not_implemented_str))
 
+    def __repr__(self):
+        return '%s(ec_type=%r, k=%r, m=%r)' % (
+            type(self).__name__,
+            'flat_xor_hd_%s' % self.hd if self.ec_type.name == 'flat_xor_hd'
+            else self.ec_type.name,
+            self.k,
+            self.m)
+
     def encode(self, data_bytes):
         """
         Encode an arbitrary-sized string

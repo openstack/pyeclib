@@ -64,7 +64,7 @@ class ECPyECLibDriver(object):
         return pyeclib_c.encode(self.handle, data_bytes)
 
     def _validate_and_return_fragment_size(self, fragments):
-        if len(fragments) > 0 and len(fragments[0]) == 0:
+        if len(fragments) == 0 or len(fragments[0]) == 0:
             return -1
         fragment_len = len(fragments[0])
         for fragment in fragments[1:]:
@@ -74,28 +74,29 @@ class ECPyECLibDriver(object):
 
     def decode(self, fragment_payloads, ranges=None,
                force_metadata_checks=False):
+        _fragment_payloads = list(fragment_payloads)
         fragment_len = self._validate_and_return_fragment_size(
-            fragment_payloads)
+            _fragment_payloads)
         if fragment_len < 0:
             raise ECDriverError(
                 "Invalid fragment payload in ECPyECLibDriver.decode")
 
-        if len(fragment_payloads) < self.k:
+        if len(_fragment_payloads) < self.k:
             raise ECInsufficientFragments(
                 "Not enough fragments given in ECPyECLibDriver.decode")
 
-        return pyeclib_c.decode(self.handle, fragment_payloads, fragment_len,
-                                ranges, force_metadata_checks)
+        return pyeclib_c.decode(self.handle, _fragment_payloads,
+                                fragment_len, ranges, force_metadata_checks)
 
     def reconstruct(self, fragment_payloads, indexes_to_reconstruct):
+        _fragment_payloads = list(fragment_payloads)
         fragment_len = self._validate_and_return_fragment_size(
-            fragment_payloads)
+            _fragment_payloads)
         if fragment_len < 0:
             raise ECDriverError(
                 "Invalid fragment payload in ECPyECLibDriver.reconstruct")
 
         reconstructed_data = []
-        _fragment_payloads = fragment_payloads[:]
 
         # Reconstruct the data, then the parity
         # The parity cannot be reconstructed until
