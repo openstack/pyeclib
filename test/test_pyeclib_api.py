@@ -28,6 +28,7 @@ import tempfile
 import unittest
 
 from distutils.version import StrictVersion
+from itertools import combinations
 
 from pyeclib.ec_iface import ECBackendNotSupported
 from pyeclib.ec_iface import ECDriver
@@ -509,6 +510,40 @@ class TestPyECLibDriver(unittest.TestCase):
                         self.assertTrue(
                             last_fragment_size == len(
                                 encoded_fragments[0]))
+
+    def test_rs_greedy_decode_reconstruct_combination(self):
+        # the testing spec defined at get_pyeclib_testspec() method
+        # and if you want to test either other parameters or backends,
+        # you can add the spec you want to test there.
+        pyeclib_drivers = self.get_pyeclib_testspec()
+        orig_data = 'a' * 1024 * 1024
+        for pyeclib_driver in pyeclib_drivers:
+            if 'rs' not in str(pyeclib_driver.ec_type):
+                continue
+            encoded = pyeclib_driver.encode(orig_data)
+            # make all fragment like (index, frag_data) format to feed
+            # to combinations
+            frags = [(i, frag) for i, frag in enumerate(encoded)]
+
+            for check_frags in combinations(frags, pyeclib_driver.k):
+                check_frags_dict = dict(check_frags)
+                decoded = pyeclib_driver.decode(check_frags_dict.values())
+                self.assertEqual(
+                    orig_data, decoded,
+                    "assertion fail in decode %s %s+%s from:%s" %
+                    (pyeclib_driver.ec_type, pyeclib_driver.k,
+                     pyeclib_driver.m, list(check_frags_dict)))
+                holes = [index for index in range(pyeclib_driver.k) if
+                         index not in check_frags_dict]
+                for hole in holes:
+                    reconed = pyeclib_driver.reconstruct(
+                        check_frags_dict.values(), [hole])[0]
+                    self.assertEqual(
+                        encoded[hole], reconed,
+                        "assertion fail in reconstruct %s %s+%s target:%s "
+                        "from:%s" % (pyeclib_driver.ec_type, pyeclib_driver.k,
+                                     pyeclib_driver.m, hole,
+                                     list(check_frags_dict)))
 
     def test_rs(self):
         pyeclib_drivers = self.get_pyeclib_testspec()
