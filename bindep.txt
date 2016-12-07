@@ -7,6 +7,7 @@ make [platform:rpm]
 autoconf
 automake
 libtool
+yasm
 liberasurecode-dev [platform:dpkg]
 liberasurecode-devel [platform:rpm]
 python-dev [platform:dpkg]
