@@ -221,6 +221,29 @@ class TestPyECLibDriver(unittest.TestCase):
                                             chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=11, m=7, ec_type=_type4,
                                             chksum_type=csum))
+
+        _type5 = 'isa_l_rs_vand'
+        if _type5 in VALID_EC_TYPES:
+            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type5,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type5,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type5,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type5,
+                                   chksum_type=csum))
+        _type6 = 'isa_l_rs_cauchy'
+        if _type6 in VALID_EC_TYPES:
+            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type6,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type6,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type6,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type6,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=7, ec_type=_type6,
+                                   chksum_type=csum))
         return pyeclib_drivers
 
     def test_small_encode(self):

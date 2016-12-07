@@ -1004,6 +1004,9 @@ static const char* backend_id_to_str(uint8_t backend_id)
     case 6:
       backend_id_str = "liberasurecode_rs_vand\0";
       break;
+    case 7:
+      backend_id_str = "isa_l_rs_cauchy\0";
+      break;
     default:
       backend_id_str = "unknown\0";
   }
