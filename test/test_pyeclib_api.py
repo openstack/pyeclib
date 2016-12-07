@@ -715,7 +715,7 @@ class TestPyECLibDriver(unittest.TestCase):
         # 1. Prepare the expected memory allocation
         encoded = ec_driver.encode(b'aaa')
         ec_driver.get_metadata(encoded[0], formatted=True)
-        loop_range = range(1000)
+        loop_range = range(400000)
 
         # 2. Get current memory usage
         baseline_usage = resource.getrusage(resource.RUSAGE_SELF)[2]

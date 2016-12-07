@@ -1047,6 +1047,7 @@ fragment_metadata_to_dict(fragment_metadata_t *fragment_metadata)
     "chksum_mismatch", fragment_metadata->chksum_mismatch,
     "backend_id", backend_id_str,
     "backend_version", fragment_metadata->backend_version);
+  encoded_chksum = check_and_free_buffer(encoded_chksum);
   if (metadata_dict == NULL) {
     pyeclib_c_seterr(-ENOMEM, "fragment_metadata_to_dict ERROR: ");
     return NULL;
