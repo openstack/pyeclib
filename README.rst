@@ -1,3 +1,6 @@
+PyEClib
+-------
+
 This library provides a simple Python interface for implementing erasure codes
 and is known to work with Python v2.6, 2.7 and 3.x.
 
@@ -6,28 +9,32 @@ which is a C based erasure code library.  Please let us know if you have any
 issues building or installing (email: kmgreen2@gmail.com or tusharsg@gmail.com).
 
 PyECLib supports a variety of Erasure Coding backends including the standard Reed
-Soloman implementations provided by Jerasure [2], liberasurecode [3] and Intel
+Soloman implementations provided by Jerasure [1], liberasurecode [3] and Intel
 ISA-L [4].  It also provides support for a flat XOR-based encoder and decoder
 (part of liberasurecode) - a class of HD Combination Codes based on "Flat
 XOR-based erasure codes in storage systems: Constructions, efficient recovery,
-and tradeoffs" in IEEE MSST 2010).  These codes are well-suited to archival
+and tradeoffs" in IEEE MSST 2010[2]).  These codes are well-suited to archival
 use-cases, have a simple construction and require a minimum number of
 participating disks during single-disk reconstruction (think XOR-based LRC code).
 
 Examples of using PyECLib are provided in the "tools" directory:
 
   Command-line encoder::
-  
+
       tools/pyeclib_encode.py
 
   Command-line decoder::
-  
+
       tools/pyeclib_decode.py
 
   Utility to determine what is needed to reconstruct missing fragments::
-  
+
       tools/pyeclib_fragments_needed.py
 
+  A configuration utility to help compare available EC schemes in terms of
+  performance and redundancy::
+
+      tools/pyeclib_conf_tool.py
 
 PyEClib initialization::
 
@@ -39,13 +46,11 @@ Supported ``ec_type`` values:
 
   * ``liberasurecode_rs_vand`` => Vandermonde Reed-Solomon encoding, software-only backend implemented by liberasurecode [3]
   * ``jerasure_rs_vand`` => Vandermonde Reed-Solomon encoding, based on Jerasure [1]
-  * ``jerasure_rs_cauchy`` => Cauchy Reed-Solomon encoding (Jerasure variant), based on Jerasure [2]
+  * ``jerasure_rs_cauchy`` => Cauchy Reed-Solomon encoding (Jerasure variant), based on Jerasure [1]
   * ``flat_xor_hd_3``, ``flat_xor_hd_4`` => Flat-XOR based HD combination codes, liberasurecode [3]
   * ``isa_l_rs_vand`` => Intel Storage Acceleration Library (ISA-L) - SIMD accelerated Erasure Coding backends [4]
-  * ``shss`` => NTT Lab Japan's Erasure Coding Library
-
-A configuration utility is provided to help compare available EC schemes in 
-terms of performance and redundancy:: `tools/pyeclib_conf_tool.py`
+  * ``isa_l_rs_cauchy`` => Cauchy Reed-Solomon encoding (ISA-L variant) [4]
+  * ``shss`` => NTT Lab Japan's Erasure Coding Library [5]
 
 
 The Python API supports the following functions:
@@ -106,16 +111,16 @@ needs to be taken when handling input to and output from the ``encode()`` and
         ECInsufficientFragments - if an insufficient set of fragments has been provided (e.g. not enough)
         ECInvalidFragmentMetadata - if the fragment headers appear to be corrupted
         ECDriverError - if an unknown error occurs
-    
+
 
 - Minimum parity fragments needed for durability gurantees::
-    
+
       def min_parity_fragments_needed(self)
 
-      NOTE: Currently hard-coded to 1, so this can only be trusted for MDS codes, such as 
+      NOTE: Currently hard-coded to 1, so this can only be trusted for MDS codes, such as
             Reed-Solomon.
 
-      output: minimum number of additional fragments needed to be synchronously written to tolerate 
+      output: minimum number of additional fragments needed to be synchronously written to tolerate
               the loss of any one fragment (similar guarantees to 2 out of 3 with 3x replication)
       throws:
         ECBackendInstanceNotAvailable - if the backend library cannot be found
@@ -124,13 +129,13 @@ needs to be taken when handling input to and output from the ``encode()`` and
         ECOutOfMemory - if the process has run out of memory
         ECDriverError - if an unknown error occurs
 
- 
+
 - Fragments needed for EC Reconstruct
 
   Return the indexes of fragments needed to reconstruct "missing_fragment_indexes"::
 
       def fragments_needed(self, missing_fragment_indexes)
-    
+
       input: list of missing_fragment_indexes
       output: list of fragments needed to reconstruct fragments listed in missing_fragment_indexes
       throws:
@@ -207,13 +212,13 @@ needs to be taken when handling input to and output from the ``encode()`` and
 
   Assume a range request is given for an object with segment size 3K and
   a 1 MB file::
-  
+
       Ranges = (0, 1), (1, 12), (10, 1000), (0, segment_size-1),
                (1, segment_size+1), (segment_size-1, 2*segment_size)
-  
+
   This will return a map keyed on the ranges, where there is a recipe
   given for each range::
-  
+
       {
        (0, 1): {0: (0, 1)},
        (10, 1000): {0: (10, 1000)},
@@ -226,30 +231,30 @@ needs to be taken when handling input to and output from the ``encode()`` and
 
 Quick Start
 
-  Install pre-requisites:
-  
+  Install pre-requisites::
+
     * Python 2.6, 2.7 or 3.x (including development packages), argparse, setuptools
     * liberasurecode v1.2.0 or greater [3]
     * Erasure code backend libraries, gf-complete and Jerasure [1],[2], ISA-L [4] etc
 
-    An example for ubuntu to install dependency packages:
+  An example for ubuntu to install dependency packages::
+
       $ sudo apt-get install build-essential python-dev python-pip liberasurecode-dev
       $ sudo pip install -U bindep -r test-requirement.txt
 
-    If you want to confirm all dependency packages installed succuessfully, try:
+  If you want to confirm all dependency packages installed successfully, try::
+
       $ sudo bindep -f bindep.txt
 
-    That shows missing dependency packages for you, http://docs.openstack.org/infra/bindep/
-
-    *Note*: currently liberasurecode-dev/liberasurecode-devel in package repo is older
-            than v1.2.0
+  *Note*: currently liberasurecode-dev/liberasurecode-devel in package repo is older than v1.2.0
 
   Install PyECLib::
-    $ sudo python setup.py install
+
+      $ sudo python setup.py install
 
   Run test suite included::
 
-    $ ./.unittests
+      $ ./.unittests
 
   If all of this works, then you should be good to go.  If not, send us an email!
 
@@ -257,11 +262,11 @@ Quick Start
   then you probably need to add /usr/local/lib to the path searched when loading
   libraries.  The best way to do this (on Linux) is to add '/usr/local/lib' to::
 
-    /etc/ld.so.conf 
+      /etc/ld.so.conf
 
   and then make sure to run::
 
-    $ sudo ldconfig
+      $ sudo ldconfig
 
 
 References
