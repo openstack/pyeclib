@@ -4,6 +4,9 @@
 build-essential [platform:dpkg]
 gcc [platform:rpm]
 make [platform:rpm]
+autoconf
+automake
+libtool
 liberasurecode-dev [platform:dpkg]
 liberasurecode-devel [platform:rpm]
 python-dev [platform:dpkg]
