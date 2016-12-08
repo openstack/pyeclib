@@ -159,7 +159,7 @@ class install(_install):
 
 module = Extension('pyeclib_c',
                    define_macros=[('MAJOR VERSION', '1'),
-                                  ('MINOR VERSION', '3')],
+                                  ('MINOR VERSION', '4')],
                    include_dirs=[default_python_incdir,
                                  'src/c/pyeclib_c',
                                  '/usr/include',
@@ -172,12 +172,13 @@ module = Extension('pyeclib_c',
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
 
 setup(name='pyeclib',
-      version='1.3.1',
+      version='1.4.0',
       author='Kevin Greenan',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
       maintainer_email='kmgreen2@gmail.com, tusharsg@gmail.com',
       url='http://git.openstack.org/cgit/openstack/pyeclib/',
+      bugtrack_url='https://bugs.launchpad.net/pyeclib',
       description='This library provides a simple Python interface for \
                    implementing erasure codes.  To obtain the best possible \
                    performance, the underlying erasure code algorithms are \
