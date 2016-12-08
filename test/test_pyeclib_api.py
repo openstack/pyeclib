@@ -731,5 +731,21 @@ class TestPyECLibDriver(unittest.TestCase):
                          (baseline_usage, new_usage))
 
 
+class TestBackendsEnabled(unittest.TestCase):
+    '''Based on TestPyECLibDriver.test_valid_algo above, but these tests
+       should *always* either pass or skip.'''
+    class __metaclass__(type):
+        def __new__(meta, cls_name, cls_bases, cls_dict):
+            for ec_type in ALL_EC_TYPES:
+                def dummy(self, ec_type=ec_type):
+                    if ec_type not in VALID_EC_TYPES:
+                        raise unittest.SkipTest
+                    k, m = 10, 4 if ec_type == 'shss' else 5
+                    ECDriver(k=k, m=m, ec_type=ec_type)
+                dummy.__name__ = 'test_%s_available' % ec_type
+                cls_dict[dummy.__name__] = dummy
+            return type.__new__(meta, cls_name, cls_bases, cls_dict)
+
+
 if __name__ == '__main__':
     unittest.main()
