@@ -289,6 +289,9 @@ class TestPyECLib(unittest.TestCase):
         size_desc = size_str.split("-")
         size = float(size_desc[0])
 
+        if avg_time == 0:
+            return '?'
+
         if size_desc[1] == 'M':
             throughput = size / avg_time
         elif size_desc[1] == 'K':
