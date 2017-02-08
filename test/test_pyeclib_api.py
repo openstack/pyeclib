@@ -143,7 +143,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 # m is smaller than 1
                 ECDriver(ec_type=ec_type, k=1, m=-100)
             self.assertEqual(str(err_context.exception),
-                             "Invalid number of data fragments (m)")
+                             "Invalid number of parity fragments (m)")
 
     def test_valid_ec_types(self):
         # Build list of available types and compare to VALID_EC_TYPES

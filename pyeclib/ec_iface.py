@@ -167,7 +167,7 @@ class ECDriver(object):
                     self.m = positive_int_value(value)
                 except ValueError:
                     raise ECDriverError(
-                        "Invalid number of data fragments (m)")
+                        "Invalid number of parity fragments (m)")
             elif key == "ec_type":
                 if value in ["flat_xor_hd", "flat_xor_hd_3", "flat_xor_hd_4"]:
                     if value == "flat_xor_hd" or value == "flat_xor_hd_3":
