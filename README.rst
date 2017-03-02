@@ -51,6 +51,7 @@ Supported ``ec_type`` values:
   * ``isa_l_rs_vand`` => Intel Storage Acceleration Library (ISA-L) - SIMD accelerated Erasure Coding backends [4]
   * ``isa_l_rs_cauchy`` => Cauchy Reed-Solomon encoding (ISA-L variant) [4]
   * ``shss`` => NTT Lab Japan's Erasure Coding Library [5]
+  * ``libphazr`` => Phazr.IO's erasure code library with built-in privacy [6]
 
 
 The Python API supports the following functions:
@@ -240,7 +241,7 @@ Quick Start
   An example for ubuntu to install dependency packages::
 
       $ sudo apt-get install build-essential python-dev python-pip liberasurecode-dev
-      $ sudo pip install -U bindep -r test-requirement.txt
+      $ sudo pip install -U bindep -r test-requirements.txt
 
   If you want to confirm all dependency packages installed successfully, try::
 
@@ -280,3 +281,5 @@ References
  [4] Intel(R) Storage Acceleration Library (Open Source Version), https://01.org/intel%C2%AE-storage-acceleration-library-open-source-version
 
  [5] Kota Tsuyuzaki <tsuyuzaki.kota@lab.ntt.co.jp>, "NTT SHSS Erasure Coding backend"
+
+ [6] Jim Cheung <support@phazr.io>, "Phazr.IO libphazr erasure code backend with built-in privacy"

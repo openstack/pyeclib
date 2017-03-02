@@ -78,6 +78,7 @@ class TestPyECLib(unittest.TestCase):
                      (PyECLib_EC_Types.shss, 10, 4),
                      (PyECLib_EC_Types.shss, 20, 4),
                      (PyECLib_EC_Types.shss, 11, 7)]
+        self.libphazr = [(PyECLib_EC_Types.libphazr, 4, 4)]
 
         # Input temp files for testing
         self.sizes = ["101-K", "202-K", "303-K"]
@@ -330,6 +331,36 @@ class TestPyECLib(unittest.TestCase):
     @require_backend("shss")
     def test_shss(self):
         for (ec_type, k, m) in self.shss:
+            print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
+
+            success = self._test_get_required_fragments(k, m, ec_type)
+            self.assertTrue(success)
+
+            for size_str in self.sizes:
+                avg_time = self.time_encode(k, m, ec_type.value, 0,
+                                            size_str,
+                                            self.iterations)
+                print("Encode (%s): %s" %
+                      (size_str, self.get_throughput(avg_time, size_str)))
+
+            for size_str in self.sizes:
+                success, avg_time = self.time_decode(k, m, ec_type.value, 0,
+                                                     size_str,
+                                                     self.iterations)
+                self.assertTrue(success)
+                print("Decode (%s): %s" %
+                      (size_str, self.get_throughput(avg_time, size_str)))
+
+            for size_str in self.sizes:
+                success, avg_time = self.time_reconstruct(
+                    k, m, ec_type.value, 0, size_str, self.iterations)
+                self.assertTrue(success)
+                print("Reconstruct (%s): %s" %
+                      (size_str, self.get_throughput(avg_time, size_str)))
+
+    @require_backend("libphazr")
+    def test_libphazr(self):
+        for (ec_type, k, m) in self.libphazr:
             print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
 
             success = self._test_get_required_fragments(k, m, ec_type)

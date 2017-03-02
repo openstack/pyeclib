@@ -134,7 +134,7 @@ class TestPyECLibDriver(unittest.TestCase):
                              "Invalid Argument: m is required")
 
             with self.assertRaises(ECDriverError) as err_context:
-                # m is smaller than 1
+                # k is smaller than 1
                 ECDriver(ec_type=ec_type, k=-100, m=1)
             self.assertEqual(str(err_context.exception),
                              "Invalid number of data fragments (k)")
@@ -151,10 +151,15 @@ class TestPyECLibDriver(unittest.TestCase):
         for _type in ALL_EC_TYPES:
             try:
                 if _type is 'shss':
+                    _k = 10
+                    _m = 4
+                elif _type is 'libphazr':
+                    _k = 4
                     _m = 4
                 else:
+                    _k = 10
                     _m = 5
-                ECDriver(k=10, m=_m, ec_type=_type, validate=True)
+                ECDriver(k=_k, m=_m, ec_type=_type, validate=True)
                 available_ec_types.append(_type)
             except Exception:
                 # ignore any errors, assume backend not available
@@ -171,10 +176,12 @@ class TestPyECLibDriver(unittest.TestCase):
             try:
                 if _type is 'shss':
                     _instance = ECDriver(k=10, m=4, ec_type=_type)
+                elif _type is 'libphazr':
+                    _instance = ECDriver(k=4, m=4, ec_type=_type)
                 else:
                     _instance = ECDriver(k=10, m=5, ec_type=_type)
             except ECDriverError:
-                self.fail("%p: %s algorithm not supported" % _instance, _type)
+                self.fail("%s algorithm not supported" % _type)
 
         self.assertRaises(ECBackendNotSupported, ECDriver, k=10, m=5,
                           ec_type="invalid_algo")
@@ -243,6 +250,11 @@ class TestPyECLibDriver(unittest.TestCase):
             pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type6,
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=11, m=7, ec_type=_type6,
+                                   chksum_type=csum))
+
+        _type7 = 'libphazr'
+        if _type7 in VALID_EC_TYPES:
+            pyeclib_drivers.append(ECDriver(k=4, m=4, ec_type=_type7,
                                    chksum_type=csum))
         return pyeclib_drivers
 
@@ -740,7 +752,15 @@ class TestBackendsEnabled(unittest.TestCase):
                 def dummy(self, ec_type=ec_type):
                     if ec_type not in VALID_EC_TYPES:
                         raise unittest.SkipTest
-                    k, m = 10, 4 if ec_type == 'shss' else 5
+                    if ec_type == 'shss':
+                        k = 10
+                        m = 4
+                    elif ec_type == 'libphazr':
+                        k = 4
+                        m = 4
+                    else:
+                        k = 10
+                        m = 5
                     ECDriver(k=k, m=m, ec_type=ec_type)
                 dummy.__name__ = 'test_%s_available' % ec_type
                 cls_dict[dummy.__name__] = dummy

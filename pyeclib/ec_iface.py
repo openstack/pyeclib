@@ -124,6 +124,7 @@ class PyECLib_EC_Types(PyECLibEnum):
     shss = 5
     liberasurecode_rs_vand = 6
     isa_l_rs_cauchy = 7
+    libphazr = 8
 
 
 # Output of Erasure (en)Coding process are data "fragments".  Fragment data
@@ -175,6 +176,8 @@ class ECDriver(object):
                     elif value == "flat_xor_hd_4":
                         self.hd = 4
                     value = "flat_xor_hd"
+                elif value == "libphazr":
+                    self.hd = 1
                 if PyECLib_EC_Types.has_enum(value):
                     self.ec_type = PyECLib_EC_Types.get_by_name(value)
                 else:
@@ -521,6 +524,7 @@ ALL_EC_TYPES = [
     'shss',
     'liberasurecode_rs_vand',
     'isa_l_rs_cauchy',
+    'libphazr',
 ]
 
 
