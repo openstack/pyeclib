@@ -148,7 +148,6 @@ class TestPyECLib(unittest.TestCase):
         :return average encode time
         """
         timer = Timer()
-        tsum = 0
         handle = pyeclib_c.init(num_data, num_parity, ec_type, hd)
         whole_file_bytes = self.get_tmp_file(file_size).read()
 
@@ -291,7 +290,7 @@ class TestPyECLib(unittest.TestCase):
         size = float(size_desc[0])
 
         if avg_time == 0:
-            return '?'
+            return '? (test finished too fast to calculate throughput)'
 
         if size_desc[1] == 'M':
             throughput = size / avg_time
