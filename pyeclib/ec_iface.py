@@ -142,8 +142,22 @@ class PyECLib_FRAGHDRCHKSUM_Types(PyECLibEnum):
 
 # Main ECDriver class
 class ECDriver(object):
+    '''A driver to encode, decode, and reconstruct erasure-coded data.'''
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        '''
+        :param ec_type: the erasure coding type to use for this driver.
+        :param k: number of data fragments to use. Required.
+        :param m: number of parity fragments to use. Required.
+        :param chksum_type:
+        :param validate: default: False
+        :param library_import_str: default: 'pyeclib.core.ECPyECLibDriver'
+
+        You must provide either ``ec_type`` or ``library_import_str``;
+        typically you just want to use ``ec_type``. See ALL_EC_TYPES for the
+        list of all EC types supported by PyECLib, and VALID_EC_TYPES for the
+        list of all EC types currently available on this system.
+        '''
         self.k = -1
         self.m = -1
         self.hd = -1
@@ -155,6 +169,11 @@ class ECDriver(object):
             if required not in kwargs:
                 raise ECDriverError(
                     "Invalid Argument: %s is required" % required)
+
+        if 'ec_type' not in kwargs and 'library_import_str' not in kwargs:
+            raise ECDriverError(
+                "Invalid Argument: either ec_type or library_import_str "
+                "must be provided")
 
         for (key, value) in kwargs.items():
             if key == "k":
