@@ -49,8 +49,6 @@ class ECPyECLibDriver(object):
         if self.chksum_type is PyECLib_FRAGHDRCHKSUM_Types.inline_crc32:
             self.inline_chksum = 1
 
-        name = self.ec_type.name
-
         self.handle = pyeclib_c.init(
             self.k,
             self.m,

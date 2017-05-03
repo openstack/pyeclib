@@ -28,12 +28,9 @@ import os
 import platform
 import sys
 
-from ctypes import *
-from ctypes.util import *
+from ctypes.util import find_library
 from distutils.command.build import build as _build
 from distutils.command.clean import clean as _clean
-from distutils.sysconfig import EXEC_PREFIX as _exec_prefix
-from distutils.sysconfig import get_python_lib
 from distutils.sysconfig import get_python_inc
 
 try:
@@ -71,7 +68,6 @@ class build(_build):
     def check_liberasure(self):
         library_basename = "liberasurecode"
         library_version = "1"
-        library = library_basename + "-" + library_version
         library_url = "https://github.com/openstack/liberasurecode"
 
         found_path = _find_library("erasurecode")
@@ -191,6 +187,6 @@ setup(name='pyeclib',
       cmdclass={'build': build, 'install': install, 'clean': clean},
       py_modules=['pyeclib.ec_iface', 'pyeclib.core'],
       command_options={
-        'build_sphinx': {
-            'build_dir': ('setup.py', 'doc/build')}},
+          'build_sphinx': {
+              'build_dir': ('setup.py', 'doc/build')}},
       test_suite='test')

@@ -57,7 +57,7 @@ def check_backend_available(backend_name):
         else:
             k, m = (10, 4)
         try:
-            driver = ECDriver(ec_type=backend_name, k=k, m=m)
+            ECDriver(ec_type=backend_name, k=k, m=m)
         except ECDriverError:
             return False
         return True
@@ -65,6 +65,7 @@ def check_backend_available(backend_name):
 
 def PyECLibVersion(z, y, x):
     return (((z) << 16) + ((y) << 8) + (x))
+
 
 PYECLIB_MAJOR = 1
 PYECLIB_MINOR = 1
@@ -560,5 +561,6 @@ def _liberasurecode_version():
             'Please upgrade to >=1.3.1 and rebuild pyeclib to suppress '
             'this message' % version_str)
     return version_str
+
 
 LIBERASURECODE_VERSION = _liberasurecode_version()

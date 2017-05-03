@@ -175,11 +175,11 @@ class TestPyECLibDriver(unittest.TestCase):
                 continue
             try:
                 if _type is 'shss':
-                    _instance = ECDriver(k=10, m=4, ec_type=_type)
+                    ECDriver(k=10, m=4, ec_type=_type)
                 elif _type is 'libphazr':
-                    _instance = ECDriver(k=4, m=4, ec_type=_type)
+                    ECDriver(k=4, m=4, ec_type=_type)
                 else:
-                    _instance = ECDriver(k=10, m=5, ec_type=_type)
+                    ECDriver(k=10, m=5, ec_type=_type)
             except ECDriverError:
                 self.fail("%s algorithm not supported" % _type)
 
