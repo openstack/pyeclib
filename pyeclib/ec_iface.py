@@ -215,30 +215,25 @@ class ECDriver(object):
         #
         # Verify that the imported library implements the required functions
         #
-        required_methods = {
-            'decode': 0,
-            'encode': 0,
-            'reconstruct': 0,
-            'fragments_needed': 0,
-            'min_parity_fragments_needed': 0,
-            'get_metadata': 0,
-            'verify_stripe_metadata': 0,
-            'get_segment_info': 0
-        }
+        required_methods = [
+            'decode',
+            'encode',
+            'reconstruct',
+            'fragments_needed',
+            'min_parity_fragments_needed',
+            'get_metadata',
+            'verify_stripe_metadata',
+            'get_segment_info',
+        ]
 
-        for attr in dir(self.ec_lib_reference):
-            if hasattr(getattr(self.ec_lib_reference, attr), "__call__"):
-                required_methods[attr] = 1
+        missing_methods = ' '.join(
+            method for method in required_methods
+            if not callable(getattr(self.ec_lib_reference, method, None)))
 
-        not_implemented_str = ""
-        for (method, is_implemented) in required_methods.items():
-            if is_implemented == 0:
-                not_implemented_str += method + " "
-
-        if len(not_implemented_str) > 0:
+        if missing_methods:
             raise ECDriverError(
                 "The following required methods are not implemented "
-                "in %s: %s" % (self.library_import_str, not_implemented_str))
+                "in %s: %s" % (self.library_import_str, missing_methods))
 
     def __repr__(self):
         return '%s(ec_type=%r, k=%r, m=%r)' % (
