@@ -1186,7 +1186,32 @@ pyeclib_c_check_backend_available(PyObject *self, PyObject *args)
 
 static PyObject*
 pyeclib_c_liberasurecode_version(PyObject *self, PyObject *args) {
-    return PyInt_FromLong(LIBERASURECODE_VERSION);
+    void *hLib;
+    char *err;
+    uint32_t (*hGetVersion)(void);
+
+    dlerror();
+    hLib = dlopen("liberasurecode.so", RTLD_LAZY);
+    /* It's important that we clear the last error before calling dysym */
+    err = dlerror();
+    if (err) {
+        /* This should never actually get hit; since we're using various
+           symbols already, liberasurecode.so should *already* be loaded. */
+        return PyInt_FromLong(LIBERASURECODE_VERSION);
+    }
+
+    hGetVersion = dlsym(hLib, "liberasurecode_get_version");
+    err = dlerror();
+    if (err) {
+        /* This is the important bit. Old version, doesn't have get_version
+           support; fall back to old behavior. */
+        dlclose(hLib);
+        return PyInt_FromLong(LIBERASURECODE_VERSION);
+    }
+
+    uint32_t version = (*hGetVersion)();
+    dlclose(hLib);
+    return Py_BuildValue("k", version);
 }
 
 static PyMethodDef PyECLibMethods[] = {
