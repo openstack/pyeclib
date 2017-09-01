@@ -114,7 +114,7 @@ needs to be taken when handling input to and output from the ``encode()`` and
         ECDriverError - if an unknown error occurs
 
 
-- Minimum parity fragments needed for durability gurantees::
+- Minimum parity fragments needed for durability guarantees::
 
       def min_parity_fragments_needed(self)
 
