@@ -119,22 +119,29 @@ class TestPyECLibDriver(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_invalid_km_args(self):
+    def test_missing_required_args(self):
+        # missing ec_type
+        with self.assertRaises(ECDriverError) as err_context:
+            ECDriver(k=1, m=1)
+        self.assertEqual(str(err_context.exception),
+                         "Invalid Argument: either ec_type or "
+                         "library_import_str must be provided")
+
         for ec_type in VALID_EC_TYPES:
             # missing k
             with self.assertRaises(ECDriverError) as err_context:
                 ECDriver(ec_type=ec_type, m=1)
-
             self.assertEqual(str(err_context.exception),
                              "Invalid Argument: k is required")
 
             # missing m
             with self.assertRaises(ECDriverError) as err_context:
                 ECDriver(ec_type=ec_type, k=1)
-
             self.assertEqual(str(err_context.exception),
                              "Invalid Argument: m is required")
 
+    def test_invalid_km_args(self):
+        for ec_type in VALID_EC_TYPES:
             with self.assertRaises(ECDriverError) as err_context:
                 # k is smaller than 1
                 ECDriver(ec_type=ec_type, k=-100, m=1)
