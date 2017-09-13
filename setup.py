@@ -55,6 +55,18 @@ default_python_incdir = get_python_inc()
 def _find_library(name):
     target_lib = find_library(name)
     if platform_str.find("Darwin") > -1:
+        # If we didn't find it, try extending our search a bit
+        if not target_lib:
+            if 'DYLD_LIBRARY_PATH' in os.environ:
+                os.environ['DYLD_LIBRARY_PATH'] += ':%s/lib' % sys.prefix
+            else:
+                os.environ['DYLD_LIBRARY_PATH'] = '%s/lib' % sys.prefix
+            target_lib = find_library(name)
+
+        # If we *still* don't find it, bail
+        if not target_lib:
+            return target_lib
+
         target_lib = os.path.abspath(target_lib)
         if os.path.islink(target_lib):
             p = os.readlink(target_lib)
@@ -167,6 +179,8 @@ module = Extension('pyeclib_c',
                                  '%s/include/liberasurecode' % sys.prefix,
                                  '%s/include' % sys.prefix],
                    libraries=['erasurecode'],
+                   library_dirs=['%s/lib' % sys.prefix],
+                   runtime_library_dirs=['%s/lib' % sys.prefix],
                    # The extra arguments are for debugging
                    # extra_compile_args=['-g', '-O0'],
                    sources=['src/c/pyeclib_c/pyeclib_c.c'])
