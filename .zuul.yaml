@@ -8,18 +8,17 @@
 
 - job:
     name: pyeclib-tox-py27-centos-7
-    parent: legacy-base
-    run: playbooks/legacy/pyeclib-tox-py27-centos-7/run
-    post-run: playbooks/legacy/pyeclib-tox-py27-centos-7/post
-    timeout: 2400
-    nodeset: legacy-centos-7
-    required-projects:
-      - openstack/requirements
+    parent: openstack-tox
+    description: |
+      Run unit tests using ``py27`` environment on CentOS 7.
+    nodeset: centos-7
+    vars:
+      tox_envlist: py27
 
 - job:
     name: libec-pyeclib-unit-centos-7
     parent: legacy-base
-    run: playbooks/legacy/libec-pyeclib-unit-centos-7/run
+    run: playbooks/legacy/libec-pyeclib-unit-centos-7/run.yaml
     timeout: 1800
     nodeset: legacy-centos-7
     required-projects:
@@ -29,7 +28,7 @@
 - job:
     name: libec-pyeclib-unit
     parent: legacy-base
-    run: playbooks/legacy/libec-pyeclib-unit/run
+    run: playbooks/legacy/libec-pyeclib-unit/run.yaml
     timeout: 1800
     required-projects:
       - openstack/liberasurecode
