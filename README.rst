@@ -38,6 +38,7 @@ RHEL/CentOS hosts::
     
     $ sudo yum install -y redhat-lsb python2-pip python-devel liberasurecode-devel
     $ sudo pip install -U bindep -r test-requirements.txt
+    $ tools/test-setup.sh
 
 If you want to confirm all dependency packages installed successfully, try::
 
