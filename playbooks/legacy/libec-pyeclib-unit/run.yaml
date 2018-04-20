@@ -1,5 +1,8 @@
 - hosts: all
   name: Autoconverted job legacy-libec-pyeclib-unit from old job gate-libec-pyeclib-unit-ubuntu-xenial
+  roles:
+    - bindep
+
   tasks:
 
     - name: Ensure legacy workspace directory
@@ -18,7 +21,6 @@
             openstack/pyeclib
           # build libec
           cd openstack/liberasurecode
-          /usr/local/jenkins/slave_scripts/install-distro-packages.sh
           ./autogen.sh
           ./configure
           make
