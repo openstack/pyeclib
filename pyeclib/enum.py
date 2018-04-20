@@ -1,4 +1,4 @@
-# Original credit: enum34 project https://pypi.python.org/pypi/enum34
+# Original credit: enum34 project https://pypi.org/project/enum34
 # Changes for PyECLib (c) Tushar Gohad (tusharsg@gmail.com)
 #
 # Redistribution and use in source and binary forms, with or without
