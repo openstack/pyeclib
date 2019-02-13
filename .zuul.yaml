@@ -1,6 +1,12 @@
 - project:
+    name: openstack/pyeclib
+    templates:
+      - openstack-python-jobs
+      - publish-to-pypi
     experimental:
       jobs:
+        - openstack-tox-py35
+        - openstack-tox-py36
         - pyeclib-tox-py27-centos-7
         - libec-pyeclib-unit-centos-7
         - libec-pyeclib-unit
