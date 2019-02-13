@@ -28,6 +28,7 @@ import os
 import platform
 import sys
 
+import ctypes
 from ctypes.util import find_library
 from distutils.command.build import build as _build
 from distutils.command.clean import clean as _clean
@@ -84,10 +85,29 @@ class build(_build):
 
         found_path = _find_library("erasurecode")
         if found_path:
-            if found_path.endswith(library_version) or \
-                    found_path.find(library_version + ".") > -1:
-                # call 1.x.x the only compatible version for now
-                return
+            libec = ctypes.CDLL(found_path)
+            try:
+                packed_version = libec.liberasurecode_get_version()
+            except AttributeError:
+                # If we don't have the version getter, we're probably
+                # pre-1.4.0; fall back to some heuristics based on name
+                version_parts = [x for x in found_path.split('.')
+                                 if x.isdigit()]
+                if not version_parts:
+                    # A bare .so? Well, we haven't released a 2.x yet... but
+                    # if we ever do, hopefully it'd still provide a
+                    # liberasurecode_get_version()
+                    return
+                if version_parts[0] == library_version:
+                    return
+                # else, seems to be an unknown version -- assume it won't work
+            else:
+                version = (
+                    packed_version >> 16,
+                    (packed_version >> 8) & 0xff,
+                    packed_version & 0xff)
+                if (1, 0, 0) <= version < (2, 0, 0):
+                    return
 
         if platform_str.find("Darwin") > -1:
             liberasure_file = \
