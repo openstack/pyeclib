@@ -189,10 +189,11 @@ setup(name='pyeclib',
       maintainer_email='kmgreen2@gmail.com, tusharsg@gmail.com',
       url='http://git.openstack.org/cgit/openstack/pyeclib/',
       bugtrack_url='https://bugs.launchpad.net/pyeclib',
-      description='This library provides a simple Python interface for \
-                   implementing erasure codes.  To obtain the best possible \
-                   performance, the underlying erasure code algorithms are \
-                   written in C.',
+      description=('This library provides a simple Python interface for '
+                   'implementing erasure codes.  To obtain the best possible '
+                   'performance, the underlying erasure code algorithms are '
+                   'written in C.'),
+      long_description=open('README.rst', 'r').read(),
       platforms='Linux',
       license='BSD',
       ext_modules=[module],

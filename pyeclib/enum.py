@@ -134,7 +134,7 @@ class _EnumDict(dict):
 
         """
         if pyver >= 3.0 and key == '__order__':
-                return
+            return
         if _is_sunder(key):
             raise ValueError('_names_ are reserved for future Enum use')
         elif _is_dunder(key):

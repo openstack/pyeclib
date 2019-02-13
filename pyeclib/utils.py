@@ -61,8 +61,8 @@ def create_instance(import_str, *args, **kwargs):
     Returns instance of class which imported by import path.
 
     :param import_str: import path of class
-    :param \*args: indexed arguments for new instance
-    :param \*\*kwargs: keyword arguments for new instance
+    :param *args: indexed arguments for new instance
+    :param **kwargs: keyword arguments for new instance
     :returns: instance of imported class which instantiated with
     arguments *args and **kwargs
     """

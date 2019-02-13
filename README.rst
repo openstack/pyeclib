@@ -19,7 +19,7 @@ reconstruction (think XOR-based LRC code).
 -----
 
 Installation
-===========
+============
 
 Install pre-requisites:
 

@@ -159,10 +159,10 @@ class TestPyECLibDriver(unittest.TestCase):
         available_ec_types = []
         for _type in ALL_EC_TYPES:
             try:
-                if _type is 'shss':
+                if _type == 'shss':
                     _k = 10
                     _m = 4
-                elif _type is 'libphazr':
+                elif _type == 'libphazr':
                     _k = 4
                     _m = 4
                 else:
@@ -183,9 +183,9 @@ class TestPyECLibDriver(unittest.TestCase):
                 print("Skipping test for %s backend" % _type)
                 continue
             try:
-                if _type is 'shss':
+                if _type == 'shss':
                     ECDriver(k=10, m=4, ec_type=_type)
-                elif _type is 'libphazr':
+                elif _type == 'libphazr':
                     ECDriver(k=4, m=4, ec_type=_type)
                 else:
                     ECDriver(k=10, m=5, ec_type=_type)
