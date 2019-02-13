@@ -26,6 +26,8 @@
 
 import os
 import platform
+import re
+import subprocess
 import sys
 
 import ctypes
@@ -72,6 +74,27 @@ def _find_library(name):
                 target_lib = p
             else:
                 target_lib = os.path.join(os.path.dirname(target_lib), p)
+    elif not target_lib:
+        # See https://bugs.python.org/issue9998
+        expr = r'[^\(\)\s]*lib%s\.[^\(\)\s]*' % re.escape(name)
+        cmd = ['ld', '-t']
+        libpath = os.environ.get('LD_LIBRARY_PATH')
+        if libpath:
+            for d in libpath.split(':'):
+                cmd.extend(['-L', d])
+        cmd.extend(['-o', os.devnull, '-l%s' % name])
+        try:
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 universal_newlines=True)
+            out, _ = p.communicate()
+            if hasattr(os, 'fsdecode'):
+                out = os.fsdecode(out)
+            res = re.search(expr, out)
+            if res:
+                target_lib = res.group(0)
+        except Exception:
+            pass  # result will be None
     # return absolute path to the library if found
     return target_lib
 
