@@ -3,7 +3,14 @@
     templates:
       - openstack-python-jobs
       - publish-to-pypi
-    experimental:
+    check:
+      jobs:
+        - openstack-tox-py35
+        - openstack-tox-py36
+        - pyeclib-tox-py27-centos-7
+        - libec-pyeclib-unit-centos-7
+        - libec-pyeclib-unit
+    gate:
       jobs:
         - openstack-tox-py35
         - openstack-tox-py36
