@@ -30,6 +30,7 @@ import unittest
 
 from distutils.version import StrictVersion
 from itertools import combinations
+import six
 
 import pyeclib.ec_iface
 from pyeclib.ec_iface import ECBackendNotSupported
@@ -791,28 +792,31 @@ class TestPyECLibDriver(unittest.TestCase):
                          (baseline_usage, new_usage))
 
 
-class TestBackendsEnabled(unittest.TestCase):
+class BackendsEnabledMetaclass(type):
+    def __new__(meta, cls_name, cls_bases, cls_dict):
+        for ec_type in ALL_EC_TYPES:
+            def dummy(self, ec_type=ec_type):
+                if ec_type not in VALID_EC_TYPES:
+                    raise unittest.SkipTest
+                if ec_type == 'shss':
+                    k = 10
+                    m = 4
+                elif ec_type == 'libphazr':
+                    k = 4
+                    m = 4
+                else:
+                    k = 10
+                    m = 5
+                ECDriver(k=k, m=m, ec_type=ec_type)
+            dummy.__name__ = 'test_%s_available' % ec_type
+            cls_dict[dummy.__name__] = dummy
+        return type.__new__(meta, cls_name, cls_bases, cls_dict)
+
+
+class TestBackendsEnabled(six.with_metaclass(BackendsEnabledMetaclass,
+                                             unittest.TestCase)):
     '''Based on TestPyECLibDriver.test_valid_algo above, but these tests
        should *always* either pass or skip.'''
-    class __metaclass__(type):
-        def __new__(meta, cls_name, cls_bases, cls_dict):
-            for ec_type in ALL_EC_TYPES:
-                def dummy(self, ec_type=ec_type):
-                    if ec_type not in VALID_EC_TYPES:
-                        raise unittest.SkipTest
-                    if ec_type == 'shss':
-                        k = 10
-                        m = 4
-                    elif ec_type == 'libphazr':
-                        k = 4
-                        m = 4
-                    else:
-                        k = 10
-                        m = 5
-                    ECDriver(k=k, m=m, ec_type=ec_type)
-                dummy.__name__ = 'test_%s_available' % ec_type
-                cls_dict[dummy.__name__] = dummy
-            return type.__new__(meta, cls_name, cls_bases, cls_dict)
 
 
 if __name__ == '__main__':
