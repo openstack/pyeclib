@@ -7,6 +7,7 @@
       jobs:
         - openstack-tox-py35
         - openstack-tox-py36
+        - openstack-tox-py37
         - pyeclib-tox-py27-centos-7
         - libec-pyeclib-unit-centos-7
         - libec-pyeclib-unit
@@ -14,6 +15,7 @@
       jobs:
         - openstack-tox-py35
         - openstack-tox-py36
+        - openstack-tox-py37
         - pyeclib-tox-py27-centos-7
         - libec-pyeclib-unit-centos-7
         - libec-pyeclib-unit
