@@ -49,7 +49,7 @@ if [ -z "$LIBERASURECODE_DIR" ]; then
     exit 1
 fi
 if [ ! -d "$LIBERASURECODE_DIR" ]; then
-    git clone git://git.openstack.org/openstack/liberasurecode "$LIBERASURECODE_DIR"
+    git clone https://git.openstack.org/openstack/liberasurecode "$LIBERASURECODE_DIR"
 fi
 pushd "$LIBERASURECODE_DIR"
 if [ -n "$LIBERASURECODE_REF" ]; then
