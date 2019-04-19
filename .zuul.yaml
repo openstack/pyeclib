@@ -1,5 +1,5 @@
 - project:
-    name: openstack/pyeclib
+    name: x/pyeclib
     templates:
       - openstack-python-jobs
       - publish-to-pypi
@@ -36,8 +36,8 @@
     timeout: 1800
     nodeset: legacy-centos-7
     required-projects:
-      - openstack/liberasurecode
-      - openstack/pyeclib
+      - x/liberasurecode
+      - x/pyeclib
 
 - job:
     name: libec-pyeclib-unit
@@ -45,5 +45,5 @@
     run: playbooks/legacy/libec-pyeclib-unit/run.yaml
     timeout: 1800
     required-projects:
-      - openstack/liberasurecode
-      - openstack/pyeclib
+      - x/liberasurecode
+      - x/pyeclib

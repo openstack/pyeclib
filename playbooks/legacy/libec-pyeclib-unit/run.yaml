@@ -16,11 +16,11 @@
           set -x
           cd $WORKSPACE
           /usr/zuul-env/bin/zuul-cloner --cache-dir /opt/git \
-            https://git.openstack.org \
-            openstack/liberasurecode \
-            openstack/pyeclib
+            https://opendev.org \
+            x/liberasurecode \
+            x/pyeclib
           # build libec
-          cd openstack/liberasurecode
+          cd x/liberasurecode
           ./autogen.sh
           ./configure
           make
@@ -28,7 +28,7 @@
           sudo bash -c "echo /usr/local/lib >> /etc/ld.so.conf"
           sudo ldconfig
           # test pyeclib
-          cd $WORKSPACE/openstack/pyeclib
+          cd $WORKSPACE/x/pyeclib
           tox -e py27
         executable: /bin/bash
         chdir: '{{ ansible_user_dir }}/workspace'
