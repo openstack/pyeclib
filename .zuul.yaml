@@ -1,8 +1,6 @@
 - project:
-    name: x/pyeclib
     templates:
       - openstack-python-jobs
-      - publish-to-pypi
     check:
       jobs:
         - openstack-tox-py35
