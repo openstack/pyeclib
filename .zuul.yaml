@@ -34,8 +34,8 @@
     timeout: 1800
     nodeset: legacy-centos-7
     required-projects:
-      - x/liberasurecode
-      - x/pyeclib
+      - openstack/liberasurecode
+      - openstack/pyeclib
 
 - job:
     name: libec-pyeclib-unit
@@ -43,5 +43,5 @@
     run: playbooks/legacy/libec-pyeclib-unit/run.yaml
     timeout: 1800
     required-projects:
-      - x/liberasurecode
-      - x/pyeclib
+      - openstack/liberasurecode
+      - openstack/pyeclib
