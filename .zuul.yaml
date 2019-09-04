@@ -2,11 +2,15 @@
     templates:
       - openstack-python-jobs
       - libec-pyeclib-jobs-arm64
+      - build-openstack-docs-pti
     check:
       jobs:
         - test-release-openstack: &release_overrides
             vars:
               build_wheel: false
+        - openstack-tox-docs: &doc_overrides
+            vars:
+              tox_skip_pdf: true
         - openstack-tox-py35: &py35_overrides
             vars:
               tox_envlist: py35-compilelibs
@@ -25,6 +29,7 @@
     gate:
       jobs:
         - test-release-openstack: *release_overrides
+        - openstack-tox-docs: *doc_overrides
         - openstack-tox-py35: *py35_overrides
         - openstack-tox-py36
         - openstack-tox-py37
