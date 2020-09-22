@@ -15,8 +15,6 @@
         - openstack-tox-py36
         - openstack-tox-py37
         - pyeclib-tox-py27-centos-7
-        - libec-pyeclib-unit-centos-7
-        - libec-pyeclib-unit
 
 - job:
     name: pyeclib-tox-py27-centos-7
@@ -36,6 +34,7 @@
     required-projects:
       - openstack/liberasurecode
       - openstack/pyeclib
+    voting: false
 
 - job:
     name: libec-pyeclib-unit
@@ -45,3 +44,4 @@
     required-projects:
       - openstack/liberasurecode
       - openstack/pyeclib
+    voting: false

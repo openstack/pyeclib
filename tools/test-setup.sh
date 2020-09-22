@@ -15,7 +15,7 @@ function is_rhel7 {
 if is_rhel7; then
     # Install CentOS OpenStack repos so that we have access to some extra
     # packages.
-    sudo yum install -y centos-release-openstack-pike
+    sudo yum install -y centos-release-openstack-train
     # Now that RDO repositories are enabled, install missing
     # packages.
     sudo yum install -y liberasurecode-devel yasm

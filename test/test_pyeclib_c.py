@@ -152,7 +152,7 @@ class TestPyECLib(unittest.TestCase):
         whole_file_bytes = self.get_tmp_file(file_size).read()
 
         timer.start()
-        for l in range(iterations):
+        for i in range(iterations):
             pyeclib_c.encode(handle, whole_file_bytes)
         tsum = timer.stop_and_return()
 
