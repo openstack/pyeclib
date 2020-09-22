@@ -6,7 +6,9 @@
         - openstack-tox-py35
         - openstack-tox-py36
         - openstack-tox-py37
+        - openstack-tox-py38
         - pyeclib-tox-py27-centos-7
+        - pyeclib-tox-py36-centos-8
         - libec-pyeclib-unit-centos-7
         - libec-pyeclib-unit
     gate:
@@ -14,16 +16,23 @@
         - openstack-tox-py35
         - openstack-tox-py36
         - openstack-tox-py37
+        - openstack-tox-py38
         - pyeclib-tox-py27-centos-7
+        - pyeclib-tox-py36-centos-8
 
 - job:
     name: pyeclib-tox-py27-centos-7
-    parent: openstack-tox
+    parent: openstack-tox-py27
     description: |
       Run unit tests using ``py27`` environment on CentOS 7.
     nodeset: centos-7
-    vars:
-      tox_envlist: py27
+
+- job:
+    name: pyeclib-tox-py36-centos-8
+    parent: openstack-tox-py36
+    description: |
+      Run unit tests using ``py36`` environment on CentOS 8.
+    nodeset: centos-8
 
 - job:
     name: libec-pyeclib-unit-centos-7
