@@ -18,7 +18,7 @@ fi
 
 if [ -n "$GFCOMPLETE_DIR" ]; then
     if [ ! -d "$GFCOMPLETE_DIR" ]; then
-        git clone http://lab.jerasure.org/jerasure/gf-complete.git "$GFCOMPLETE_DIR"
+        git clone https://github.com/ceph/gf-complete.git "$GFCOMPLETE_DIR"
     fi
     pushd "$GFCOMPLETE_DIR"
     ./autogen.sh
@@ -34,7 +34,7 @@ if [ -n "$JERASURE_DIR" ]; then
         exit 1
     fi
     if [ ! -d "$JERASURE_DIR" ]; then
-        git clone http://lab.jerasure.org/jerasure/jerasure.git "$JERASURE_DIR"
+        git clone https://github.com/ceph/jerasure.git "$JERASURE_DIR"
     fi
     pushd "$JERASURE_DIR"
     autoreconf --force --install
