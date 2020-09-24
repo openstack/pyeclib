@@ -9,8 +9,9 @@
         - openstack-tox-py38
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8
-        - libec-pyeclib-unit-centos-7
         - libec-pyeclib-unit
+        - libec-pyeclib-unit-centos-7
+        - libec-pyeclib-unit-centos-8
     gate:
       jobs:
         - openstack-tox-py35
@@ -19,6 +20,9 @@
         - openstack-tox-py38
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8
+        - libec-pyeclib-unit
+        - libec-pyeclib-unit-centos-7
+        - libec-pyeclib-unit-centos-8
 
 - job:
     name: pyeclib-tox-py27-centos-7
@@ -36,21 +40,23 @@
 
 - job:
     name: libec-pyeclib-unit-centos-7
-    parent: legacy-base
-    run: playbooks/legacy/libec-pyeclib-unit-centos-7/run.yaml
+    parent: openstack-tox-py27
     timeout: 1800
-    nodeset: legacy-centos-7
-    required-projects:
-      - openstack/liberasurecode
-      - openstack/pyeclib
-    voting: false
+    nodeset: centos-7
+    vars:
+      tox_envlist: py27-compilelibs
+
+- job:
+    name: libec-pyeclib-unit-centos-8
+    parent: openstack-tox-py36
+    timeout: 1800
+    nodeset: centos-8
+    vars:
+      tox_envlist: py36-compilelibs
 
 - job:
     name: libec-pyeclib-unit
-    parent: legacy-base
-    run: playbooks/legacy/libec-pyeclib-unit/run.yaml
+    parent: openstack-tox-py38
     timeout: 1800
-    required-projects:
-      - openstack/liberasurecode
-      - openstack/pyeclib
-    voting: false
+    vars:
+      tox_envlist: py38-compilelibs
