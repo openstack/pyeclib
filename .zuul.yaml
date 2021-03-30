@@ -7,6 +7,7 @@
         - openstack-tox-py36
         - openstack-tox-py37
         - openstack-tox-py38
+        - openstack-tox-py39
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8
         - libec-pyeclib-unit
@@ -18,6 +19,7 @@
         - openstack-tox-py36
         - openstack-tox-py37
         - openstack-tox-py38
+        - openstack-tox-py39
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8
         - libec-pyeclib-unit
@@ -56,7 +58,7 @@
 
 - job:
     name: libec-pyeclib-unit
-    parent: openstack-tox-py38
+    parent: openstack-tox-py39
     timeout: 1800
     vars:
-      tox_envlist: py38-compilelibs
+      tox_envlist: py39-compilelibs
