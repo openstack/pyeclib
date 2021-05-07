@@ -302,7 +302,6 @@ class ECDriver(object):
         :param missing_fragment_indexes: a list of integers representing
                                          the indexes of the fragments to be
                                          reconstructed.
-        :param destination_index: the index of the element to reconstruct
         :returns: a list of buffers (ordered by fragment index) containing
                   the reconstructed payload associated with the indexes
                   provided in missing_fragment_indexes
