@@ -313,7 +313,7 @@ class ECDriver(object):
             available_fragment_payloads, missing_fragment_indexes)
 
     def fragments_needed(self, reconstruction_indexes,
-                         exclude_indexes=[]):
+                         exclude_indexes=None):
         """
         Determine which fragments are needed to reconstruct some subset of
         missing fragments.
@@ -330,6 +330,8 @@ class ECDriver(object):
         :raises: ECDriverError if there is an error during decoding or there
                  are not sufficient fragments to decode
         """
+        if exclude_indexes is None:
+            exclude_indexes = []
         return self.ec_lib_reference.fragments_needed(reconstruction_indexes,
                                                       exclude_indexes)
 
