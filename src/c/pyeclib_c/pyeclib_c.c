@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <paths.h>
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <math.h>
 #include <bytesobject.h>
@@ -492,7 +493,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   char **encoded_parity = NULL;     /* array of m parity buffers */
   PyObject *list_of_strips = NULL;  /* list of encoded strips to return */
   char *data;                       /* param, data buffer to encode */
-  int data_len;                     /* param, length of data buffer */
+  Py_ssize_t data_len;              /* param, length of data buffer */
   uint64_t fragment_len;            /* length, in bytes of the fragments */
   int i;                            /* a counter */
   int ret = 0;
@@ -1040,7 +1041,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
   char *fragment = NULL;                            /* param, fragment from caller */
   fragment_metadata_t c_fragment_metadata;          /* structure to hold metadata */
   PyObject *fragment_metadata = NULL;               /* metadata object to return */
-  int fragment_len;                                 /* fragment length */
+  Py_ssize_t fragment_len;                          /* fragment length */
   int formatted;                                    /* format the metadata in a dict */
   int ret;
 
