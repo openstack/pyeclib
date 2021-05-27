@@ -1,6 +1,7 @@
 - project:
     templates:
       - openstack-python-jobs
+      - libec-pyeclib-jobs-arm64
     check:
       jobs:
         - openstack-tox-py35
@@ -62,3 +63,21 @@
     timeout: 1800
     vars:
       tox_envlist: py39-compilelibs
+
+- job:
+    name: libec-pyeclib-unit-arm64
+    parent: libec-pyeclib-unit
+    nodeset: ubuntu-focal-arm64
+    description: |
+      Run unit tests for an OpenStack Python project under cPython
+      version 3.9 on top of arm64 architecture.
+
+- project-template:
+    name: libec-pyeclib-jobs-arm64
+    description: |
+      Runs pyeclib unit tests designated for testing on top of
+      ARM64 architecture
+    check-arm64:
+      jobs:
+        - libec-pyeclib-unit-arm64:
+            voting: false
