@@ -104,7 +104,7 @@ class build(_build):
     def check_liberasure(self):
         library_basename = "liberasurecode"
         library_version = "1"
-        library_url = "https://github.com/openstack/liberasurecode"
+        library_url = "https://opendev.org/openstack/liberasurecode"
 
         found_path = _find_library("erasurecode")
         if found_path:
@@ -230,7 +230,7 @@ setup(name='pyeclib',
       author_email='kmgreen2@gmail.com',
       maintainer='Kevin Greenan and Tushar Gohad',
       maintainer_email='kmgreen2@gmail.com, tusharsg@gmail.com',
-      url='http://git.openstack.org/cgit/openstack/pyeclib/',
+      url='https://opendev.org/openstack/pyeclib',
       bugtrack_url='https://bugs.launchpad.net/pyeclib',
       description=('This library provides a simple Python interface for '
                    'implementing erasure codes.  To obtain the best possible '
