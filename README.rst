@@ -113,7 +113,7 @@ Code Maintenance
 ================
 
 This library is currently mainly maintained by the Openstack Swift community.
-For questions or any other help, come ask in #openstack-swift on freenode.
+For questions or any other help, come ask in #openstack-swift on OFTC.
 
 -----
 
