@@ -58,6 +58,11 @@ class ECPyECLibDriver(object):
             self.algsig_chksum,
             validate)
 
+    def __repr__(self):
+        return '%s(k=%r, m=%r, hd=%r, ec_type=%r, chksum_type=%r)' % (
+            self.__class__.__name__, self.k, self.m, self.hd, self.ec_type,
+            self.chksum_type)
+
     def encode(self, data_bytes):
         return pyeclib_c.encode(self.handle, data_bytes)
 
