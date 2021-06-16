@@ -122,7 +122,7 @@ References
 
 [1] Jerasure, C library that supports erasure coding in storage applications, http://jerasure.org
 
-[2] Greenan, Kevin M et al, "Flat XOR-based erasure codes in storage systems", http://www.kaymgee.com/Kevin_Greenan/Publications_files/greenan-msst10.pdf
+[2] Greenan, Kevin M et al, "Flat XOR-based erasure codes in storage systems", http://shiftleft.com/mirrors/www.hpl.hp.com/personal/Jay_Wylie/publications/greenan-msst10.pdf
 
 [3] liberasurecode, C API abstraction layer for erasure coding backends, https://github.com/openstack/liberasurecode
 
