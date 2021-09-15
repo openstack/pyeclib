@@ -66,7 +66,7 @@ for TYPE in ${TYPES}; do
       FAULT_TOL=${NUM_PARITY}
       if [[ ${TYPE} == "flat_xor_hd"* ]]; then
         FAULT_TOL="2"
-      fi 
+      fi
       for file in `cd ${FILES}; echo *; cd ..`; do
         python ${TOOLS_DIR}/pyeclib_encode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${FILE_DIR} ${file} ${FRAGMENT_DIR}
       done
@@ -76,10 +76,10 @@ for TYPE in ${TYPES}; do
         let i=0
         while (( $i < ${FAULT_TOL} )); do
           index=$(( RANDOM % NUM_TOTAL ))
-          fragments[${index}]="" 
+          fragments[${index}]=""
           let i=$i+1
         done
-        python ${TOOLS_DIR}/pyeclib_decode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${fragments[*]} ${DECODED_DIR}/${file} 
+        python ${TOOLS_DIR}/pyeclib_decode.py ${NUM_DATA} ${NUM_PARITY} ${TYPE} ${fragments[*]} ${DECODED_DIR}/${file}
         diff ${FILE_DIR}/${file} ${DECODED_DIR}/${file}.decoded
         if [[ $? != 0 ]]; then
           echo "${FILE_DIR}/${file} != ${DECODED_DIR}/${file}.decoded"
