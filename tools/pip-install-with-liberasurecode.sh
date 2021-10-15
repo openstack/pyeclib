@@ -4,9 +4,25 @@ if [ -z "$VIRTUAL_ENV" ]; then
     exit 1
 fi
 
+if [ -n "$NASM_DIR" ]; then
+    if [ ! -d "$NASM_DIR" ]; then
+        mkdir -p "$NASM_DIR"
+        pushd "$NASM_DIR"
+        curl https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.01.tar.gz | tar -xz
+        popd
+    fi
+    pushd "$NASM_DIR"/nasm*
+    ./autogen.sh
+    ./configure --prefix "$VIRTUAL_ENV"
+    make nasm
+    install -c nasm "$VIRTUAL_ENV"/bin/nasm
+    PATH="$VIRTUAL_ENV/bin:$PATH"
+    popd
+fi
+
 if [ -n "$ISAL_DIR" ]; then
     if [ ! -d "$ISAL_DIR" ]; then
-        git clone https://github.com/intel/isa-l.git -b v2.30.0 "$ISAL_DIR"
+        git clone https://github.com/intel/isa-l.git "$ISAL_DIR"
     fi
     pushd "$ISAL_DIR"
     ./autogen.sh
