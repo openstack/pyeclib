@@ -6,7 +6,7 @@ fi
 
 if [ -n "$ISAL_DIR" ]; then
     if [ ! -d "$ISAL_DIR" ]; then
-        git clone git://github.com/01org/isa-l.git "$ISAL_DIR"
+        git clone git://github.com/intel/isa-l.git -b v2.30.0 "$ISAL_DIR"
     fi
     pushd "$ISAL_DIR"
     ./autogen.sh
