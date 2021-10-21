@@ -4,6 +4,9 @@
       - libec-pyeclib-jobs-arm64
     check:
       jobs:
+        - test-release-openstack:
+            vars:
+              build_wheel: false
         - openstack-tox-py35
         - openstack-tox-py36
         - openstack-tox-py37
@@ -16,6 +19,9 @@
         - libec-pyeclib-unit-centos-8
     gate:
       jobs:
+        - test-release-openstack:
+            vars:
+              build_wheel: false
         - openstack-tox-py35
         - openstack-tox-py36
         - openstack-tox-py37
@@ -26,6 +32,16 @@
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-7
         - libec-pyeclib-unit-centos-8
+    pre-release:
+      jobs:
+        - release-openstack-python:
+            vars:
+              build_wheel: false
+    release:
+      jobs:
+        - release-openstack-python:
+            vars:
+              build_wheel: false
 
 - job:
     name: pyeclib-tox-py27-centos-7
