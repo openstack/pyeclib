@@ -231,7 +231,9 @@ setup(name='pyeclib',
       maintainer='Kevin Greenan and Tushar Gohad',
       maintainer_email='kmgreen2@gmail.com, tusharsg@gmail.com',
       url='https://opendev.org/openstack/pyeclib',
-      bugtrack_url='https://bugs.launchpad.net/pyeclib',
+      project_urls={
+        'Bug Tracker': 'https://bugs.launchpad.net/pyeclib',
+      },
       description=('This library provides a simple Python interface for '
                    'implementing erasure codes.  To obtain the best possible '
                    'performance, the underlying erasure code algorithms are '
