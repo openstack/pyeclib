@@ -12,6 +12,7 @@
         - openstack-tox-py37
         - openstack-tox-py38
         - openstack-tox-py39
+        - openstack-tox-py310
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8-stream
         - libec-pyeclib-unit
@@ -27,6 +28,7 @@
         - openstack-tox-py37
         - openstack-tox-py38
         - openstack-tox-py39
+        - openstack-tox-py310
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8-stream
         - libec-pyeclib-unit
