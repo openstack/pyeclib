@@ -28,6 +28,8 @@ from .utils import create_instance
 from .utils import positive_int_value
 from pyeclib_c import get_liberasurecode_version
 
+import warnings
+
 import logging
 from logging.handlers import SysLogHandler
 logger = logging.getLogger('pyeclib')
@@ -198,8 +200,15 @@ class ECDriver(object):
                     value = "flat_xor_hd"
                 elif value == "libphazr":
                     self.hd = 1
+
                 if PyECLib_EC_Types.has_enum(value):
                     self.ec_type = PyECLib_EC_Types.get_by_name(value)
+                    if self.ec_type in (PyECLib_EC_Types.jerasure_rs_vand,
+                                        PyECLib_EC_Types.jerasure_rs_cauchy):
+                        warnings.warn('Jerasure support is deprecated and '
+                                      'may be removed in a future release',
+                                      FutureWarning, stacklevel=2)
+
                 else:
                     raise ECBackendNotSupported(
                         "%s is not a valid EC type for PyECLib!" % value)
