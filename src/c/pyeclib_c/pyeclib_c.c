@@ -989,15 +989,15 @@ hex_encode_string(char *buf, uint32_t buf_len)
 {
   char *hex_encoded_buf = (char*)alloc_zeroed_buffer((buf_len * 2) + 1);
   char *hex_encoded_ptr = hex_encoded_buf;
-  int i;
+  uint32_t i;
 
   for (i = 0; i < buf_len; i++) {
-    hex_encoded_ptr += sprintf(hex_encoded_ptr, "%.2x", (unsigned char)buf[i]); 
+    hex_encoded_ptr += sprintf(hex_encoded_ptr, "%.2x", (unsigned char)buf[i]);
   }
 
   hex_encoded_buf[buf_len * 2] = 0;
- 
-  return hex_encoded_buf; 
+
+  return hex_encoded_buf;
 }
 
 static PyObject*
