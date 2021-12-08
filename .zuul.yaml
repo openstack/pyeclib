@@ -13,10 +13,10 @@
         - openstack-tox-py38
         - openstack-tox-py39
         - pyeclib-tox-py27-centos-7
-        - pyeclib-tox-py36-centos-8
+        - pyeclib-tox-py36-centos-8-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-7
-        - libec-pyeclib-unit-centos-8
+        - libec-pyeclib-unit-centos-8-stream
     gate:
       jobs:
         - test-release-openstack:
@@ -28,10 +28,10 @@
         - openstack-tox-py38
         - openstack-tox-py39
         - pyeclib-tox-py27-centos-7
-        - pyeclib-tox-py36-centos-8
+        - pyeclib-tox-py36-centos-8-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-7
-        - libec-pyeclib-unit-centos-8
+        - libec-pyeclib-unit-centos-8-stream
     pre-release:
       jobs:
         - release-openstack-python:
@@ -51,11 +51,11 @@
     nodeset: centos-7
 
 - job:
-    name: pyeclib-tox-py36-centos-8
+    name: pyeclib-tox-py36-centos-8-stream
     parent: openstack-tox-py36
     description: |
       Run unit tests using ``py36`` environment on CentOS 8.
-    nodeset: centos-8
+    nodeset: centos-8-stream
 
 - job:
     name: libec-pyeclib-unit-centos-7
@@ -66,10 +66,10 @@
       tox_envlist: py27-compilelibs
 
 - job:
-    name: libec-pyeclib-unit-centos-8
+    name: libec-pyeclib-unit-centos-8-stream
     parent: openstack-tox-py36
     timeout: 1800
-    nodeset: centos-8
+    nodeset: centos-8-stream
     vars:
       tox_envlist: py36-compilelibs
 
