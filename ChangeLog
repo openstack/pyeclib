@@ -1,3 +1,15 @@
+New in 1.6.1
+------------
+
+ * Deprecate Jerasure support
+ * Use Py_ssize_t when calling PyArg_Parse
+ * Test against Python 3.8 - 3.10
+ * Use the Python Stable ABI; abi3 wheels may now be built with
+
+       python setup.py bdist_wheel --py-limited-api=cp35
+
+ * Various other minor bugs fixes and improvements
+
 New in 1.6.0
 ------------
 

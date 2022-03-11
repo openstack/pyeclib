@@ -70,8 +70,8 @@ def PyECLibVersion(z, y, x):
 
 
 PYECLIB_MAJOR = 1
-PYECLIB_MINOR = 1
-PYECLIB_REV = 2
+PYECLIB_MINOR = 6
+PYECLIB_REV = 1
 PYECLIB_VERSION = PyECLibVersion(PYECLIB_MAJOR, PYECLIB_MINOR,
                                  PYECLIB_REV)
 
