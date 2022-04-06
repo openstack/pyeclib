@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <paths.h>
 #define PY_SSIZE_T_CLEAN
+#define Py_LIMITED_API 0x03050000
 #include <Python.h>
 #include <math.h>
 #include <bytesobject.h>
@@ -488,7 +489,7 @@ static PyObject *
 pyeclib_c_encode(PyObject *self, PyObject *args)
 {
   PyObject *pyeclib_obj_handle = NULL;
-  pyeclib_t *pyeclib_handle= NULL; 
+  pyeclib_t *pyeclib_handle = NULL;
   char **encoded_data = NULL;     /* array of k data buffers */
   char **encoded_parity = NULL;     /* array of m parity buffers */
   PyObject *list_of_strips = NULL;  /* list of encoded strips to return */
@@ -512,25 +513,25 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   ret = liberasurecode_encode(pyeclib_handle->ec_desc, data, data_len, &encoded_data, &encoded_parity, &fragment_len);
   if (ret < 0) {
     pyeclib_c_seterr(ret, "pyeclib_c_encode");
-    return NULL; 
+    return NULL;
   }
   
   /* Create the python list of fragments to return */
   list_of_strips = PyList_New(pyeclib_handle->ec_args.k + pyeclib_handle->ec_args.m);
   if (NULL == list_of_strips) {
     pyeclib_c_seterr(-ENOMEM, "pyeclib_c_encode");
-    return NULL; 
+    return NULL;
   }
   
   /* Add data fragments to the python list to return */
   for (i = 0; i < pyeclib_handle->ec_args.k; i++) {
-    PyList_SET_ITEM(list_of_strips, i, 
+    PyList_SetItem(list_of_strips, i,
                     PY_BUILDVALUE_OBJ_LEN(encoded_data[i], fragment_len));
   }
   
   /* Add parity fragments to the python list to return */
   for (i = 0; i < pyeclib_handle->ec_args.m; i++) {
-    PyList_SET_ITEM(list_of_strips, pyeclib_handle->ec_args.k + i, 
+    PyList_SetItem(list_of_strips, pyeclib_handle->ec_args.k + i,
                     PY_BUILDVALUE_OBJ_LEN(encoded_parity[i], fragment_len));
   }
 
@@ -886,7 +887,7 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
         pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range");
         goto error;
       }
-      PyList_SET_ITEM(ret_payload, i,
+      PyList_SetItem(ret_payload, i,
         PY_BUILDVALUE_OBJ_LEN(c_orig_payload + c_ranges[i].offset, c_ranges[i].length));
     }
   }

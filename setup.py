@@ -209,6 +209,7 @@ class install(_install):
 
 
 module = Extension('pyeclib_c',
+                   py_limited_api=True,
                    define_macros=[('MAJOR VERSION', '1'),
                                   ('MINOR VERSION', '6')],
                    include_dirs=[default_python_incdir,
