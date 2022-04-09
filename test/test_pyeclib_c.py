@@ -29,6 +29,7 @@ import time
 import unittest
 
 import pyeclib_c
+
 from pyeclib.ec_iface import PyECLib_EC_Types
 from pyeclib.ec_iface import VALID_EC_TYPES
 

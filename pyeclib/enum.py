@@ -815,8 +815,10 @@ class IntEnum(int, Enum):
 
 
 def unique(enumeration):
-    """Class decorator that ensures only unique members exist
-    in an enumeration."""
+    """
+    Class decorator that ensures only unique members exist
+    in an enumeration.
+    """
     duplicates = []
     for name, member in enumeration.__members__.items():
         if name != member.name:

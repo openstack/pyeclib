@@ -122,7 +122,7 @@ class ECPyECLibDriver(object):
         return required_fragments
 
     def min_parity_fragments_needed(self):
-        """ FIXME - fix this to return a function of HD """
+        """FIXME - fix this to return a function of HD"""
         return 1
 
     def get_metadata(self, fragment, formatted=0):

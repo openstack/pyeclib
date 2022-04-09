@@ -23,13 +23,15 @@
 
 import os
 import random
-from string import ascii_letters, ascii_uppercase, digits
+import resource
+import string
 import sys
 import tempfile
 import unittest
 
 from distutils.version import StrictVersion
 from itertools import combinations
+
 import six
 
 import pyeclib.ec_iface
@@ -40,10 +42,11 @@ from pyeclib.ec_iface import ECInsufficientFragments
 from pyeclib.ec_iface import ECInvalidFragmentMetadata
 from pyeclib.ec_iface import ECInvalidParameter
 from pyeclib.ec_iface import PyECLib_EC_Types
+
 from pyeclib.ec_iface import ALL_EC_TYPES
 from pyeclib.ec_iface import VALID_EC_TYPES
+
 from pyeclib.ec_iface import LIBERASURECODE_VERSION
-import resource
 
 
 if sys.version < '3':
@@ -105,7 +108,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 size *= 1000
 
             # Create the dictionary of files to test with
-            buf = ''.join(random.choice(ascii_letters) for i in range(size))
+            buf = ''.join(random.choice(string.ascii_letters) for i in range(size))
             if sys.version_info >= (3,):
                 buf = buf.encode('ascii')
             tmp_file = tempfile.NamedTemporaryFile()
@@ -364,7 +367,7 @@ class TestPyECLibDriver(unittest.TestCase):
             return
 
         filesize = 1024 * 1024 * 3
-        file_str = ''.join(random.choice(ascii_letters)
+        file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
         file_bytes = file_str.encode('utf-8')
 
@@ -423,7 +426,7 @@ class TestPyECLibDriver(unittest.TestCase):
     def test_verify_fragment_inline_chksum_fail(self):
         pyeclib_drivers = self.get_pyeclib_testspec("inline_crc32")
         filesize = 1024 * 1024 * 3
-        file_str = ''.join(random.choice(ascii_letters)
+        file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
         file_bytes = file_str.encode('utf-8')
 
@@ -463,7 +466,7 @@ class TestPyECLibDriver(unittest.TestCase):
         pyeclib_drivers = self.get_pyeclib_testspec("inline_crc32")
 
         filesize = 1024 * 1024 * 3
-        file_str = ''.join(random.choice(ascii_letters)
+        file_str = ''.join(random.choice(string.ascii_letters)
                            for i in range(filesize))
         file_bytes = file_str.encode('utf-8')
 
@@ -542,7 +545,7 @@ class TestPyECLibDriver(unittest.TestCase):
         # Use 2 * segment size, because last segment may be
         # greater than segment_size
         #
-        char_set = ascii_uppercase + digits
+        char_set = string.ascii_uppercase + string.digits
         for segment_size in segment_sizes:
             segment_strings[segment_size] = ''.join(
                 random.choice(char_set) for i in range(segment_size * 2))
@@ -815,8 +818,10 @@ class BackendsEnabledMetaclass(type):
 
 class TestBackendsEnabled(six.with_metaclass(BackendsEnabledMetaclass,
                                              unittest.TestCase)):
-    '''Based on TestPyECLibDriver.test_valid_algo above, but these tests
-       should *always* either pass or skip.'''
+    '''
+    Based on TestPyECLibDriver.test_valid_algo above, but these tests
+    should *always* either pass or skip.
+    '''
 
 
 if __name__ == '__main__':
