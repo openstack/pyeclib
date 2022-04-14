@@ -43,8 +43,8 @@ except ImportError:
     use_setuptools()
     from setuptools import setup
 
-from setuptools import Extension
 from setuptools.command.install import install as _install
+from setuptools import Extension
 
 platform_str = platform.platform()
 default_python_incdir = get_python_inc()
@@ -233,25 +233,25 @@ setup(name='pyeclib',
       maintainer_email='kmgreen2@gmail.com, tusharsg@gmail.com',
       url='https://opendev.org/openstack/pyeclib',
       project_urls={
-        'Bug Tracker': 'https://bugs.launchpad.net/pyeclib',
+          'Bug Tracker': 'https://bugs.launchpad.net/pyeclib',
       },
       description=('This library provides a simple Python interface for '
                    'implementing erasure codes.  To obtain the best possible '
                    'performance, the underlying erasure code algorithms are '
                    'written in C.'),
       classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: BSD License",
+          "Development Status :: 5 - Production/Stable",
+          "Programming Language :: Python :: 2",
+          "Programming Language :: Python :: 2.7",
+          "Programming Language :: Python :: 3",
+          "Programming Language :: Python :: 3.5",
+          "Programming Language :: Python :: 3.6",
+          "Programming Language :: Python :: 3.7",
+          "Programming Language :: Python :: 3.8",
+          "Programming Language :: Python :: 3.9",
+          "Programming Language :: Python :: 3.10",
+          "Intended Audience :: Developers",
+          "License :: OSI Approved :: BSD License",
       ],
       long_description=open('README.rst', 'r').read(),
       long_description_content_type='text/x-rst',
