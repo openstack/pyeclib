@@ -24,7 +24,7 @@ Installation
 Install pre-requisites:
 
 * Python 2.6, 2.7 or 3.x (including development packages), argparse, setuptools
-* liberasurecode v1.3.1 or greater [3]
+* liberasurecode v1.4.0 or greater [3]
 * Erasure code backend libraries, gf-complete and Jerasure [1],[2], ISA-L [4], etc
 
 Install dependencies:
@@ -44,7 +44,6 @@ If you want to confirm all dependency packages installed successfully, try::
 
     $ sudo bindep -f bindep.txt
 
-*Note*: Currently, for Ubuntu, liberasurecode-dev in package repo is older than v1.2.0.
 For CentOS, make sure to install the latest Openstack Cloud SIG repo
 to be able to install the latest available version of liberasurecode-devel.
 
