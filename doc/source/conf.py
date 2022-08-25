@@ -40,8 +40,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'PyECLib'
-copyright = u'2019, Kevin Greenan, Tushar Gohad, Kota Tsuyuzaki'
+project = 'PyECLib'
+copyright = '2019, Kevin Greenan, Tushar Gohad, Kota Tsuyuzaki'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -183,8 +183,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'PyECLib.tex', u'PyECLib Documentation',
-   u'Kevin Greenan, Tushar Gohad, Kota Tsuyuzaki', 'manual'),
+  ('index', 'PyECLib.tex', 'PyECLib Documentation',
+   'Kevin Greenan, Tushar Gohad, Kota Tsuyuzaki', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,8 +213,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pyeclib', u'PyECLib Documentation',
-     [u'Kevin Greenan, Tushar Gohad, Kota Tsuyuzaki'], 1)
+    ('index', 'pyeclib', 'PyECLib Documentation',
+     ['Kevin Greenan, Tushar Gohad, Kota Tsuyuzaki'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'PyECLib', u'PyECLib Documentation',
-   u'Kevin Greenan, Tushar Gohad, Kota Tsuyuzaki', 'PyECLib', 'One line description of project.',
+  ('index', 'PyECLib', 'PyECLib Documentation',
+   'Kevin Greenan, Tushar Gohad, Kota Tsuyuzaki', 'PyECLib', 'One line description of project.',
    'Miscellaneous'),
 ]
 
