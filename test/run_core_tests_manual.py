@@ -67,7 +67,7 @@ class CoreTests():
                     (pythonpath, test_cmd_prefix, test, cur_dir,
                      log_filename_prefix, test))
 
-                assert(0 == ret)
+                assert (0 == ret)
                 os.system("rm -f *.pyc")
                 os.chdir(cur_dir)
                 print('ok')
