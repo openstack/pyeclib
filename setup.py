@@ -234,6 +234,8 @@ setup(name='pyeclib',
       url='https://opendev.org/openstack/pyeclib',
       project_urls={
           'Bug Tracker': 'https://bugs.launchpad.net/pyeclib',
+          'Release Notes': ('https://opendev.org/openstack/pyeclib/'
+                            'src/branch/master/ChangeLog'),
       },
       description=('This library provides a simple Python interface for '
                    'implementing erasure codes.  To obtain the best possible '
