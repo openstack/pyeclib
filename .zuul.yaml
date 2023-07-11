@@ -17,9 +17,11 @@
         - openstack-tox-py310
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8-stream
+        - pyeclib-tox-py39-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-7
         - libec-pyeclib-unit-centos-8-stream
+        - libec-pyeclib-unit-centos-9-stream
     gate:
       jobs:
         - test-release-openstack:
@@ -35,9 +37,11 @@
         - openstack-tox-py310
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8-stream
+        - pyeclib-tox-py39-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-7
         - libec-pyeclib-unit-centos-8-stream
+        - libec-pyeclib-unit-centos-9-stream
     pre-release:
       jobs:
         - release-openstack-python:
@@ -64,6 +68,13 @@
     nodeset: centos-8-stream
 
 - job:
+    name: pyeclib-tox-py39-centos-9-stream
+    parent: openstack-tox-py39
+    description: |
+      Run unit tests using ``py39`` environment on CentOS 9.
+    nodeset: centos-9-stream
+
+- job:
     name: libec-pyeclib-unit-centos-7
     parent: openstack-tox-py27
     timeout: 1800
@@ -78,6 +89,14 @@
     nodeset: centos-8-stream
     vars:
       tox_envlist: py36-compilelibs
+
+- job:
+    name: libec-pyeclib-unit-centos-9-stream
+    parent: openstack-tox-py39
+    timeout: 1800
+    nodeset: centos-9-stream
+    vars:
+      tox_envlist: py39-compilelibs
 
 - job:
     name: libec-pyeclib-unit
