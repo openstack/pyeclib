@@ -7,8 +7,6 @@ make [platform:rpm]
 autoconf
 automake
 libtool
-# yasm exists everywhere but CentOS 7
-yasm [!platform:centos]
 liberasurecode-dev [platform:dpkg]
 # There's no library in CentOS 7 but Fedora and openSUSE have it.
 liberasurecode-devel [platform:rpm !platform:centos]
