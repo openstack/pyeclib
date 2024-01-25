@@ -24,6 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <paths.h>
 #define PY_SSIZE_T_CLEAN
