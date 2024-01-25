@@ -27,9 +27,6 @@
 #ifndef __PYEC_LIB_C_H_
 #define __PYEC_LIB_C_H_
 
-/* For exact-width integer types */
-#include <stdint.h>
-
 typedef struct pyeclib_s
 {
   int             ec_desc;
