@@ -108,7 +108,8 @@ class TestPyECLibDriver(unittest.TestCase):
                 size *= 1000
 
             # Create the dictionary of files to test with
-            buf = ''.join(random.choice(string.ascii_letters) for i in range(size))
+            buf = ''.join(random.choice(string.ascii_letters)
+                          for i in range(size))
             if sys.version_info >= (3,):
                 buf = buf.encode('ascii')
             tmp_file = tempfile.NamedTemporaryFile()
