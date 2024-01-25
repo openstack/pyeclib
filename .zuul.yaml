@@ -15,7 +15,7 @@
         - openstack-tox-py38
         - openstack-tox-py39
         - openstack-tox-py310
-        - pyeclib-tox-py311
+        - openstack-tox-py311
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8-stream
         - pyeclib-tox-py39-centos-9-stream
@@ -36,7 +36,7 @@
         - openstack-tox-py38
         - openstack-tox-py39
         - openstack-tox-py310
-        - pyeclib-tox-py311
+        - openstack-tox-py311
         - pyeclib-tox-py27-centos-7
         - pyeclib-tox-py36-centos-8-stream
         - pyeclib-tox-py39-centos-9-stream
@@ -114,14 +114,6 @@
     description: |
       Run unit tests for an OpenStack Python project under cPython
       version 3.9 on top of arm64 architecture.
-
-- job:
-    name: pyeclib-tox-py311
-    parent: openstack-tox-py310
-    vars:
-      tox_envlist: py311
-      bindep_profile: test py311
-      python_version: '3.11'
 
 - project-template:
     name: libec-pyeclib-jobs-arm64
