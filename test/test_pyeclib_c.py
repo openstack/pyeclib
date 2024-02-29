@@ -208,7 +208,7 @@ class TestPyECLib(unittest.TestCase):
 
         begins = [int(random.randint(0, len(whole_file_bytes) - 1))
                   for i in range(3)]
-        ends = [int(random.randint(begins[i], len(whole_file_bytes)))
+        ends = [int(random.randint(begins[i], len(whole_file_bytes) - 1))
                 for i in range(3)]
 
         ranges = list(zip(begins, ends))
