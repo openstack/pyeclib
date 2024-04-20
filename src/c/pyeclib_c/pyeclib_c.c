@@ -34,10 +34,6 @@
 #include <bytesobject.h>
 #include <liberasurecode/erasurecode.h>
 
-#if ( LIBERASURECODE_VERSION < _VERSION(1,1,0) )
-#include <liberasurecode/erasurecode_helpers.h>
-#endif
-
 /* Compat layer for python <= 2.6 */
 #include "capsulethunk.h"
 
@@ -1189,32 +1185,7 @@ pyeclib_c_check_backend_available(PyObject *self, PyObject *args)
 
 static PyObject*
 pyeclib_c_liberasurecode_version(PyObject *self, PyObject *args) {
-    void *hLib;
-    char *err;
-    uint32_t (*hGetVersion)(void);
-
-    dlerror();
-    hLib = dlopen("liberasurecode.so", RTLD_LAZY);
-    /* It's important that we clear the last error before calling dysym */
-    err = dlerror();
-    if (err) {
-        /* This should never actually get hit; since we're using various
-           symbols already, liberasurecode.so should *already* be loaded. */
-        return PyInt_FromLong(LIBERASURECODE_VERSION);
-    }
-
-    hGetVersion = dlsym(hLib, "liberasurecode_get_version");
-    err = dlerror();
-    if (err) {
-        /* This is the important bit. Old version, doesn't have get_version
-           support; fall back to old behavior. */
-        dlclose(hLib);
-        return PyInt_FromLong(LIBERASURECODE_VERSION);
-    }
-
-    uint32_t version = (*hGetVersion)();
-    dlclose(hLib);
-    return Py_BuildValue("k", version);
+    return Py_BuildValue("k", liberasurecode_get_version());
 }
 
 static PyMethodDef PyECLibMethods[] = {
@@ -1227,9 +1198,7 @@ static PyMethodDef PyECLibMethods[] = {
     {"get_metadata", pyeclib_c_get_metadata, METH_VARARGS, "Get the integrity checking metadata for a fragment"},
     {"check_metadata", pyeclib_c_check_metadata, METH_VARARGS, "Check the integrity checking metadata for a set of fragments"},
     {"get_liberasurecode_version", pyeclib_c_liberasurecode_version, METH_NOARGS, "Get libersaurecode version in use"},
-#if ( LIBERASURECODE_VERSION >= _VERSION(1,2,0) )
     {"check_backend_available", pyeclib_c_check_backend_available, METH_VARARGS, "Check if a backend is available"},
-#endif
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

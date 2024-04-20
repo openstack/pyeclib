@@ -10,6 +10,8 @@
         - openstack-tox-py35:
             vars:
               tox_envlist: py35-compilelibs
+              tox_environment:
+                LIBERASURECODE_REF: '1.4.0'
         - openstack-tox-py36
         - openstack-tox-py37
         - openstack-tox-py38
@@ -29,6 +31,8 @@
         - openstack-tox-py35:
             vars:
               tox_envlist: py35-compilelibs
+              tox_environment:
+                LIBERASURECODE_REF: '1.4.0'
         - openstack-tox-py36
         - openstack-tox-py37
         - openstack-tox-py38
