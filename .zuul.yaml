@@ -5,6 +5,7 @@
       - build-openstack-docs-pti
     check:
       jobs:
+        - pyeclib-build-wheels
         - test-release-openstack: &release_overrides
             vars:
               build_wheel: false
@@ -66,6 +67,15 @@
     timeout: 1800
     vars:
       tox_envlist: py312-compilelibs
+
+- job:
+    name: pyeclib-build-wheels
+    nodeset: ubuntu-noble
+    description: |
+      Build binary manylinux wheels that include ISA-L for x86_64.
+    pre-run: tools/playbooks/build-wheel/pre.yaml
+    run: tools/playbooks/build-wheel/run.yaml
+    post-run: tools/playbooks/build-wheel/post.yaml
 
 - job:
     name: libec-pyeclib-unit-arm64
