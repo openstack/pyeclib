@@ -8,6 +8,10 @@
         - pyeclib-build-wheels
         - pyeclib-build-wheels-arm64
         - test-release-openstack: &release_overrides
+            dependencies:
+              - pyeclib-build-wheels
+              - pyeclib-build-wheels-arm64
+            pre-run: tools/playbooks/release-wheel/download-artifacts.yaml
             vars:
               build_wheel: false
         - openstack-tox-py35: &py35_overrides
@@ -28,6 +32,8 @@
         - libec-pyeclib-unit-centos-9-stream
     gate:
       jobs:
+        - pyeclib-build-wheels
+        - pyeclib-build-wheels-arm64
         - test-release-openstack: *release_overrides
         - openstack-tox-py35: *py35_overrides
         - openstack-tox-py36
@@ -42,9 +48,13 @@
         - libec-pyeclib-unit-centos-9-stream
     pre-release:
       jobs:
+        - pyeclib-build-wheels
+        - pyeclib-build-wheels-arm64
         - release-openstack-python: *release_overrides
     release:
       jobs:
+        - pyeclib-build-wheels
+        - pyeclib-build-wheels-arm64
         - release-openstack-python: *release_overrides
 
 - job:

@@ -1,0 +1,22 @@
+---
+- hosts: all
+  tasks:
+    - name: Create dist dir
+      file:
+        path: "{{ zuul.project.src_dir }}/dist"
+        state: directory
+        mode: 0755
+
+    - name: Fetch built wheels
+      get_url:
+        url: "{{ zj_artifact.url }}"
+        dest: "{{ zuul.project.src_dir }}/dist/{{ zj_artifact.url.rstrip('/') | basename }}"
+      when:
+        # Be a little defensive
+        - zj_artifact.project == zuul.project.name
+        - zj_artifact.metadata is defined
+        - zj_artifact.metadata.type is defined
+        - zj_artifact.metadata.type == "python_wheel"
+      loop: "{{ zuul.artifacts }}"
+      loop_control:
+        loop_var: zj_artifact

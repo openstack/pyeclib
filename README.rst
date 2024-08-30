@@ -2,9 +2,9 @@ PyEClib
 -------
 
 This library provides a simple Python interface for implementing erasure codes
-and is known to work with Python v2.6, 2.7 and 3.x. To obtain the best possible
-performance, the library utilizes liberasurecode, which is a C based erasure
-code library.
+and is known to work with Python 2.7 and 3.5 through 3.12. To obtain the best
+possible performance, the library utilizes liberasurecode, which is a C based
+erasure code library.
 
 PyECLib supports a variety of Erasure Coding backends including the standard
 Reed-Solomon implementations provided by Jerasure [1], liberasurecode [3],
@@ -23,7 +23,7 @@ Installation
 
 Install pre-requisites:
 
-* Python 2.6, 2.7 or 3.x (including development packages), argparse, setuptools
+* Python 2.7 or 3.5+ (including development packages), argparse, setuptools
 * liberasurecode v1.4.0 or greater [3]
 * Erasure code backend libraries, gf-complete and Jerasure [1],[2], ISA-L [4], etc
 
