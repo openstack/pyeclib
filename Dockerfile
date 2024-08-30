@@ -1,7 +1,13 @@
 # manylinux2010 has oldest build chain that can still build modern ISA-L
 # 2021-02-06-3d322a5 is newest tag that still had 2.7 support
+# aarch64 images never had 2.7, but 2021-05-01-a10bece is the newest that still had 3.5
 
-FROM quay.io/pypa/manylinux2010_x86_64:2021-02-06-3d322a5
+ARG TARGET="x86_64"
+
+FROM quay.io/pypa/manylinux2010_x86_64:2021-02-06-3d322a5 AS x86_64
+FROM quay.io/pypa/manylinux2014_aarch64:2021-05-01-a10bece AS aarch64
+FROM ${TARGET}
+
 MAINTAINER OpenStack Swift
 
 # can also take branch names, e.g. "master"
@@ -15,6 +21,13 @@ ENV UID=1000
 ENV PYTHON_VERSION=cp35-cp35m
 
 RUN mkdir /opt/src /output
+
+# Fix up mirrorlist issues
+RUN rm -f /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo
+RUN sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo && \
+    sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo && \
+    sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
+
 RUN yum install -y zlib-devel
 # Update auditwheel so it can improve our tag to manylinux1 automatically
 # Not *too far*, though, since we've got the old base image

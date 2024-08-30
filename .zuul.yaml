@@ -6,6 +6,7 @@
     check:
       jobs:
         - pyeclib-build-wheels
+        - pyeclib-build-wheels-arm64
         - test-release-openstack: &release_overrides
             vars:
               build_wheel: false
@@ -76,6 +77,15 @@
     pre-run: tools/playbooks/build-wheel/pre.yaml
     run: tools/playbooks/build-wheel/run.yaml
     post-run: tools/playbooks/build-wheel/post.yaml
+
+- job:
+    name: pyeclib-build-wheels-arm64
+    parent: pyeclib-build-wheels
+    nodeset: ubuntu-noble-arm64
+    description: |
+      Build binary manylinux wheels that include ISA-L for ARM64.
+    vars:
+      wheel_target: aarch64
 
 - job:
     name: libec-pyeclib-unit-arm64
