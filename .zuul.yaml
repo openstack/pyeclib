@@ -20,6 +20,7 @@
         - openstack-tox-py310
         - openstack-tox-py311
         - openstack-tox-py312
+        - openstack-tox-py313
         - pyeclib-tox-py39-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-9-stream
