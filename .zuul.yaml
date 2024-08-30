@@ -90,5 +90,4 @@
       ARM64 architecture
     check-arm64:
       jobs:
-        - libec-pyeclib-unit-arm64:
-            voting: false
+        - libec-pyeclib-unit-arm64
