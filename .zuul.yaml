@@ -4,10 +4,10 @@
       - libec-pyeclib-jobs-arm64
     check:
       jobs:
-        - test-release-openstack:
+        - test-release-openstack: &release_overrides
             vars:
               build_wheel: false
-        - openstack-tox-py35:
+        - openstack-tox-py35: &py35_overrides
             vars:
               tox_envlist: py35-compilelibs
               tox_environment:
@@ -24,14 +24,8 @@
         - libec-pyeclib-unit-centos-9-stream
     gate:
       jobs:
-        - test-release-openstack:
-            vars:
-              build_wheel: false
-        - openstack-tox-py35:
-            vars:
-              tox_envlist: py35-compilelibs
-              tox_environment:
-                LIBERASURECODE_REF: '1.4.0'
+        - test-release-openstack: *release_overrides
+        - openstack-tox-py35: *py35_overrides
         - openstack-tox-py36
         - openstack-tox-py37
         - openstack-tox-py38
@@ -44,14 +38,10 @@
         - libec-pyeclib-unit-centos-9-stream
     pre-release:
       jobs:
-        - release-openstack-python:
-            vars:
-              build_wheel: false
+        - release-openstack-python: *release_overrides
     release:
       jobs:
-        - release-openstack-python:
-            vars:
-              build_wheel: false
+        - release-openstack-python: *release_overrides
 
 - job:
     name: pyeclib-tox-py39-centos-9-stream
