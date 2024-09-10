@@ -30,6 +30,8 @@ RUN if [ -e /etc/yum.repos.d ]; then \
   fi
 
 RUN if [ -n "$(type -p yum)" ]; then yum install -y zlib-devel ; fi
+# Update setuptools for pyproject.toml support
+RUN "/opt/python/${PYTHON_VERSION}/bin/python3" -m pip install -U setuptools packaging
 
 ADD https://github.com/netwide-assembler/nasm/archive/refs/tags/nasm-2.15.05.tar.gz /opt/src/nasm.tar.gz
 RUN tar -C /opt/src -xz -f /opt/src/nasm.tar.gz

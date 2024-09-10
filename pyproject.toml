@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=74.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyeclib"
+version = "1.6.4"
+authors = [
+    {name = "Kevin Greenan", email = "kmgreen2@gmail.com"},
+]
+maintainers = [
+    {name = "Tim Burke", email = "tim.burke@gmail.com"},
+    {name = "Kevin Greenan", email = "kmgreen2@gmail.com"},
+    {name = "Tushar Gohad", email = "tusharsg@gmail.com"},
+]
+description = "This library provides a simple Python interface for implementing erasure codes.  To obtain the best possible performance, the underlying erasure code algorithms are written in C."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = {text = "BSD-2-Clause"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+]
+
+[project.urls]
+Homepage = "https://opendev.org/openstack/pyeclib"
+"Bug Tracker" = "https://bugs.launchpad.net/pyeclib"
+"Release Notes" = "https://opendev.org/openstack/pyeclib/src/branch/master/ChangeLog"
+
+[tool.setuptools]
+packages = ["pyeclib"]
+platforms = ["Linux"]
+
+[[tool.setuptools.ext-modules]]
+name = "pyeclib_c"
+sources = ["src/c/pyeclib_c/pyeclib_c.c"]
+include-dirs = ["src/c/pyeclib_c"]
+libraries = ["erasurecode"]
+py-limited-api = true
