@@ -6,6 +6,8 @@ ARG TARGET="x86_64"
 
 FROM quay.io/pypa/manylinux2010_x86_64:2021-02-06-3d322a5 AS x86_64
 FROM quay.io/pypa/manylinux2014_aarch64:2021-05-01-a10bece AS aarch64
+FROM quay.io/pypa/musllinux_1_1_x86_64:2021-09-18-f12faf3 AS musl_x86_64
+FROM quay.io/pypa/musllinux_1_1_aarch64:2021-09-18-f12faf3 AS musl_aarch64
 FROM ${TARGET}
 
 MAINTAINER OpenStack Swift
@@ -24,11 +26,13 @@ RUN mkdir /opt/src /output
 
 # Fix up mirrorlist issues
 RUN rm -f /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo
-RUN sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo && \
+RUN if [ -e /etc/yum.repos.d ]; then \
+    sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo && \
     sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo && \
-    sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
+    sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo ; \
+  fi
 
-RUN yum install -y zlib-devel
+RUN if [ -n "$(type -p yum)" ]; then yum install -y zlib-devel ; fi
 # Update auditwheel so it can improve our tag to manylinux1 automatically
 # Not *too far*, though, since we've got the old base image
 RUN /opt/_internal/tools/bin/pip install -U 'auditwheel<5.2'

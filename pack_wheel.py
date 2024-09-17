@@ -170,12 +170,14 @@ def relocate_libs(tmp, so_suffix):
     # These guys all stand on their own, so don't need the rpath update
     inject(locate_library('nullcode'))
     inject(locate_library('Xorcode'))
-    inject(locate_library('erasurecode_rs_vand'))
+    builtin_rs_vand = inject(locate_library('erasurecode_rs_vand'))
+    maybe_add_needed(relocated_libec, os.path.basename(builtin_rs_vand))
 
     # Nobody actually links against this, but we want it anyway if available
     isal = locate_library('isal', missing_ok=True)
     if isal:
-        inject(isal)
+        relocated_isal = inject(isal)
+        maybe_add_needed(relocated_libec, os.path.basename(relocated_isal))
 
 
 def update_rpath(lib, rpath_suffix=''):
@@ -188,6 +190,13 @@ def update_rpath(lib, rpath_suffix=''):
     else:
         subprocess.check_call([
             'patchelf', '--set-rpath', '$ORIGIN' + rpath_suffix, lib])
+
+
+def maybe_add_needed(lib, needed):
+    if sys.platform == 'linux' and platform.libc_ver()[0] != 'glibc':
+        # We need to do this for musl; it doesn't seem to respect RUNPATH
+        # for dynamic loading, just dynamic linking
+        subprocess.check_call(['patchelf', '--add-needed', needed, lib])
 
 
 def inject_lib(

@@ -3,4 +3,4 @@
     docker run --rm
     --env PYTHON_VERSION={{ wheel_python_version }}
     --volume {{ ansible_user_dir }}/artifacts:/output:Z
-    {{ tag }}
+    {{ tag }}{{ "-musl" if musl else "" }}

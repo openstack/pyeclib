@@ -1,6 +1,6 @@
 - hosts: all
   roles:
-    - build-pyeclib-image
+    - build-pyeclib-images
 
     - role: build-pyeclib-wheel
       wheel_python_version: cp27-cp27m
@@ -12,3 +12,7 @@
 
     - role: build-pyeclib-wheel
       wheel_python_version: cp35-cp35m
+
+    - role: build-pyeclib-wheel
+      wheel_python_version: cp36-cp36m
+      musl: True
