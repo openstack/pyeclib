@@ -250,6 +250,9 @@ class ECDriver(object):
             self.k,
             self.m)
 
+    def close(self):
+        self.ec_lib_reference.close()
+
     def encode(self, data_bytes):
         """
         Encode an arbitrary-sized string

@@ -30,6 +30,7 @@ import unittest
 
 import pyeclib_c
 
+from pyeclib.ec_iface import ECBackendInstanceNotAvailable
 from pyeclib.ec_iface import PyECLib_EC_Types
 from pyeclib.ec_iface import VALID_EC_TYPES
 
@@ -468,6 +469,30 @@ class TestPyECLib(unittest.TestCase):
                     self.assertTrue(success)
                     print("Reconstruct (%s): %s" %
                           (size_str, self.get_throughput(avg_time, size_str)))
+
+    def test_destroy(self):
+        # liberasurecode_rs_vand should always be available
+        handle = pyeclib_c.init(
+            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2)
+        whole_file_bytes = self.get_tmp_file("101-K").read()
+        # sanity check that it works
+        pyeclib_c.encode(handle, whole_file_bytes)
+        pyeclib_c.destroy(handle)
+
+        # Can't destroy again
+        with self.assertRaises(ECBackendInstanceNotAvailable) as caught:
+            pyeclib_c.destroy(handle)
+        self.assertEqual(
+            str(caught.exception),
+            'pyeclib_c_destroy ERROR: Backend instance not found. Please '
+            'inspect syslog for liberasurecode error report.')
+        with self.assertRaises(ECBackendInstanceNotAvailable) as caught:
+            # but now it's busted!
+            pyeclib_c.encode(handle, whole_file_bytes)
+        self.assertEqual(
+            str(caught.exception),
+            'pyeclib_c_encode ERROR: Backend instance not found. Please '
+            'inspect syslog for liberasurecode error report.')
 
 
 if __name__ == "__main__":
