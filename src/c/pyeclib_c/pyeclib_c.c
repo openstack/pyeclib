@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <paths.h>
 #define PY_SSIZE_T_CLEAN
-#define Py_LIMITED_API 0x03050000
 #include <Python.h>
 #include <math.h>
 #include <bytesobject.h>
