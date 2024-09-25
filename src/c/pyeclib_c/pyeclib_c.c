@@ -35,33 +35,19 @@
 
 #include <pyeclib_c.h>
 
-/* Python 3 compatibility macros */
-#if PY_MAJOR_VERSION >= 3
-  #define PYTHON3
-  #define MOD_ERROR_VAL NULL
-  #define MOD_SUCCESS_VAL(val) val
-  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
-  #define MOD_DEF(ob, name, doc, methods) \
-          static struct PyModuleDef moduledef = { \
-              PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
-          ob = PyModule_Create(&moduledef);
-  #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
-          Py_BuildValue("y#", obj, (Py_ssize_t)objlen)
-  #define PyInt_FromLong PyLong_FromLong
-  #define PyString_FromString PyUnicode_FromString
-  #define ENCODE_ARGS "Oy#"
-  #define GET_METADATA_ARGS "Oy#i"
-#else
-  #define MOD_ERROR_VAL
-  #define MOD_SUCCESS_VAL(val)
-  #define MOD_INIT(name) void init##name(void)
-  #define MOD_DEF(ob, name, doc, methods) \
-          ob = Py_InitModule3(name, methods, doc);
-  #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
-          Py_BuildValue("s#", obj, (Py_ssize_t)objlen)
-  #define ENCODE_ARGS "Os#"
-  #define GET_METADATA_ARGS "Os#i"
-#endif
+#define MOD_ERROR_VAL NULL
+#define MOD_SUCCESS_VAL(val) val
+#define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+#define MOD_DEF(ob, name, doc, methods) \
+      static struct PyModuleDef moduledef = { \
+          PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+      ob = PyModule_Create(&moduledef);
+#define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
+      Py_BuildValue("y#", obj, (Py_ssize_t)objlen)
+#define PyInt_FromLong PyLong_FromLong
+#define PyString_FromString PyUnicode_FromString
+#define ENCODE_ARGS "Oy#"
+#define GET_METADATA_ARGS "Oy#i"
 
 
 typedef struct pyeclib_byte_range {
@@ -858,20 +844,12 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
 
         if (PyLong_Check(py_begin))
             begin = PyLong_AsLong(py_begin);
-#ifndef PYTHON3
-        else if (PyInt_Check(py_begin))
-            begin = PyInt_AsLong(py_begin);
-#endif
         else {
           pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range");
           goto error;
         }
         if (PyLong_Check(py_end))
             end = PyLong_AsLong(py_end);
-#ifndef PYTHON3
-        else if (PyInt_Check(py_end))
-            end = PyInt_AsLong(py_end);
-#endif
         else {
           pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_decode invalid range");
           goto error;
