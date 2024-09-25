@@ -22,22 +22,22 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from .enum import Enum
-from .enum import unique
+from enum import Enum
+from enum import unique
+import warnings
+
 from .utils import create_instance
 from .utils import positive_int_value
 from pyeclib_c import get_liberasurecode_version
-
-import warnings
 
 
 def check_backend_available(backend_name):
     from pyeclib_c import check_backend_available
 
     if backend_name.startswith('flat_xor_hd'):
-        int_type = PyECLib_EC_Types.get_by_name('flat_xor_hd')
+        int_type = PyECLib_EC_Types['flat_xor_hd']
     else:
-        int_type = PyECLib_EC_Types.get_by_name(backend_name)
+        int_type = PyECLib_EC_Types[backend_name]
     if not int_type:
         return False
     return check_backend_available(int_type.value)
@@ -64,23 +64,6 @@ class PyECLibEnum(Enum):
     def describe(self):
         # returns supported types
         return list(self)
-
-    @classmethod
-    def has_enum(cls, name):
-        # returns True if name is a valid member of the enum
-        try:
-            cls.__getattr__(name)
-        except AttributeError:
-            return False
-        return True
-
-    @classmethod
-    def get_by_name(cls, name):
-        try:
-            obj = cls.__getattr__(name)
-        except AttributeError:
-            return None
-        return obj
 
     @classmethod
     def names(cls):
@@ -179,8 +162,8 @@ class ECDriver(object):
                 elif value == "libphazr":
                     self.hd = 1
 
-                if PyECLib_EC_Types.has_enum(value):
-                    self.ec_type = PyECLib_EC_Types.get_by_name(value)
+                if value in PyECLib_EC_Types.__members__:
+                    self.ec_type = PyECLib_EC_Types[value]
                     if self.ec_type in (PyECLib_EC_Types.jerasure_rs_vand,
                                         PyECLib_EC_Types.jerasure_rs_cauchy):
                         warnings.warn('Jerasure support is deprecated and '
@@ -191,9 +174,9 @@ class ECDriver(object):
                     raise ECBackendNotSupported(
                         "%s is not a valid EC type for PyECLib!" % value)
             elif key == "chksum_type":
-                if PyECLib_FRAGHDRCHKSUM_Types.has_enum(value):
+                if value in PyECLib_FRAGHDRCHKSUM_Types.__members__:
                     self.chksum_type = \
-                        PyECLib_FRAGHDRCHKSUM_Types.get_by_name(value)
+                        PyECLib_FRAGHDRCHKSUM_Types[value]
                 else:
                     raise ECDriverError(
                         "%s is not a valid checksum type for PyECLib!" % value)
