@@ -36,8 +36,6 @@ import unittest
 
 from itertools import combinations
 
-import six
-
 import pyeclib.ec_iface
 from pyeclib.ec_iface import ECBackendNotSupported
 from pyeclib.ec_iface import ECDriver
@@ -333,7 +331,7 @@ class TestPyECLibDriver(unittest.TestCase):
         self.assertGreater(len(pyeclib_drivers), 0)
         pyeclib_driver = pyeclib_drivers[0]
 
-        from six.moves import builtins
+        import builtins
         real_import = builtins.__import__
 
         def fake_import(*a, **kw):
@@ -836,8 +834,8 @@ class BackendsEnabledMetaclass(type):
         return type.__new__(meta, cls_name, cls_bases, cls_dict)
 
 
-class TestBackendsEnabled(six.with_metaclass(BackendsEnabledMetaclass,
-                                             unittest.TestCase)):
+class TestBackendsEnabled(unittest.TestCase,
+                          metaclass=BackendsEnabledMetaclass):
     '''
     Based on TestPyECLibDriver.test_valid_algo above, but these tests
     should *always* either pass or skip.

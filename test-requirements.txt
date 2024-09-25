@@ -4,4 +4,3 @@
 
 coverage
 pytest
-six>=1.9.0
