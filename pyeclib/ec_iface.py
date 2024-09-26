@@ -58,27 +58,9 @@ PYECLIB_MAX_DATA = 32
 PYECLIB_MAX_PARITY = 32
 
 
-@unique
-class PyECLibEnum(Enum):
-
-    def describe(self):
-        # returns supported types
-        return list(self)
-
-    @classmethod
-    def names(cls):
-        return [name for name, value in cls.__members__.items()]
-
-    @classmethod
-    def values(cls):
-        return [value for name, value in cls.__members__.items()]
-
-    def __str__(self):
-        return "%s: %d" % (self.name, self.value)
-
-
 # Erasure Code backends supported as of this PyECLib API rev
-class PyECLib_EC_Types(PyECLibEnum):
+@unique
+class PyECLib_EC_Types(Enum):
     # Note: the Enum start value defaults to 1 as the starting value and not 0
     # 0 is False in the boolean sense but enum members evaluate to True
     jerasure_rs_vand = 1
@@ -97,7 +79,8 @@ class PyECLib_EC_Types(PyECLibEnum):
 
 # The following Enum defines the schemes supported for fragment checksums.
 # The checksum type is "none" unless specified.
-class PyECLib_FRAGHDRCHKSUM_Types(PyECLibEnum):
+@unique
+class PyECLib_FRAGHDRCHKSUM_Types(Enum):
     # Note: the Enum start value defaults to 1 as the starting value and not 0
     # 0 is False in the boolean sense but enum members evaluate to True
     none = 1
