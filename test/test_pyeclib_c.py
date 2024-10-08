@@ -61,40 +61,40 @@ def require_backend(backend):
 
 class TestPyECLib(unittest.TestCase):
 
-    def __init__(self, *args):
-        self.num_datas = [12, 12, 12]
-        self.num_parities = [2, 3, 4]
-        self.iterations = 100
+    @classmethod
+    def setUpClass(cls):
+        cls.num_datas = [12, 12, 12]
+        cls.num_parities = [2, 3, 4]
+        cls.iterations = 100
 
         # EC algorithm and config parameters
-        self.rs_types = [(PyECLib_EC_Types.jerasure_rs_vand),
-                         (PyECLib_EC_Types.jerasure_rs_cauchy),
-                         (PyECLib_EC_Types.isa_l_rs_vand),
-                         (PyECLib_EC_Types.liberasurecode_rs_vand),
-                         (PyECLib_EC_Types.isa_l_rs_cauchy)]
-        self.xor_types = [(PyECLib_EC_Types.flat_xor_hd, 12, 6, 4),
-                          (PyECLib_EC_Types.flat_xor_hd, 10, 5, 4),
-                          (PyECLib_EC_Types.flat_xor_hd, 10, 5, 3)]
-        self.shss = [(PyECLib_EC_Types.shss, 6, 3),
-                     (PyECLib_EC_Types.shss, 10, 4),
-                     (PyECLib_EC_Types.shss, 20, 4),
-                     (PyECLib_EC_Types.shss, 11, 7)]
-        self.libphazr = [(PyECLib_EC_Types.libphazr, 4, 4)]
+        cls.rs_types = [(PyECLib_EC_Types.jerasure_rs_vand),
+                        (PyECLib_EC_Types.jerasure_rs_cauchy),
+                        (PyECLib_EC_Types.isa_l_rs_vand),
+                        (PyECLib_EC_Types.liberasurecode_rs_vand),
+                        (PyECLib_EC_Types.isa_l_rs_cauchy)]
+        cls.xor_types = [(PyECLib_EC_Types.flat_xor_hd, 12, 6, 4),
+                         (PyECLib_EC_Types.flat_xor_hd, 10, 5, 4),
+                         (PyECLib_EC_Types.flat_xor_hd, 10, 5, 3)]
+        cls.shss = [(PyECLib_EC_Types.shss, 6, 3),
+                    (PyECLib_EC_Types.shss, 10, 4),
+                    (PyECLib_EC_Types.shss, 20, 4),
+                    (PyECLib_EC_Types.shss, 11, 7)]
+        cls.libphazr = [(PyECLib_EC_Types.libphazr, 4, 4)]
 
         # Input temp files for testing
-        self.sizes = ["101-K", "202-K", "303-K"]
-        self.files = {}
-        self._create_tmp_files()
+        cls.sizes = ["101-K", "202-K", "303-K"]
+        cls.files = {}
+        cls._create_tmp_files()
 
-        unittest.TestCase.__init__(self, *args)
-
-    def _create_tmp_files(self):
+    @classmethod
+    def _create_tmp_files(cls):
         """
         Create the temporary files needed for testing.  Use the tempfile
         package so that the files will be automatically removed during
         garbage collection.
         """
-        for size_str in self.sizes:
+        for size_str in cls.sizes:
             # Determine the size of the file to create
             size_desc = size_str.split("-")
             size = int(size_desc[0])
@@ -109,7 +109,7 @@ class TestPyECLib(unittest.TestCase):
                 buf = buf.encode('ascii')
             tmp_file = tempfile.NamedTemporaryFile('w+b')
             tmp_file.write(buf)
-            self.files[size_str] = tmp_file
+            cls.files[size_str] = tmp_file
 
     def get_tmp_file(self, name):
         """
@@ -128,8 +128,10 @@ class TestPyECLib(unittest.TestCase):
         for _, tmp_file in self.files.items():
             tmp_file.seek(0, 0)
 
-    def tearDown(self):
-        pass
+    @classmethod
+    def tearDownClass(cls):
+        for tmp_file in cls.files.values():
+            tmp_file.close()
 
     def iter_available_types(self, ec_types):
         found_one = False

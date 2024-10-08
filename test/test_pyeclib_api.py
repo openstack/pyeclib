@@ -80,22 +80,22 @@ class TestStripeDriver(unittest.TestCase):
 
 class TestPyECLibDriver(unittest.TestCase):
 
-    def __init__(self, *args):
+    @classmethod
+    def setUpClass(cls):
         # Create the temp files needed for testing
-        self.file_sizes = ["100-K"]
-        self.files = {}
-        self.num_iterations = 100
-        self._create_tmp_files()
+        cls.file_sizes = ["100-K"]
+        cls.files = {}
+        cls.num_iterations = 100
+        cls._create_tmp_files()
 
-        unittest.TestCase.__init__(self, *args)
-
-    def _create_tmp_files(self):
+    @classmethod
+    def _create_tmp_files(cls):
         """
         Create the temporary files needed for testing.  Use the tempfile
         package so that the files will be automatically removed during
         garbage collection.
         """
-        for size_str in self.file_sizes:
+        for size_str in cls.file_sizes:
             # Determine the size of the file to create
             size_desc = size_str.split("-")
             size = int(size_desc[0])
@@ -111,15 +111,17 @@ class TestPyECLibDriver(unittest.TestCase):
                 buf = buf.encode('ascii')
             tmp_file = tempfile.NamedTemporaryFile()
             tmp_file.write(buf)
-            self.files[size_str] = tmp_file
+            cls.files[size_str] = tmp_file
 
     def setUp(self):
         # Ensure that the file offset is set to the head of the file
         for _, tmp_file in self.files.items():
             tmp_file.seek(0, 0)
 
-    def tearDown(self):
-        pass
+    @classmethod
+    def tearDownClass(cls):
+        for tmp_file in cls.files.values():
+            tmp_file.close()
 
     def test_missing_required_args(self):
         # missing ec_type
