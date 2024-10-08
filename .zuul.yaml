@@ -9,6 +9,7 @@
             vars:
               build_wheel: false
         - openstack-tox-py35: &py35_overrides
+            ansible-version: 8
             vars:
               tox_envlist: py35-compilelibs
               tox_environment:
