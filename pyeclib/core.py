@@ -63,6 +63,11 @@ class ECPyECLibDriver(object):
             self.__class__.__name__, self.k, self.m, self.hd, self.ec_type,
             self.chksum_type)
 
+    def close(self):
+        if self.handle:
+            pyeclib_c.destroy(self.handle)
+        self.handle = None
+
     def encode(self, data_bytes):
         return pyeclib_c.encode(self.handle, data_bytes)
 
@@ -147,6 +152,9 @@ class ECNullDriver(object):
         self.k = k
         self.m = m
         self.hd = hd
+
+    def close(self):
+        pass
 
     def encode(self, data_bytes):
         pass

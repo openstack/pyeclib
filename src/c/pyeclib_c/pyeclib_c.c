@@ -177,6 +177,14 @@ void pyeclib_c_seterr(int ret, const char * prefix) {
             err_class = "ECOutOfMemory";
             err_msg = "Out of memory";
             break;
+        case EDEADLK:
+            err_class = "ECDriverError";
+            err_msg = "Thread already owns lock";
+            break;
+        case EINVAL:
+            err_class = "ECDriverError";
+            err_msg = "Invalid read-write lock";
+            break;
         default:
             err_class = "ECDriverError";
             err_msg = "Unknown error";
@@ -296,26 +304,65 @@ cleanup:
 }
 
 
+static pyeclib_t *
+_destroy(PyObject *obj, int in_destructor)
+{
+  pyeclib_t *pyeclib_handle = NULL;  /* pyeclib object to destroy */
+  int ret;
+
+  if (!PyCapsule_CheckExact(obj)) {
+    if (!in_destructor) {
+      pyeclib_c_seterr(-1, "pyeclib_c_destroy");
+    }
+    return NULL;
+  }
+
+  pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(obj, PYECC_HANDLE_NAME);
+  if (pyeclib_handle == NULL) {
+    if (!in_destructor) {
+      pyeclib_c_seterr(-1, "pyeclib_c_destroy");
+    }
+    return NULL;
+  }
+
+  /*
+   * Free up the liberasure instance using liberasurecode.
+   * If it fails due to wrlock issues, fall back to check_and_free_buffer
+   * to GC the instance.
+   */
+  ret = liberasurecode_instance_destroy(pyeclib_handle->ec_desc);
+  if (ret != 0) {
+    if (in_destructor) {
+      /* destructor still wants to check_and_free */
+      return pyeclib_handle;
+    }
+    pyeclib_c_seterr(ret, "pyeclib_c_destroy");
+    return NULL;
+  }
+  return pyeclib_handle;
+}
+
+/**
+ * Destroy method for cleaning up pyeclib object.
+ */
+static PyObject *
+pyeclib_c_destroy(PyObject *self, PyObject *obj)
+{
+  if (_destroy(obj, 0) == NULL) {
+    return NULL;
+  }
+  Py_RETURN_NONE;
+}
+
+
 /**
  * Destructor method for cleaning up pyeclib object.
  */
 static void
 pyeclib_c_destructor(PyObject *obj)
 {
-  pyeclib_t *pyeclib_handle = NULL;  /* pyeclib object to destroy */
-
-  if (!PyCapsule_CheckExact(obj)) {
-    pyeclib_c_seterr(-1, "pyeclib_c_destructor");
-    return;
-  }
-
-  pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(obj, PYECC_HANDLE_NAME);
-  if (pyeclib_handle == NULL) {
-    pyeclib_c_seterr(-1, "pyeclib_c_destructor");
-  } else {
-    check_and_free_buffer(pyeclib_handle);
-  }
-  return;
+  pyeclib_t *pyeclib_handle = _destroy(obj, 1);
+  check_and_free_buffer(pyeclib_handle);
 }
 
 
@@ -1189,6 +1236,7 @@ pyeclib_c_liberasurecode_version(PyObject *self, PyObject *args) {
 
 static PyMethodDef PyECLibMethods[] = {
     {"init",  pyeclib_c_init, METH_VARARGS, "Initialize a new erasure encoder/decoder"},
+    {"destroy",  pyeclib_c_destroy, METH_O, "Destroy an erasure encoder/decoder"},
     {"encode",  pyeclib_c_encode, METH_VARARGS, "Create parity using source data"},
     {"decode",  pyeclib_c_decode, METH_VARARGS, "Recover all lost data/parity"},
     {"reconstruct",  pyeclib_c_reconstruct, METH_VARARGS, "Recover selective data/parity"},
