@@ -1,1 +1,3 @@
 tag: pyeclib-build-wheel-latest
+wheel_target: x86_64
+# alternatively, aarch64 -- see Dockerfile

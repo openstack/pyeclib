@@ -1,4 +1,4 @@
 - name: Build image
-  command: "docker build . --tag {{ tag }}"
+  command: "docker build --build-arg TARGET={{ wheel_target }} . --tag {{ tag }}"
   args:
     chdir: "{{ zuul.project.src_dir }}"
