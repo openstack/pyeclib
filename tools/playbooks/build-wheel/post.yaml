@@ -24,4 +24,10 @@
                 url: 'artifacts/{{ item.path | basename }}'
                 metadata:
                   type: python_wheel
-                  # TODO: parse further metadata from basename (python tag, ABI tag)
+                  package: '{{ (item.path | basename | split("-") ).0 }}'
+                  version: '{{ (item.path | basename | split("-") ).1 }}'
+                  # according to https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/
+                  # there may or may not be a "build tag" next, whatever that is
+                  python-tag: '{{ (item.path | basename | split("-") )[-3] }}'
+                  abi-tag: '{{ (item.path | basename | split("-") )[-2] }}'
+                  platform-tag: '{{ (item.path[:-4] | basename | split("-") )[-1].split(".") }}'
