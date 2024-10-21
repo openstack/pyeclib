@@ -1,0 +1,9 @@
+- name: Build image (glibc)
+  command: "docker build --build-arg TARGET={{ wheel_target }} . --tag {{ tag }}"
+  args:
+    chdir: "{{ zuul.project.src_dir }}"
+
+- name: Build image (musl)
+  command: "docker build --build-arg TARGET=musl_{{ wheel_target }} . --tag {{ tag }}-musl"
+  args:
+    chdir: "{{ zuul.project.src_dir }}"
