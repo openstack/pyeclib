@@ -1,0 +1,8 @@
+- hosts: all
+  roles:
+    - ensure-docker
+  tasks:
+    - name: Ensure output directory
+      file:
+        path: '{{ ansible_user_dir }}/artifacts'
+        state: directory

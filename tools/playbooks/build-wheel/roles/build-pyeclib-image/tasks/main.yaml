@@ -1,0 +1,4 @@
+- name: Build image
+  command: "docker build . --tag {{ tag }}"
+  args:
+    chdir: "{{ zuul.project.src_dir }}"
