@@ -1,3 +1,12 @@
+New in 1.6.2
+------------
+
+ * Updated liberasurecode dependency to 1.4.0. For more information,
+   see https://bugs.launchpad.net/pyeclib/+bug/1639691
+ * Fix a resource leak when creating many ECDrivers.
+ * Test against Python 3.11 - 3.13.
+ * Fix building on free-threaded Python 3.13.
+
 New in 1.6.1
 ------------
 
