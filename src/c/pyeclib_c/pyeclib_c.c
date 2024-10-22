@@ -33,9 +33,6 @@
 #include <bytesobject.h>
 #include <liberasurecode/erasurecode.h>
 
-/* Compat layer for python <= 2.6 */
-#include "capsulethunk.h"
-
 #include <pyeclib_c.h>
 
 /* Python 3 compatibility macros */
@@ -275,14 +272,8 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   }
 
   /* Prepare the python object to return */
-#ifdef Py_CAPSULE_H
   pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME,
                                      pyeclib_c_destructor);
-#else
-  pyeclib_obj_handle = PyCObject_FromVoidPtrAndDesc(
-                                     pyeclib_handle, (void *) PYECC_HANDLE_NAME,
-                                     pyeclib_c_destructor);
-#endif /* Py_CAPSULE_H */
 
   /* Clean up the allocated memory on error, or update the ref count */
   if (pyeclib_obj_handle == NULL) {

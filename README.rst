@@ -2,7 +2,7 @@ PyEClib
 -------
 
 This library provides a simple Python interface for implementing erasure codes
-and is known to work with Python 2.7 and 3.5 through 3.12. To obtain the best
+and is known to work with Python 2.7 and 3.5 through 3.13. To obtain the best
 possible performance, the library utilizes liberasurecode, which is a C based
 erasure code library.
 
