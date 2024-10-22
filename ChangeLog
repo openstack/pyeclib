@@ -6,6 +6,8 @@ New in 1.6.2
  * Fix a resource leak when creating many ECDrivers.
  * Test against Python 3.11 - 3.13.
  * Fix building on free-threaded Python 3.13.
+ * Binary wheels (bundling liberasurecode==1.6.4 and ISA-L==2.31.0) are now
+   published to PyPI.
 
 New in 1.6.1
 ------------
