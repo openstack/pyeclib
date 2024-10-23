@@ -481,20 +481,42 @@ class TestPyECLib(unittest.TestCase):
         pyeclib_c.encode(handle, whole_file_bytes)
         pyeclib_c.destroy(handle)
 
-        # Can't destroy again
-        with self.assertRaises(ECBackendInstanceNotAvailable) as caught:
-            pyeclib_c.destroy(handle)
-        self.assertEqual(
-            str(caught.exception),
-            'pyeclib_c_destroy ERROR: Backend instance not found. Please '
-            'inspect syslog for liberasurecode error report.')
-        with self.assertRaises(ECBackendInstanceNotAvailable) as caught:
-            # but now it's busted!
-            pyeclib_c.encode(handle, whole_file_bytes)
-        self.assertEqual(
-            str(caught.exception),
-            'pyeclib_c_encode ERROR: Backend instance not found. Please '
-            'inspect syslog for liberasurecode error report.')
+        if pyeclib_c.get_liberasurecode_version() > 0x010604:
+            # Can't destroy again
+            with self.assertRaises(ECBackendInstanceNotAvailable) as caught:
+                pyeclib_c.destroy(handle)
+            self.assertEqual(
+                str(caught.exception),
+                'pyeclib_c_destroy ERROR: Backend instance not found. Please '
+                'inspect syslog for liberasurecode error report.')
+
+            with self.assertRaises(ECBackendInstanceNotAvailable) as caught:
+                # but now it's busted!
+                pyeclib_c.encode(handle, whole_file_bytes)
+            self.assertEqual(
+                str(caught.exception),
+                'pyeclib_c_encode ERROR: Backend instance not found. Please '
+                'inspect syslog for liberasurecode error report.')
+
+    def test_destroy_one_leaves_other_usable(self):
+        # liberasurecode_rs_vand should always be available
+        handle1 = pyeclib_c.init(
+            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2)
+        handle2 = pyeclib_c.init(
+            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2)
+        whole_file_bytes = self.get_tmp_file("101-K").read()
+        # sanity check that both work
+        pyeclib_c.encode(handle1, whole_file_bytes)
+        pyeclib_c.encode(handle2, whole_file_bytes)
+
+        pyeclib_c.destroy(handle1)
+
+        # This should still be useful, even if we're on liberasurecode without
+        # https://review.opendev.org/c/openstack/liberasurecode/+/929193
+        # Significantly, we *should not* segfault, even if it means a small
+        # resource leak!
+        pyeclib_c.encode(handle2, whole_file_bytes)
+        pyeclib_c.destroy(handle2)
 
 
 if __name__ == "__main__":

@@ -316,6 +316,13 @@ _destroy(PyObject *obj, int in_destructor)
     return NULL;
   }
 
+  if (liberasurecode_get_version() < 0x010605) {
+    /*
+     * Prior to https://review.opendev.org/c/openstack/liberasurecode/+/929193
+     * it won't actually be safe for us to destroy the instance.
+     */
+    return pyeclib_handle;
+  }
   /*
    * Free up the liberasure instance using liberasurecode.
    * If it fails due to wrlock issues, fall back to check_and_free_buffer
