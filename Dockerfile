@@ -58,7 +58,7 @@ ADD https://github.com/openstack/liberasurecode/archive/${LIBERASURECODE_TAG}.ta
 RUN tar -C /opt/src -x -f /opt/src/liberasurecode.tar.gz -z
 RUN cd /opt/src/liberasurecode*/ && \
     ./autogen.sh && \
-    CFLAGS="-DLIBERASURECODE_SO_SUFFIX='"'"'"${SO_SUFFIX}"'"'"'" ./configure --prefix=/usr && \
+    CFLAGS="-DLIBERASURECODE_SO_SUFFIX='"'"'"${SO_SUFFIX}"'"'"'" ./configure --prefix=/usr --disable-mmi && \
     make && \
     make install
 
