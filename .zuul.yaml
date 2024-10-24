@@ -47,6 +47,11 @@
         - pyeclib-tox-py39-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-9-stream
+    post:
+      jobs:
+        - publish-openstack-python-branch-tarball:
+            vars:
+              build_wheel: false
     pre-release:
       jobs:
         - pyeclib-build-wheels
