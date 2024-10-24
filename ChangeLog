@@ -1,3 +1,9 @@
+New in 1.6.3
+------------
+
+ * Only destroy liberasurecode descriptors on liberasurecode versions where it
+   should be safe to do so.
+
 New in 1.6.2
 ------------
 
