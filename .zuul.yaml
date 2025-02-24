@@ -27,7 +27,7 @@
         - openstack-tox-py310
         - openstack-tox-py311
         - openstack-tox-py312
-        - openstack-tox-py313
+        - pyeclib-tox-py313t
         - pyeclib-tox-py39-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-9-stream
@@ -44,6 +44,7 @@
         - openstack-tox-py310
         - openstack-tox-py311
         - openstack-tox-py312
+        - pyeclib-tox-py313t
         - pyeclib-tox-py39-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-9-stream
@@ -62,6 +63,14 @@
         - pyeclib-build-wheels
         - pyeclib-build-wheels-arm64
         - release-openstack-python: *release_overrides
+
+- job:
+    name: pyeclib-tox-py313t
+    parent: openstack-tox-py313
+    description: |
+      Run unit tests using ``py313t``, explicitly using free-threaded python
+    vars:
+      tox_envlist: py313t
 
 - job:
     name: pyeclib-tox-py39-centos-9-stream
