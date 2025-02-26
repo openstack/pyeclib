@@ -106,6 +106,7 @@
 - job:
     name: pyeclib-build-wheels-arm64
     parent: pyeclib-build-wheels
+    timeout: 3600
     nodeset: ubuntu-noble-arm64
     description: |
       Build binary manylinux wheels that include ISA-L for ARM64.
