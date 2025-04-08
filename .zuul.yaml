@@ -1,6 +1,6 @@
 - project:
     templates:
-      - openstack-python-jobs
+      - openstack-python3-jobs
       - libec-pyeclib-jobs-arm64
       - build-openstack-docs-pti
     check:
@@ -14,21 +14,11 @@
             pre-run: tools/playbooks/release-wheel/download-artifacts.yaml
             vars:
               build_wheel: false
-        - openstack-tox-py35: &py35_overrides
-            ansible-version: 8
-            vars:
-              tox_envlist: py35-compilelibs
-              tox_environment:
-                LIBERASURECODE_REF: '1.4.0'
-        - openstack-tox-py36
-        - openstack-tox-py37
-        - openstack-tox-py38
-        - openstack-tox-py39
         - openstack-tox-py310
         - openstack-tox-py311
         - openstack-tox-py312
         - openstack-tox-py313
-        - pyeclib-tox-py39-centos-9-stream
+        - pyeclib-tox-py311-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-9-stream
     gate:
@@ -36,16 +26,11 @@
         - pyeclib-build-wheels
         - pyeclib-build-wheels-arm64
         - test-release-openstack: *release_overrides
-        - openstack-tox-py35: *py35_overrides
-        - openstack-tox-py36
-        - openstack-tox-py37
-        - openstack-tox-py38
-        - openstack-tox-py39
         - openstack-tox-py310
         - openstack-tox-py311
         - openstack-tox-py312
         - openstack-tox-py313
-        - pyeclib-tox-py39-centos-9-stream
+        - pyeclib-tox-py311-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-9-stream
     post:
@@ -65,19 +50,22 @@
         - release-openstack-python: *release_overrides
 
 - job:
-    name: pyeclib-tox-py39-centos-9-stream
-    parent: openstack-tox-py39
+    name: pyeclib-tox-py311-centos-9-stream
+    parent: openstack-tox-py311
     description: |
-      Run unit tests using ``py39`` environment on CentOS 9.
+      Run unit tests using ``py311`` environment on CentOS 9.
     nodeset: centos-9-stream
+    vars:
+      python_use_pyenv: true
 
 - job:
     name: libec-pyeclib-unit-centos-9-stream
-    parent: openstack-tox-py39
+    parent: openstack-tox-py311
     timeout: 1800
     nodeset: centos-9-stream
     vars:
-      tox_envlist: py39-compilelibs
+      python_use_pyenv: true
+      tox_envlist: py311-compilelibs
 
 - job:
     name: libec-pyeclib-unit

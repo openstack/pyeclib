@@ -1,16 +1,14 @@
 # manylinux2010 has oldest build chain that can still build modern ISA-L
-# 2021-02-06-3d322a5 is newest tag that still had 2.7 support
-# aarch64 images never had 2.7, but 2021-05-01-a10bece is the newest that still had 3.5
 
 ARG TARGET="x86_64"
 
-FROM quay.io/pypa/manylinux2010_x86_64:2021-02-06-3d322a5 AS x86_64
-FROM quay.io/pypa/manylinux2014_aarch64:2021-05-01-a10bece AS aarch64
-FROM quay.io/pypa/musllinux_1_1_x86_64:2021-09-18-f12faf3 AS musl_x86_64
-FROM quay.io/pypa/musllinux_1_1_aarch64:2021-09-18-f12faf3 AS musl_aarch64
+FROM quay.io/pypa/manylinux2010_x86_64:latest AS x86_64
+FROM quay.io/pypa/manylinux2014_aarch64:latest AS aarch64
+FROM quay.io/pypa/musllinux_1_1_x86_64:latest AS musl_x86_64
+FROM quay.io/pypa/musllinux_1_1_aarch64:latest AS musl_aarch64
 FROM ${TARGET}
 
-MAINTAINER OpenStack Swift
+LABEL org.opencontainers.image.authors="OpenStack Swift"
 
 # can also take branch names, e.g. "master"
 ARG LIBERASURECODE_TAG=1.6.4
@@ -19,8 +17,7 @@ ARG ISAL_TAG=v2.31.0
 ARG SO_SUFFIX=-pyeclib
 ENV SO_SUFFIX=${SO_SUFFIX}
 ENV UID=1000
-# Alternatively, try cp27-cp27m, cp27-cp27mu
-ENV PYTHON_VERSION=cp35-cp35m
+ENV PYTHON_VERSION=cp310-cp310
 
 RUN mkdir /opt/src /output
 
@@ -33,9 +30,6 @@ RUN if [ -e /etc/yum.repos.d ]; then \
   fi
 
 RUN if [ -n "$(type -p yum)" ]; then yum install -y zlib-devel ; fi
-# Update auditwheel so it can improve our tag to manylinux1 automatically
-# Not *too far*, though, since we've got the old base image
-RUN /opt/_internal/tools/bin/pip install -U 'auditwheel<5.2'
 
 ADD https://github.com/netwide-assembler/nasm/archive/refs/tags/nasm-2.15.05.tar.gz /opt/src/nasm.tar.gz
 RUN tar -C /opt/src -xz -f /opt/src/nasm.tar.gz
@@ -62,4 +56,4 @@ RUN cd /opt/src/liberasurecode*/ && \
     make install
 
 COPY . /opt/src/pyeclib/
-ENTRYPOINT ["/bin/sh", "-c", "/opt/python/${PYTHON_VERSION}/bin/python /opt/src/pyeclib/pack_wheel.py /opt/src/pyeclib/ --repair --so-suffix=${SO_SUFFIX} --wheel-dir=/output"]
+ENTRYPOINT ["/bin/sh", "-c", "/opt/python/${PYTHON_VERSION}/bin/python3 /opt/src/pyeclib/pack_wheel.py /opt/src/pyeclib/ --repair --so-suffix=${SO_SUFFIX} --wheel-dir=/output"]

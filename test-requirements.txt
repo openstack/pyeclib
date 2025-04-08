@@ -3,6 +3,5 @@
 # process, which may cause wedges in the gate later.
 
 coverage
-attrs<22; python_version<"3.5"
 pytest
 six>=1.9.0

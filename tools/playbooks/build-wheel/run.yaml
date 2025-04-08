@@ -3,16 +3,6 @@
     - build-pyeclib-images
 
     - role: build-pyeclib-wheel
-      wheel_python_version: cp27-cp27m
-      when: wheel_target != "aarch64"
 
     - role: build-pyeclib-wheel
-      wheel_python_version: cp27-cp27mu
-      when: wheel_target != "aarch64"
-
-    - role: build-pyeclib-wheel
-      wheel_python_version: cp35-cp35m
-
-    - role: build-pyeclib-wheel
-      wheel_python_version: cp36-cp36m
       musl: True

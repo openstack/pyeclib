@@ -103,7 +103,7 @@ def build_wheel(src_dir):
     try:
         subprocess.check_call([
             sys.executable, 'setup.py',
-            'bdist_wheel', '-d', tmp, '--py-limited-api=cp35',
+            'bdist_wheel', '-d', tmp, '--py-limited-api=cp310',
         ], cwd=src_dir)
         files = os.listdir(tmp)
         assert len(files) == 1, files
