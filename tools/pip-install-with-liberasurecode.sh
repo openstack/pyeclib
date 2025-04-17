@@ -6,12 +6,9 @@ fi
 
 if [ -n "$NASM_DIR" ]; then
     if [ ! -d "$NASM_DIR" ]; then
-        mkdir -p "$NASM_DIR"
-        pushd "$NASM_DIR"
-        curl https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.01.tar.gz | tar -xz
-        popd
+        git clone https://github.com/netwide-assembler/nasm.git -b nasm-2.15.05 "$NASM_DIR"
     fi
-    pushd "$NASM_DIR"/nasm*
+    pushd "$NASM_DIR"
     ./autogen.sh
     ./configure --prefix "$VIRTUAL_ENV"
     make nasm

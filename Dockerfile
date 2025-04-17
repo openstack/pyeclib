@@ -37,9 +37,8 @@ RUN if [ -n "$(type -p yum)" ]; then yum install -y zlib-devel ; fi
 # Not *too far*, though, since we've got the old base image
 RUN /opt/_internal/tools/bin/pip install -U 'auditwheel<5.2'
 
-# Server includes `Content-Encoding: x-gzip`, so ADD unwraps it
-ADD https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.01.tar.gz /opt/src/nasm.tar
-RUN tar -C /opt/src -x -f /opt/src/nasm.tar
+ADD https://github.com/netwide-assembler/nasm/archive/refs/tags/nasm-2.15.05.tar.gz /opt/src/nasm.tar.gz
+RUN tar -C /opt/src -xz -f /opt/src/nasm.tar.gz
 RUN cd /opt/src/nasm-* && \
     ./autogen.sh && \
     ./configure --prefix=/usr && \
