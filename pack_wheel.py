@@ -73,24 +73,19 @@ def locate_library(name, missing_ok=False):
         for d in libpath.split(':'):
             cmd.extend(['-L', d.rstrip('/')])
     cmd.extend(['-o', os.devnull, '-l%s' % name])
-    try:
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             universal_newlines=True)
-        out, _ = p.communicate()
-    except subprocess.CalledProcessError:
-        pass
-    else:
-        if hasattr(os, 'fsdecode'):
-            out = os.fsdecode(out)
-        res = re.search(expr, out)
-        if res:
-            return os.path.realpath(res.group(0))
+    p = subprocess.run(cmd, capture_output=True, text=True)
+    # Note that we don't expect the command to exit cleanly; we just want
+    # to see what got loaded
+    res = re.search(expr, p.stdout)
+    if res:
+        return os.path.realpath(res.group(0))
 
     if missing_ok:
         return None
 
-    raise RuntimeError('Failed to locate %s (checked %s)' % (name, libpath))
+    print(f'{" ".join(cmd)!r} failed with status {p.returncode}:')
+    print(f'\x1b[31m{p.stderr}\x1b[0m', end='')
+    raise RuntimeError(f'Failed to locate {name}')
 
 
 def build_wheel(src_dir):
