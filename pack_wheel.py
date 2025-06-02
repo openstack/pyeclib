@@ -72,6 +72,16 @@ def locate_library(name, missing_ok=False):
     if libpath:
         for d in libpath.split(':'):
             cmd.extend(['-L', d.rstrip('/')])
+    should_read_path = False
+    for flg in os.environ.get('LDFLAGS', '').split(' '):
+        if should_read_path:
+            cmd.append(flg)
+            should_read_path = False
+        elif flg == '-L':
+            cmd.append(flg)
+            should_read_path = True
+        elif flg.startswith('-L'):
+            cmd.append(flg)
     cmd.extend(['-o', os.devnull, '-l%s' % name])
     p = subprocess.run(cmd, capture_output=True, text=True)
     # Note that we don't expect the command to exit cleanly; we just want
