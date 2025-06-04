@@ -406,8 +406,8 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
   /* The minimum segment size depends on the EC algorithm */
   min_segment_size = liberasurecode_get_minimum_encode_size(pyeclib_handle->ec_desc);
   if (min_segment_size < 0) {
-      pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info");
-      return NULL;
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info");
+    return NULL;
   }
 
   /* Get the number of segments */
@@ -435,8 +435,8 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 
     fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, data_len);
     if (fragment_size < 0) {
-        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info");
-	return NULL;
+      pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info");
+      return NULL;
     }
 
     /* Segment size is the user-provided segment size */
@@ -451,8 +451,8 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 
     fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, segment_size);
     if (fragment_size < 0) {
-        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info");
-	return NULL;
+      pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info");
+      return NULL;
     }
 
     last_segment_size = data_len - (segment_size * (num_segments - 1));
@@ -471,8 +471,8 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
 
     last_fragment_size = liberasurecode_get_fragment_size(pyeclib_handle->ec_desc, last_segment_size);
     if (fragment_size < 0) {
-        pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info");
-	return NULL;
+      pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_segment_info");
+      return NULL;
     }
   }
 
@@ -489,19 +489,11 @@ pyeclib_c_get_segment_info(PyObject *self, PyObject *args)
     "last_fragment_size", last_fragment_size,
     "num_segments", num_segments);
   if (NULL == ret_dict) {
-    goto error;
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_segment_info");
+    return NULL;
   }
 
-exit:
-    return ret_dict;
-
-error:
-    // To prevent unexpected call, this is placed after return call
-    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_get_segment_info");
-    Py_XDECREF(ret_dict);
-    ret_dict = NULL;
-    goto exit;
-
+  return ret_dict;
 }
 
 
