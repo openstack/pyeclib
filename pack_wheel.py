@@ -113,7 +113,7 @@ def build_wheel(src_dir):
         raise
 
 
-def repack_wheel(whl, so_suffix, out_whl=None):
+def repack_wheel(whl, so_suffix, out_whl=None, require_isal=False):
     """
     Repack a wheel to bundle in liberasurecode libraries.
 
@@ -130,14 +130,14 @@ def repack_wheel(whl, so_suffix, out_whl=None):
         zf = zipfile.ZipFile(whl, 'r')
         zf.extractall(tmp)
 
-        relocate_libs(tmp, so_suffix)
+        relocate_libs(tmp, so_suffix, require_isal)
         rebuild_dist_info_record(tmp)
         build_zip(tmp, out_whl)
     finally:
         shutil.rmtree(tmp)
 
 
-def relocate_libs(tmp, so_suffix):
+def relocate_libs(tmp, so_suffix, require_isal=False):
     """
     Bundle libraries into a unpacked-wheel tree.
 
@@ -174,7 +174,7 @@ def relocate_libs(tmp, so_suffix):
     maybe_add_needed(relocated_libec, os.path.basename(builtin_rs_vand))
 
     # Nobody actually links against this, but we want it anyway if available
-    isal = locate_library('isal', missing_ok=True)
+    isal = locate_library('isal', missing_ok=not require_isal)
     if isal:
         relocated_isal = inject(isal)
         maybe_add_needed(relocated_libec, os.path.basename(relocated_isal))
@@ -324,11 +324,12 @@ def main():
     parser.add_argument('-w', '--wheel-dir', default='.')
     parser.add_argument('-s', '--so-suffix', default='-pyeclib')
     parser.add_argument('-r', '--repair', action='store_true')
+    parser.add_argument('--require-isal', action='store_true')
     args = parser.parse_args()
     whl = build_wheel(args.src_dir)
     whl_dir = os.path.dirname(whl)
     try:
-        repack_wheel(whl, args.so_suffix)
+        repack_wheel(whl, args.so_suffix, require_isal=args.require_isal)
         if args.repair:
             whl = repair_wheel(whl)
         output_whl = os.path.join(
