@@ -22,14 +22,10 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-try:
-    import queue
-except ImportError:  # py2
-    import Queue as queue
+import queue
 import random
 import resource
 import string
-import sys
 import tempfile
 import threading
 import unittest
@@ -47,14 +43,6 @@ from pyeclib.ec_iface import PyECLib_EC_Types
 
 from pyeclib.ec_iface import ALL_EC_TYPES
 from pyeclib.ec_iface import VALID_EC_TYPES
-
-
-if sys.version < '3':
-    def b2i(b):
-        return ord(b)
-else:
-    def b2i(b):
-        return b
 
 
 class TestNullDriver(unittest.TestCase):
@@ -110,8 +98,7 @@ class TestPyECLibDriver(unittest.TestCase):
             # Create the dictionary of files to test with
             buf = ''.join(random.choice(string.ascii_letters)
                           for i in range(size))
-            if sys.version_info >= (3,):
-                buf = buf.encode('ascii')
+            buf = buf.encode('ascii')
             tmp_file = tempfile.NamedTemporaryFile()
             tmp_file.write(buf)
             cls.files[size_str] = tmp_file
@@ -469,7 +456,7 @@ class TestPyECLibDriver(unittest.TestCase):
             for fragment in fragments:
                 if i in fragments_to_corrupt:
                     corrupted_fragment = fragment[:100] +\
-                        (str(chr((b2i(fragment[100]) + 0x1)
+                        (str(chr((fragment[100] + 0x1)
                                  % 128))).encode('utf-8') + fragment[101:]
                     fragment_metadata_list.append(
                         pyeclib_driver.get_metadata(corrupted_fragment))
