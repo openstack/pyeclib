@@ -261,12 +261,10 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_obj_handle = PyCapsule_New(pyeclib_handle, PYECC_HANDLE_NAME,
                                      pyeclib_c_destructor);
 
-  /* Clean up the allocated memory on error, or update the ref count */
+  /* Clean up the allocated memory on error */
   if (pyeclib_obj_handle == NULL) {
     pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init");
     goto cleanup;
-  } else {
-    Py_INCREF(pyeclib_obj_handle);
   }
 
 exit:
