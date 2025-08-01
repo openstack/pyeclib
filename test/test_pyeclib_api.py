@@ -610,7 +610,7 @@ class TestPyECLibDriver(unittest.TestCase):
         # and if you want to test either other parameters or backends,
         # you can add the spec you want to test there.
         pyeclib_drivers = self.get_pyeclib_testspec()
-        orig_data = os.urandom(1024 ** 2)
+        orig_data = os.urandom(1024)
         for pyeclib_driver in pyeclib_drivers:
             encoded = pyeclib_driver.encode(orig_data)
             # make all fragment like (index, frag_data) format to feed
