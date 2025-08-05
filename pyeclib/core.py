@@ -21,6 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from .ec_iface import ECBackendInstanceNotAvailable
 from .ec_iface import ECDriverError
 from .ec_iface import ECInsufficientFragments
 from .ec_iface import PyECLib_FRAGHDRCHKSUM_Types
@@ -49,7 +50,7 @@ class ECPyECLibDriver(object):
         if self.chksum_type is PyECLib_FRAGHDRCHKSUM_Types.inline_crc32:
             self.inline_chksum = 1
 
-        self.handle = pyeclib_c.init(
+        self._handle = pyeclib_c.init(
             self.k,
             self.m,
             ec_type.value,
@@ -64,9 +65,16 @@ class ECPyECLibDriver(object):
             self.chksum_type)
 
     def close(self):
-        if self.handle:
-            pyeclib_c.destroy(self.handle)
-        self.handle = None
+        if self._handle is not None:
+            pyeclib_c.destroy(self._handle)
+        self._handle = None
+
+    @property
+    def handle(self):
+        if self._handle is None:
+            raise ECBackendInstanceNotAvailable(
+                'erasure coding handle is closed')
+        return self._handle
 
     def encode(self, data_bytes):
         return pyeclib_c.encode(self.handle, data_bytes)

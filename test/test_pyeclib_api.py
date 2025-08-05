@@ -33,6 +33,7 @@ import unittest
 from itertools import combinations
 
 import pyeclib.ec_iface
+from pyeclib.ec_iface import ECBackendInstanceNotAvailable
 from pyeclib.ec_iface import ECBackendNotSupported
 from pyeclib.ec_iface import ECDriver
 from pyeclib.ec_iface import ECDriverError
@@ -293,6 +294,27 @@ class TestPyECLibDriver(unittest.TestCase):
             pyeclib_drivers.append(ECDriver(k=11, m=7, ec_type=_type8,
                                    chksum_type=csum))
         return pyeclib_drivers
+
+    def test_use_after_close(self):
+        pyeclib_drivers = self.get_pyeclib_testspec()
+        for pyeclib_driver in pyeclib_drivers:
+            frags = pyeclib_driver.encode(b"testdata")
+            self.assertEqual(
+                pyeclib_driver.reconstruct(frags[1:], [0])[0], frags[0])
+
+            pyeclib_driver.close()
+            with self.assertRaises(ECBackendInstanceNotAvailable) as ctx:
+                pyeclib_driver.encode(b"testdata")
+            self.assertEqual(str(ctx.exception),
+                             'erasure coding handle is closed')
+            with self.assertRaises(ECBackendInstanceNotAvailable) as ctx:
+                pyeclib_driver.decode(frags)
+            self.assertEqual(str(ctx.exception),
+                             'erasure coding handle is closed')
+            with self.assertRaises(ECBackendInstanceNotAvailable) as ctx:
+                pyeclib_driver.reconstruct(frags[1:], [0])
+            self.assertEqual(str(ctx.exception),
+                             'erasure coding handle is closed')
 
     def test_small_encode(self):
         pyeclib_drivers = self.get_pyeclib_testspec()
