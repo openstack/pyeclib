@@ -37,12 +37,15 @@ Homepage = "https://opendev.org/openstack/pyeclib"
 "Release Notes" = "https://opendev.org/openstack/pyeclib/src/branch/master/ChangeLog"
 
 [tool.setuptools]
-packages = ["pyeclib", "pyeclib.cli"]
 platforms = ["Linux"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+"*" = ["*.pyi"]
 
 [[tool.setuptools.ext-modules]]
 name = "pyeclib_c"
-sources = ["src/c/pyeclib_c/pyeclib_c.c"]
-include-dirs = ["src/c/pyeclib_c"]
+sources = ["src/pyeclib_c/pyeclib_c.c"]
+include-dirs = ["src/pyeclib_c"]
 libraries = ["erasurecode"]
 py-limited-api = true
