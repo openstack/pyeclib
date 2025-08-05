@@ -124,16 +124,16 @@ class TestPyECLibDriver(unittest.TestCase):
 
         for ec_type in VALID_EC_TYPES:
             # missing k
-            with self.assertRaises(ECDriverError) as err_context:
+            with self.assertRaises(TypeError) as err_context:
                 ECDriver(ec_type=ec_type, m=1)
-            self.assertEqual(str(err_context.exception),
-                             "Invalid Argument: k is required")
+            self.assertIn("missing 1 required keyword-only argument: 'k'",
+                          str(err_context.exception))
 
             # missing m
-            with self.assertRaises(ECDriverError) as err_context:
+            with self.assertRaises(TypeError) as err_context:
                 ECDriver(ec_type=ec_type, k=1)
-            self.assertEqual(str(err_context.exception),
-                             "Invalid Argument: m is required")
+            self.assertIn("missing 1 required keyword-only argument: 'm'",
+                          str(err_context.exception))
 
     def test_invalid_km_args(self):
         for ec_type in VALID_EC_TYPES:
