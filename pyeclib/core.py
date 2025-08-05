@@ -21,27 +21,33 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
 from .ec_iface import ECBackendInstanceNotAvailable
 from .ec_iface import ECDriverError
 from .ec_iface import ECDriverErrorWithPosition
 from .ec_iface import ECInsufficientFragments
+from .ec_iface import PyECLib_EC_Types
 from .ec_iface import PyECLib_FRAGHDRCHKSUM_Types
 
 import math
 import pyeclib_c
+from typing import Any
+from typing import Collection
+
+NO_CHECKSUM = PyECLib_FRAGHDRCHKSUM_Types.none
 
 
 class ECPyECLibDriver(object):
 
     def __init__(
         self,
-        k,
-        m,
-        hd,
-        ec_type,
-        chksum_type=PyECLib_FRAGHDRCHKSUM_Types.none,
-        validate=False,
-        local_parity=0,
+        k: int,
+        m: int,
+        hd: int,
+        ec_type: PyECLib_EC_Types,
+        chksum_type: PyECLib_FRAGHDRCHKSUM_Types = NO_CHECKSUM,
+        validate: bool = False,
+        local_parity: int = 0,
     ):
         self.k = k
         self.m = m
@@ -56,7 +62,7 @@ class ECPyECLibDriver(object):
         if self.chksum_type is PyECLib_FRAGHDRCHKSUM_Types.inline_crc32:
             self.inline_chksum = 1
 
-        self._handle = pyeclib_c.init(
+        self._handle: pyeclib_c.PyECLibHandle | None = pyeclib_c.init(
             self.k,
             self.m,
             ec_type.value,
@@ -67,7 +73,7 @@ class ECPyECLibDriver(object):
             self.local_parity,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "%s(k=%r, m=%r, hd=%r, ec_type=%r, chksum_type=%r)" % (
             self.__class__.__name__,
             self.k,
@@ -77,23 +83,27 @@ class ECPyECLibDriver(object):
             self.chksum_type,
         )
 
-    def close(self):
+    def close(self) -> None:
         if self._handle is not None:
             pyeclib_c.destroy(self._handle)
         self._handle = None
 
     @property
-    def handle(self):
+    def handle(self) -> pyeclib_c.PyECLibHandle:
         if self._handle is None:
             raise ECBackendInstanceNotAvailable(
                 "erasure coding handle is closed"
             )
         return self._handle
 
-    def encode(self, data_bytes):
+    def encode(self, data_bytes: bytes) -> list[bytes]:
         return pyeclib_c.encode(self.handle, data_bytes)
 
-    def _validate_and_return_fragment_size(self, method, fragments):
+    def _validate_and_return_fragment_size(
+        self,
+        method: str,
+        fragments: list[bytes],
+    ) -> int:
         if len(fragments) == 0:
             raise ECDriverError(
                 f"No fragments payload in ECPyECLibDriver.{method}"
@@ -114,8 +124,11 @@ class ECPyECLibDriver(object):
         return fragment_len
 
     def decode(
-        self, fragment_payloads, ranges=None, force_metadata_checks=False
-    ):
+        self,
+        fragment_payloads: Collection[bytes],
+        ranges: list[tuple[int, int]] | None = None,
+        force_metadata_checks: bool = False,
+    ) -> bytes:
         _fragment_payloads = list(fragment_payloads)
         fragment_len = self._validate_and_return_fragment_size(
             "decode", _fragment_payloads
@@ -134,7 +147,11 @@ class ECPyECLibDriver(object):
             force_metadata_checks,
         )
 
-    def reconstruct(self, fragment_payloads, indexes_to_reconstruct):
+    def reconstruct(
+        self,
+        fragment_payloads: Collection[bytes],
+        indexes_to_reconstruct: list[int],
+    ) -> list[bytes]:
         _fragment_payloads = list(fragment_payloads)
         fragment_len = self._validate_and_return_fragment_size(
             "reconstruct", _fragment_payloads
@@ -158,27 +175,40 @@ class ECPyECLibDriver(object):
 
         return reconstructed_data
 
-    def fragments_needed(self, reconstruct_indexes, exclude_indexes):
+    def fragments_needed(
+        self, reconstruct_indexes: list[int], exclude_indexes: list[int]
+    ) -> list[int]:
         required_fragments = pyeclib_c.get_required_fragments(
             self.handle, reconstruct_indexes, exclude_indexes
         )
         return required_fragments
 
-    def min_parity_fragments_needed(self):
+    def min_parity_fragments_needed(self) -> int:
         """FIXME - fix this to return a function of HD"""
         return 1
 
-    def get_metadata(self, fragment, formatted=0):
+    def get_metadata(
+        self,
+        fragment: bytes,
+        formatted: int = 0,
+    ) -> bytes | pyeclib_c.MetadataDict:
         fragment_metadata = pyeclib_c.get_metadata(
             self.handle, fragment, formatted
         )
         return fragment_metadata
 
-    def verify_stripe_metadata(self, fragment_metadata_list):
+    def verify_stripe_metadata(
+        self,
+        fragment_metadata_list: list[bytes],
+    ) -> pyeclib_c.CheckMetadataResultDict:
         success = pyeclib_c.check_metadata(self.handle, fragment_metadata_list)
         return success
 
-    def get_segment_info(self, data_len, segment_size):
+    def get_segment_info(
+        self,
+        data_len: int,
+        segment_size: int,
+    ) -> pyeclib_c.SegmentInfoDict:
         segment_info = pyeclib_c.get_segment_info(
             self.handle, data_len, segment_size
         )
@@ -189,45 +219,55 @@ class ECNullDriver(object):
 
     def __init__(
         self,
-        k,
-        m,
-        hd,
-        ec_type=None,
-        chksum_type=None,
-        validate=False,
-        local_parity=0,
+        k: int,
+        m: int,
+        hd: int,
+        ec_type: Any = None,
+        chksum_type: PyECLib_FRAGHDRCHKSUM_Types | int | str = "none",
+        validate: bool = False,
+        local_parity: int = 0,
     ):
         self.k = k
         self.m = m
         self.hd = hd
 
-    def close(self):
+    def close(self) -> None:
         pass
 
-    def encode(self, data_bytes):
+    def encode(self, data_bytes: bytes) -> None:
         pass
 
-    def decode(self, fragment_payloads, ranges, force_metadata_checks):
+    def decode(
+        self,
+        fragment_payloads: Collection[bytes],
+        ranges: list[tuple[int, int]] | None = None,
+        force_metadata_checks: bool = False,
+    ) -> None:
         pass
 
     def reconstruct(
-        self, available_fragment_payloads, missing_fragment_indexes
-    ):
+        self,
+        fragment_payloads: Collection[bytes],
+        indexes_to_reconstruct: list[int],
+    ) -> None:
         pass
 
-    def fragments_needed(self, missing_fragment_indexes):
+    def fragments_needed(self, missing_fragment_indexes: list[int]) -> None:
         pass
 
-    def get_metadata(self, fragment, formatted=0):
+    def get_metadata(self, fragment: bytes, formatted: int = 0) -> None:
         pass
 
-    def min_parity_fragments_needed(self):
+    def min_parity_fragments_needed(self) -> None:
         pass
 
-    def verify_stripe_metadata(self, fragment_metadata_list):
+    def verify_stripe_metadata(
+        self,
+        fragment_metadata_list: list[bytes],
+    ) -> None:
         pass
 
-    def get_segment_info(self, data_len, segment_size):
+    def get_segment_info(self, data_len: int, segment_size: int) -> None:
         pass
 
 
@@ -238,7 +278,13 @@ class ECNullDriver(object):
 class ECStripingDriver(object):
 
     def __init__(
-        self, k, m, hd, ec_type=None, chksum_type=None, validate=False
+        self,
+        k: int,
+        m: int,
+        hd: int,
+        ec_type: PyECLib_EC_Types | None = None,
+        chksum_type: PyECLib_FRAGHDRCHKSUM_Types = NO_CHECKSUM,
+        validate: bool = False,
     ):
         """Stripe an arbitrary-sized string into k fragments
         :param k: the number of data fragments to stripe
@@ -253,7 +299,7 @@ class ECStripingDriver(object):
         self.m = m
         self.hd = hd
 
-    def encode(self, data_bytes):
+    def encode(self, data_bytes: bytes) -> list[bytes]:
         """Stripe an arbitrary-sized string into k fragments
         :param data_bytes: the buffer to encode
         :returns: a list of k buffers (data only)
@@ -276,8 +322,11 @@ class ECStripingDriver(object):
         return fragments
 
     def decode(
-        self, fragment_payloads, ranges=None, force_metadata_checks=False
-    ):
+        self,
+        fragment_payloads: Collection[bytes],
+        ranges: list[tuple[int, int]] | None = None,
+        force_metadata_checks: bool = False,
+    ) -> bytes:
         """Convert a k-fragment data stripe into a string
         :param fragment_payloads: fragments (in order) to convert into a string
         :param ranges (unsupported): range decode
@@ -309,8 +358,10 @@ class ECStripingDriver(object):
         return ret_string
 
     def reconstruct(
-        self, available_fragment_payloads, missing_fragment_indexes
-    ):
+        self,
+        available_fragment_payloads: list[bytes],
+        missing_fragment_indexes: list[int],
+    ) -> list[bytes]:
         """We cannot reconstruct a fragment using other fragments.  This means
         that reconstruction means all fragments must be specified, otherwise we
         cannot reconstruct and must raise an error.
@@ -327,7 +378,10 @@ class ECStripingDriver(object):
 
         return available_fragment_payloads
 
-    def fragments_needed(self, missing_fragment_indexes):
+    def fragments_needed(
+        self,
+        missing_fragment_indexes: list[int],
+    ) -> list[int]:
         """By definition, all missing fragment indexes are needed to
         reconstruct, so just return the list handed to this function.
         :param missing_fragment_indexes: indexes of missing fragments
@@ -335,23 +389,26 @@ class ECStripingDriver(object):
         """
         return missing_fragment_indexes
 
-    def min_parity_fragments_needed(self):
+    def min_parity_fragments_needed(self) -> None:
         pass
 
-    def get_metadata(self, fragment, formatted=0):
+    def get_metadata(self, fragment: bytes, formatted: int = 0) -> bytes:
         """This driver does not include fragment metadata, so return empty
         string
         :param fragment: a fragment
         :returns: empty string
         """
-        return ""
+        return b""
 
-    def verify_stripe_metadata(self, fragment_metadata_list):
+    def verify_stripe_metadata(
+        self,
+        fragment_metadata_list: list[bytes],
+    ) -> bool:
         """This driver does not include fragment metadata, so return true
         :param fragment_metadata_list: a list of fragments
         :returns: True
         """
         return True
 
-    def get_segment_info(self, data_len, segment_size):
+    def get_segment_info(self, data_len: int, segment_size: int) -> None:
         pass

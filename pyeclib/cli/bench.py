@@ -30,14 +30,14 @@ from pyeclib import cli
 from pyeclib import ec_iface
 
 
-def add_bench_args(parser):
+def add_bench_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("-e", "--encode", action="store_true")
     parser.add_argument("-d", "--decode", action="store_true")
     cli.add_instance_args(parser, default_segment_size=2**20)
     parser.add_argument("--iterations", "-i", type=int, default=200)
 
 
-def bench_command(args):
+def bench_command(args: argparse.Namespace) -> None:
     args.ec_type = cli.expand_ec_types(args.ec_type)
     data = os.urandom(args.segment_size + args.iterations)
     width = max(len(ec_type) for ec_type in args.ec_type)

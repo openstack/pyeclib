@@ -21,6 +21,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
+from typing import Iterable
+
 from pyeclib import ec_iface
 
 _type_abbreviations = {
@@ -37,7 +40,7 @@ _type_abbreviations = {
 }
 
 
-def expand_ec_types(user_types):
+def expand_ec_types(user_types: Iterable[str]) -> list[str]:
     result = set(user_types or ["all"])
     for abbrev, prefix in _type_abbreviations.items():
         if abbrev in result:
@@ -50,7 +53,10 @@ def expand_ec_types(user_types):
     return sorted(result)
 
 
-def add_instance_args(parser, default_segment_size=1024):
+def add_instance_args(
+    parser: argparse.ArgumentParser,
+    default_segment_size: int = 1024,
+) -> None:
     """
     Add arguments to ``parser`` for instance instantiation.
     """

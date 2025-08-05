@@ -31,14 +31,14 @@ from pyeclib import cli
 from pyeclib import ec_iface
 
 
-def add_verify_args(parser):
+def add_verify_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("-q", "--quiet", action="store_true")
     parser.add_argument("--reconstruct", "-r", action="store_true")
     parser.add_argument("-i", "--iterations", type=int, default=None)
     cli.add_instance_args(parser)
 
 
-def verify_command(args):
+def verify_command(args: argparse.Namespace) -> int:
     args.ec_type = cli.expand_ec_types(args.ec_type)
     total_failures = 0
     total_corrupt = 0
@@ -111,8 +111,13 @@ def verify_command(args):
 
 
 def check_instance(
-    instance, reconstruct, frags, unavailable, data, iterations
-):
+    instance: ec_iface.ECDriver,
+    reconstruct: bool,
+    frags: list[bytes],
+    unavailable: int,
+    data: bytes,
+    iterations: bool,
+) -> tuple[int, int, int]:
     combinations = corrupt = failures = 0
     if iterations is None:
         frags_iter = itertools.combinations(frags, len(frags) - unavailable)

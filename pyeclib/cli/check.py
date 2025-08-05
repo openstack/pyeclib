@@ -27,12 +27,12 @@ import sys
 from pyeclib import ec_iface
 
 
-def add_check_args(parser):
+def add_check_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("-q", "--quiet", action="store_true")
     parser.add_argument("ec_type")
 
 
-def check_command(args):
+def check_command(args: argparse.Namespace) -> int:
     if args.ec_type in ec_iface.VALID_EC_TYPES:
         if not args.quiet:
             print(args.ec_type, "is available")

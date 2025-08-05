@@ -28,7 +28,7 @@ from pyeclib import cli
 from pyeclib import ec_iface
 
 
-def add_list_args(parser):
+def add_list_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "-a",
         "--available",
@@ -43,7 +43,7 @@ def add_list_args(parser):
     )
 
 
-def list_command(args):
+def list_command(args: argparse.Namespace) -> int:
     args.ec_type = cli.expand_ec_types(args.ec_type)
 
     width = max(len(backend) for backend in args.ec_type)

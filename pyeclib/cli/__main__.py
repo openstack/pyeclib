@@ -23,6 +23,8 @@
 
 import argparse
 import sys
+from typing import NoReturn
+from typing import Optional
 
 from pyeclib.cli import bench
 from pyeclib.cli import check
@@ -31,7 +33,7 @@ from pyeclib.cli import verify
 from pyeclib.cli import version
 
 
-def main(args=None):
+def main(args: Optional[list[str]] = None) -> NoReturn:
     parser = argparse.ArgumentParser(
         prog="pyeclib-backend",
         description="tool to get various erasure coding information",

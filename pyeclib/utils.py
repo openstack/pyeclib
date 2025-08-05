@@ -24,9 +24,10 @@
 
 import sys
 import traceback
+from typing import Any
 
 
-def positive_int_value(param):
+def positive_int_value(param: Any) -> int:
     # Returns value as a positive int or raises ValueError otherwise
     try:
         value = int(param)
@@ -39,7 +40,7 @@ def positive_int_value(param):
     return value
 
 
-def import_class(import_str):
+def import_class(import_str: str) -> Any:
     """
     Returns a class from a string that specifies a module and/or class
 
@@ -58,7 +59,7 @@ def import_class(import_str):
         )
 
 
-def create_instance(import_str, *args, **kwargs):
+def create_instance(import_str: str, *args: Any, **kwargs: Any) -> Any:
     """
     Returns instance of class which imported by import path.
 

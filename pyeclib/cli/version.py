@@ -21,16 +21,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
 import importlib.metadata
 import platform
 import sys
+from typing import Optional
 
 from pyeclib import ec_iface
 
 version_description = "print pyeclib and liberasurecode versions"
 
 
-def version_command(args=None):
+def version_command(args: Optional[argparse.Namespace] = None) -> None:
     print(f"pyeclib {ec_iface.__version__}")
     bundled = ""
     try:
