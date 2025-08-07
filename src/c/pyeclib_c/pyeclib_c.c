@@ -1113,19 +1113,19 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "OO", &pyeclib_obj_handle, &fragment_metadata_list)) {
-    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_check_metadata");
     return NULL;
   }
   pyeclib_handle = (pyeclib_t*)PyCapsule_GetPointer(pyeclib_obj_handle, PYECC_HANDLE_NAME);
   if (pyeclib_handle == NULL) {
-    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_check_metadata");
     return NULL;
   }
   k = pyeclib_handle->ec_args.k;
   m = pyeclib_handle->ec_args.m;
   num_fragments = k + m;
   if (num_fragments != PyList_Size(fragment_metadata_list)) {
-    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode");
+    pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_check_metadata");
     return NULL;
   }
 
@@ -1133,7 +1133,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   size = sizeof(char * ) * num_fragments;
   c_fragment_metadata_list = (char **) alloc_zeroed_buffer(size);
   if (NULL == c_fragment_metadata_list) {
-    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_encode");
+    pyeclib_c_seterr(-ENOMEM, "pyeclib_c_check_metadata");
     goto error;
   }
 
