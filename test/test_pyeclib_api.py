@@ -279,6 +279,19 @@ class TestPyECLibDriver(unittest.TestCase):
         if _type7 in VALID_EC_TYPES:
             pyeclib_drivers.append(ECDriver(k=4, m=4, ec_type=_type7,
                                    chksum_type=csum))
+
+        _type8 = 'isa_l_rs_vand_inv'
+        if _type8 in VALID_EC_TYPES:
+            pyeclib_drivers.append(ECDriver(k=12, m=2, ec_type=_type8,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=2, ec_type=_type8,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=10, m=2, ec_type=_type8,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=8, m=4, ec_type=_type8,
+                                   chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=7, ec_type=_type8,
+                                   chksum_type=csum))
         return pyeclib_drivers
 
     def test_small_encode(self):

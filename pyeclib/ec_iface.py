@@ -71,6 +71,7 @@ class PyECLib_EC_Types(Enum):
     liberasurecode_rs_vand = 6
     isa_l_rs_cauchy = 7
     libphazr = 8
+    isa_l_rs_vand_inv = 9
 
 
 # Output of Erasure (en)Coding process are data "fragments".  Fragment data
@@ -497,6 +498,7 @@ ALL_EC_TYPES = [
     'liberasurecode_rs_vand',
     'isa_l_rs_cauchy',
     'libphazr',
+    'isa_l_rs_vand_inv',
 ]
 
 
