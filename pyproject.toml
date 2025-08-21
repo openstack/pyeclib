@@ -28,13 +28,16 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 
+[project.scripts]
+pyeclib-backend = "pyeclib.cli.__main__:main"
+
 [project.urls]
 Homepage = "https://opendev.org/openstack/pyeclib"
 "Bug Tracker" = "https://bugs.launchpad.net/pyeclib"
 "Release Notes" = "https://opendev.org/openstack/pyeclib/src/branch/master/ChangeLog"
 
 [tool.setuptools]
-packages = ["pyeclib"]
+packages = ["pyeclib", "pyeclib.cli"]
 platforms = ["Linux"]
 
 [[tool.setuptools.ext-modules]]
