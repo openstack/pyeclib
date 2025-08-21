@@ -11,8 +11,8 @@ FROM ${TARGET}
 LABEL org.opencontainers.image.authors="OpenStack Swift"
 
 # can also take branch names, e.g. "master"
-ARG LIBERASURECODE_TAG=1.6.4
-ARG ISAL_TAG=v2.31.0
+ARG LIBERASURECODE_TAG=1.7.1
+ARG ISAL_TAG=v2.31.1
 
 ARG SO_SUFFIX=-pyeclib
 ENV SO_SUFFIX=${SO_SUFFIX}
