@@ -58,4 +58,7 @@ RUN cd /opt/src/liberasurecode*/ && \
     make install
 
 COPY . /opt/src/pyeclib/
+# Ensure licenses for liberasurecode and isa-l are included in the packed wheel
+RUN cp /opt/src/liberasurecode*/COPYING /opt/src/pyeclib/LICENSE-liberasurecode && \
+    cp /opt/src/isa-l-*/LICENSE /opt/src/pyeclib/LICENSE-isal
 ENTRYPOINT ["/bin/sh", "-c", "/opt/python/${PYTHON_VERSION}/bin/python3 /opt/src/pyeclib/pack_wheel.py /opt/src/pyeclib/ --repair --so-suffix=${SO_SUFFIX} --wheel-dir=/output --require-isal"]
