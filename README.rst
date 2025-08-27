@@ -25,7 +25,7 @@ Install pre-requisites:
 
 * Python 3.10+ (including development packages), argparse, setuptools
 * liberasurecode v1.4.0 or greater [3]
-* Erasure code backend libraries, gf-complete and Jerasure [1],[2], ISA-L [4], etc
+* Erasure code backend libraries, gf-complete and Jerasure [1], ISA-L [4], etc.
 
 Install dependencies:
 

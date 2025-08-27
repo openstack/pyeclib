@@ -1,3 +1,14 @@
+New in 1.7.0
+------------
+
+ * Added a pyeclib-backend tool to list backends, check their availability,
+   test failure modes, and benchmark encode and decode operations.
+ * Added support for a new isa_l_rs_vand_inv backend.
+ * Binary wheels now bundle liberasurecode==1.7.1 and ISA-L==2.31.1
+ * Various packaging improvements and modernization.
+ * Dropped support for Python versions 2.7, 3.5, 3.6, 3.7, 3.8, and 3.9.
+ * Various other minor bugs fixes and improvements
+
 New in 1.6.4
 ------------
 
