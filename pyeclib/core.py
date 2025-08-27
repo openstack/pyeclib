@@ -28,9 +28,6 @@ from .ec_iface import PyECLib_FRAGHDRCHKSUM_Types
 
 import math
 import pyeclib_c
-import sys
-
-pyver = float('%s.%s' % sys.version_info[:2])
 
 
 class ECPyECLibDriver(object):
@@ -254,7 +251,7 @@ class ECStripingDriver(object):
                 "Decode requires %d fragments, %d fragments were given" %
                 (len(fragment_payloads), self.k))
 
-        ret_string = ''
+        ret_string = b''
 
         for fragment in fragment_payloads:
             ret_string += fragment

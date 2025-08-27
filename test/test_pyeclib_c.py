@@ -38,8 +38,8 @@ from pyeclib.ec_iface import VALID_EC_TYPES
 class Timer:
 
     def __init__(self):
-        self.start_time = 0
-        self.end_time = 0
+        self.start_time = 0.0
+        self.end_time = 0.0
 
     def start(self):
         self.start_time = time.time()

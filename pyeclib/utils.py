@@ -30,10 +30,11 @@ def positive_int_value(param):
     # Returns value as a positive int or raises ValueError otherwise
     try:
         value = int(param)
-        assert value > 0
-    except (TypeError, ValueError, AssertionError):
+        if value <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
         # Handle: TypeError for 'None', ValueError for non-int strings
-        # and AssertionError for values <= 0
+        # and values <= 0
         raise ValueError('Must be an integer > 0, not "%s".' % param)
     return value
 

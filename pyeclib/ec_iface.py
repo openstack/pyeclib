@@ -93,7 +93,15 @@ class PyECLib_FRAGHDRCHKSUM_Types(Enum):
 class ECDriver(object):
     '''A driver to encode, decode, and reconstruct erasure-coded data.'''
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self, *,
+        ec_type=None,
+        library_import_str='pyeclib.core.ECPyECLibDriver',
+        k,
+        m,
+        chksum_type='none',
+        validate=False,
+    ):
         '''
         :param ec_type: the erasure coding type to use for this driver.
         :param k: number of data fragments to use. Required.
@@ -112,68 +120,63 @@ class ECDriver(object):
         self.hd = -1
         self.ec_type = None
         self.chksum_type = None
-        self.validate = False
 
-        for required in ('k', 'm'):
-            if required not in kwargs:
-                raise ECDriverError(
-                    "Invalid Argument: %s is required" % required)
-
-        if 'ec_type' not in kwargs and 'library_import_str' not in kwargs:
+        if (
+            ec_type is None and
+            library_import_str == 'pyeclib.core.ECPyECLibDriver'
+        ):
             raise ECDriverError(
                 "Invalid Argument: either ec_type or library_import_str "
                 "must be provided")
 
-        for (key, value) in kwargs.items():
-            if key == "k":
-                try:
-                    self.k = positive_int_value(value)
-                except ValueError:
-                    raise ECDriverError(
-                        "Invalid number of data fragments (k)")
-            elif key == "m":
-                try:
-                    self.m = positive_int_value(value)
-                except ValueError:
-                    raise ECDriverError(
-                        "Invalid number of parity fragments (m)")
-            elif key == "ec_type":
-                if value in ["flat_xor_hd", "flat_xor_hd_3", "flat_xor_hd_4"]:
-                    if value == "flat_xor_hd" or value == "flat_xor_hd_3":
-                        self.hd = 3
-                    elif value == "flat_xor_hd_4":
-                        self.hd = 4
-                    value = "flat_xor_hd"
-                elif value == "libphazr":
-                    self.hd = 1
+        try:
+            self.k = positive_int_value(k)
+        except ValueError:
+            raise ECDriverError(
+                "Invalid number of data fragments (k)")
 
-                if value in PyECLib_EC_Types.__members__:
-                    self.ec_type = PyECLib_EC_Types[value]
-                    if self.ec_type in (PyECLib_EC_Types.jerasure_rs_vand,
-                                        PyECLib_EC_Types.jerasure_rs_cauchy):
-                        warnings.warn('Jerasure support is deprecated and '
-                                      'may be removed in a future release',
-                                      FutureWarning, stacklevel=2)
+        try:
+            self.m = positive_int_value(m)
+        except ValueError:
+            raise ECDriverError(
+                "Invalid number of parity fragments (m)")
 
-                else:
-                    raise ECBackendNotSupported(
-                        "%s is not a valid EC type for PyECLib!" % value)
-            elif key == "chksum_type":
-                if value in PyECLib_FRAGHDRCHKSUM_Types.__members__:
-                    self.chksum_type = \
-                        PyECLib_FRAGHDRCHKSUM_Types[value]
-                else:
-                    raise ECDriverError(
-                        "%s is not a valid checksum type for PyECLib!" % value)
-            elif key == "validate":
-                # validate if the ec type is available (runtime check)
-                self.validate = value
+        if ec_type:
+            if ec_type in ["flat_xor_hd", "flat_xor_hd_3", "flat_xor_hd_4"]:
+                if ec_type == "flat_xor_hd" or ec_type == "flat_xor_hd_3":
+                    self.hd = 3
+                elif ec_type == "flat_xor_hd_4":
+                    self.hd = 4
+                ec_type = "flat_xor_hd"
+            elif ec_type == "libphazr":
+                self.hd = 1
+
+            if ec_type in PyECLib_EC_Types.__members__:
+                self.ec_type = PyECLib_EC_Types[ec_type]
+                if self.ec_type in (PyECLib_EC_Types.jerasure_rs_vand,
+                                    PyECLib_EC_Types.jerasure_rs_cauchy):
+                    warnings.warn('Jerasure support is deprecated and '
+                                  'may be removed in a future release',
+                                  FutureWarning, stacklevel=2)
+
+            else:
+                raise ECBackendNotSupported(
+                    "%s is not a valid EC type for PyECLib!" % ec_type)
+
+        if chksum_type in PyECLib_FRAGHDRCHKSUM_Types.__members__:
+            self.chksum_type = \
+                PyECLib_FRAGHDRCHKSUM_Types[chksum_type]
+        else:
+            raise ECDriverError(
+                "%s is not a valid checksum type for PyECLib!"
+                % chksum_type)
+
+        self.validate = validate
 
         if self.hd == -1:
             self.hd = self.m
 
-        self.library_import_str = kwargs.pop('library_import_str',
-                                             'pyeclib.core.ECPyECLibDriver')
+        self.library_import_str = library_import_str
         #
         # Instantiate EC backend driver
         #
@@ -211,12 +214,15 @@ class ECDriver(object):
                 "in %s: %s" % (self.library_import_str, missing_methods))
 
     def __repr__(self):
-        return '%s(ec_type=%r, k=%r, m=%r)' % (
-            type(self).__name__,
-            'flat_xor_hd_%s' % self.hd if self.ec_type.name == 'flat_xor_hd'
-            else self.ec_type.name,
-            self.k,
-            self.m)
+        if self.ec_type is None:
+            ec_type = 'None'
+        elif self.ec_type.name == 'flat_xor_hd':
+            ec_type = f'flat_xor_hd_{self.hd}'
+        else:
+            ec_type = self.ec_type.name
+
+        return (f'{type(self).__name__}('
+                f'ec_type={ec_type!r}, k={self.k}, m={self.m})')
 
     def close(self):
         self.ec_lib_reference.close()
@@ -313,7 +319,7 @@ class ECDriver(object):
         Verify a subset of fragments generated by encode()
 
         :param fragment_metadata_list: a list of buffers representing the
-                                       metadata from a subset of the framgments
+                                       metadata from a subset of the fragments
                                        generated by encode().
         :returns: 'None' if the metadata is consistent.
                   a list of fragment indexes corresponding to inconsistent
