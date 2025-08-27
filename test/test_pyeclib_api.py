@@ -500,7 +500,7 @@ class TestPyECLibDriver(unittest.TestCase):
                         pyeclib_driver.get_metadata(fragment))
                 i += 1
 
-            expected_ret_value = {"status": -206,
+            expected_ret_value = {"status": -205,
                                   "reason": "Bad checksum",
                                   "bad_fragments": fragments_to_corrupt}
             self.assertEqual(

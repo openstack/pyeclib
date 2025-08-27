@@ -1153,15 +1153,20 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
   ret = liberasurecode_verify_stripe_metadata(pyeclib_handle->ec_desc, c_fragment_metadata_list,
                                               num_fragments);
 
-  ret_obj = PyDict_New();
   if (ret == 0) {
+    ret_obj = PyDict_New();
+    if (NULL == ret_obj) {
+      pyeclib_c_seterr(-ENOMEM, "pyeclib_c_check_metadata");
+      goto error;
+    }
     PyDict_SetItemString(ret_obj, "status", PyLong_FromLong((long)0));
-  } else if (ret == -EINVALIDPARAMS) {
-    PyDict_SetItemString(ret_obj, "status", PyLong_FromLong((long)-EINVALIDPARAMS));
-    PyDict_SetItemString(ret_obj, "reason", PyString_FromString("Invalid arguments"));
-    goto error;
   } else if (ret == -EBADCHKSUM) {
-    PyDict_SetItemString(ret_obj, "status", PyLong_FromLong((long)-EINVALIDPARAMS));
+    ret_obj = PyDict_New();
+    if (NULL == ret_obj) {
+      pyeclib_c_seterr(-ENOMEM, "pyeclib_c_check_metadata");
+      goto error;
+    }
+    PyDict_SetItemString(ret_obj, "status", PyLong_FromLong((long)ret));
     PyDict_SetItemString(ret_obj, "reason", PyString_FromString("Bad checksum"));
     PyObject *bad_chksums = PyList_New(0);
     for (i = 0; i < num_fragments; i++) {
@@ -1171,14 +1176,11 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
       }
     }
     PyDict_SetItemString(ret_obj, "bad_fragments", bad_chksums);
+  } else {
+    pyeclib_c_seterr(ret, "pyeclib_c_check_metadata");
   }
 
-  goto exit;
-
 error:
-  ret_obj = NULL;
-
-exit:
   free(c_fragment_metadata_list);
 
   return ret_obj;
