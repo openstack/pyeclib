@@ -129,12 +129,13 @@ class TestList(unittest.TestCase):
             [backend for backend, status in line_parts],
             sorted(backend for backend in ec_iface.ALL_EC_TYPES
                    if backend.startswith("isa_l_")))
-        found_status = {status for backend, status in line_parts}
-        self.assertEqual(len(found_status), 1, found_status)
-        found_status = list(found_status)[0]
-        self.assertIn(found_status, {"available", "missing"})
+        found_statuses = {status for backend, status in line_parts}
+        if ec_iface.get_liberasurecode_version() >= 0x1_07_00:
+            self.assertEqual(len(found_statuses), 1, found_statuses)
+        for status in found_statuses:
+            self.assertIn(status, {"available", "missing"})
         self.assertEqual(caught.exception.code,
-                         0 if found_status == "available" else 1)
+                         0 if "available" in found_statuses else 1)
 
     def test_list_available(self):
         with mock.patch("sys.stdout", new=io.StringIO()) as stdout, \
