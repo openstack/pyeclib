@@ -46,7 +46,7 @@ class TestVersion(unittest.TestCase):
             'liberasurecode',
             platform.python_implementation(),
         ])
-        re_version = re.compile(r"\d+\.\d+\.\d+")
+        re_version = re.compile(r"^\d+\.\d+\.\d+(?:rc\d*)?$")
         self.assertEqual(
             [bool(re_version.match(vers)) for prog, vers in line_parts],
             [True] * 3)
