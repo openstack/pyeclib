@@ -38,7 +38,7 @@ class TestVersion(unittest.TestCase):
             main(args)
         self.assertTrue(stdout.getvalue().endswith("\n"))
         line_parts = [
-            line.split(" ")
+            line.split(" ", 1)
             for line in stdout.getvalue()[:-1].split("\n")
         ]
         self.assertEqual([prog for prog, vers in line_parts], [
@@ -46,7 +46,9 @@ class TestVersion(unittest.TestCase):
             'liberasurecode',
             platform.python_implementation(),
         ])
-        re_version = re.compile(r"^\d+\.\d+\.\d+(?:rc\d*)?$")
+        re_version = re.compile(
+            r"^\d+\.\d+\.\d+(?:rc\d*)?"
+            r"(?:(?: experimental)? free-threading build)?$")
         self.assertEqual(
             [bool(re_version.match(vers)) for prog, vers in line_parts],
             [True] * 3)

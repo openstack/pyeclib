@@ -22,6 +22,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import platform
+import sys
 
 from pyeclib import ec_iface
 
@@ -31,7 +32,8 @@ version_description = "print pyeclib and liberasurecode versions"
 def version_command(args=None):
     print(f"pyeclib {ec_iface.__version__}")
     print(f"liberasurecode {ec_iface.LIBERASURECODE_VERSION}")
-    print(f"{platform.python_implementation()} {platform.python_version()}")
+    version_str = sys.version.split(' (', 1)[0]
+    print(f"{platform.python_implementation()} {version_str}")
 
 
 if __name__ == "__main__":
