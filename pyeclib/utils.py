@@ -47,14 +47,15 @@ def import_class(import_str):
     :returns imported object
     :raises: ImportedError if the class does not exist or the path is invalid
     """
-    (mod_str, separator, class_str) = import_str.rpartition('.')
+    mod_str, separator, class_str = import_str.rpartition(".")
     try:
         __import__(mod_str)
         return getattr(sys.modules[mod_str], class_str)
     except (ValueError, AttributeError):
-        raise ImportError('Class %s cannot be found (%s)' %
-                          (class_str,
-                           traceback.format_exception(*sys.exc_info())))
+        raise ImportError(
+            "Class %s cannot be found (%s)"
+            % (class_str, traceback.format_exception(*sys.exc_info()))
+        )
 
 
 def create_instance(import_str, *args, **kwargs):

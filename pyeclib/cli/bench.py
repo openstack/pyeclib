@@ -41,8 +41,10 @@ def bench_command(args):
     args.ec_type = cli.expand_ec_types(args.ec_type)
     data = os.urandom(args.segment_size + args.iterations)
     width = max(len(ec_type) for ec_type in args.ec_type)
-    print(f"Using {args.n_data} data + {args.n_parity} parity with "
-          f"{args.unavailable} unavailable frags")
+    print(
+        f"Using {args.n_data} data + {args.n_parity} parity with "
+        f"{args.unavailable} unavailable frags"
+    )
 
     for ec_type in args.ec_type:
         if ec_type not in ec_iface.ALL_EC_TYPES:
@@ -61,40 +63,40 @@ def bench_command(args):
         except ec_iface.ECDriverError:
             print(f"{ec_type:<{width}} could not be instantiated")
             continue
-        frags = instance.encode(data[:args.segment_size])
+        frags = instance.encode(data[: args.segment_size])
 
         if args.encode or not args.decode:
             start = time.time()
             for i in range(args.iterations):
-                _ = instance.encode(data[i:i + args.segment_size])
+                _ = instance.encode(data[i : i + args.segment_size])
             dt = time.time() - start
-            mb_encoded = args.iterations * args.segment_size / (2 ** 20)
-            print(f'{ec_type} (encode): {mb_encoded / dt:.1f}MB/s')
+            mb_encoded = args.iterations * args.segment_size / (2**20)
+            print(f"{ec_type} (encode): {mb_encoded / dt:.1f}MB/s")
 
         if args.decode or not args.encode:
             start = time.time()
             for i in range(args.iterations):
                 data_frags = random.sample(
-                    frags[:args.n_data],
+                    frags[: args.n_data],
                     args.n_data - args.unavailable,
                 )
-                if ec_type.startswith('flat_xor'):
+                if ec_type.startswith("flat_xor"):
                     # The math is actually more complicated than this, but ...
-                    parity_frags = frags[args.n_data:]
-                elif ec_type == 'isa_l_rs_lrc':
+                    parity_frags = frags[args.n_data :]
+                elif ec_type == "isa_l_rs_lrc":
                     parity_frags = random.sample(
-                        frags[args.n_data:],
+                        frags[args.n_data :],
                         args.unavailable + args.local_parity - 1,
                     )
                 else:
                     parity_frags = random.sample(
-                        frags[args.n_data:],
+                        frags[args.n_data :],
                         args.unavailable,
                     )
                 _ = instance.decode(data_frags + parity_frags)
             dt = time.time() - start
-            mb_encoded = args.iterations * args.segment_size / (2 ** 20)
-            print(f'{ec_type} (decode): {mb_encoded / dt:.1f}MB/s')
+            mb_encoded = args.iterations * args.segment_size / (2**20)
+            print(f"{ec_type} (decode): {mb_encoded / dt:.1f}MB/s")
 
 
 bench_description = "benchmark EC schemas"

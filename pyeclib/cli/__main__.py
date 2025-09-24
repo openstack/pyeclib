@@ -47,26 +47,25 @@ def main(args=None):
     subparsers = parser.add_subparsers()
 
     version_parser = subparsers.add_parser(
-        "version", help=version.version_description)
+        "version", help=version.version_description
+    )
     version_parser.set_defaults(func=version.version_command)
 
-    list_parser = subparsers.add_parser(
-        "list", help=list_cli.list_description)
+    list_parser = subparsers.add_parser("list", help=list_cli.list_description)
     list_parser.set_defaults(func=list_cli.list_command)
     list_cli.add_list_args(list_parser)
 
-    check_parser = subparsers.add_parser(
-        "check", help=check.check_description)
+    check_parser = subparsers.add_parser("check", help=check.check_description)
     check_parser.set_defaults(func=check.check_command)
     check.add_check_args(check_parser)
 
     verify_parser = subparsers.add_parser(
-        "verify", help=verify.verify_description)
+        "verify", help=verify.verify_description
+    )
     verify_parser.set_defaults(func=verify.verify_command)
     verify.add_verify_args(verify_parser)
 
-    bench_parser = subparsers.add_parser(
-        "bench", help=bench.bench_description)
+    bench_parser = subparsers.add_parser("bench", help=bench.bench_description)
     bench_parser.set_defaults(func=bench.bench_command)
     bench.add_bench_args(bench_parser)
 

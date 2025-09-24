@@ -43,13 +43,13 @@ import sys
 import tempfile
 import zipfile
 
-
-ENV_KEY = ('DYLD_LIBRARY_PATH' if sys.platform == 'darwin'
-           else 'LD_LIBRARY_PATH')
+ENV_KEY = (
+    "DYLD_LIBRARY_PATH" if sys.platform == "darwin" else "LD_LIBRARY_PATH"
+)
 if ENV_KEY in os.environ:
-    os.environ[ENV_KEY] += ':/usr/lib:/usr/local/lib'
+    os.environ[ENV_KEY] += ":/usr/lib:/usr/local/lib"
 else:
-    os.environ[ENV_KEY] = '/usr/lib:/usr/local/lib'
+    os.environ[ENV_KEY] = "/usr/lib:/usr/local/lib"
 
 
 def locate_library(name, missing_ok=False):
@@ -64,25 +64,25 @@ def locate_library(name, missing_ok=False):
                           is ``False``.
     :returns: The full path to the library.
     """
-    expr = r'[^\(\)\s]*lib%s\.[^\(\)\s]*' % re.escape(name)
-    cmd = ['ld', '-t']
-    if sys.platform == 'darwin':
-        cmd.extend(['-arch', platform.machine()])
+    expr = r"[^\(\)\s]*lib%s\.[^\(\)\s]*" % re.escape(name)
+    cmd = ["ld", "-t"]
+    if sys.platform == "darwin":
+        cmd.extend(["-arch", platform.machine()])
     libpath = os.environ.get(ENV_KEY)
     if libpath:
-        for d in libpath.split(':'):
-            cmd.extend(['-L', d.rstrip('/')])
+        for d in libpath.split(":"):
+            cmd.extend(["-L", d.rstrip("/")])
     should_read_path = False
-    for flg in os.environ.get('LDFLAGS', '').split(' '):
+    for flg in os.environ.get("LDFLAGS", "").split(" "):
         if should_read_path:
             cmd.append(flg)
             should_read_path = False
-        elif flg == '-L':
+        elif flg == "-L":
             cmd.append(flg)
             should_read_path = True
-        elif flg.startswith('-L'):
+        elif flg.startswith("-L"):
             cmd.append(flg)
-    cmd.extend(['-o', os.devnull, '-l%s' % name])
+    cmd.extend(["-o", os.devnull, "-l%s" % name])
     p = subprocess.run(cmd, capture_output=True, text=True)
     # Note that we don't expect the command to exit cleanly; we just want
     # to see what got loaded
@@ -94,8 +94,8 @@ def locate_library(name, missing_ok=False):
         return None
 
     print(f'{" ".join(cmd)!r} failed with status {p.returncode}:')
-    print(f'\x1b[31m{p.stderr}\x1b[0m', end='')
-    raise RuntimeError(f'Failed to locate {name}')
+    print(f"\x1b[31m{p.stderr}\x1b[0m", end="")
+    raise RuntimeError(f"Failed to locate {name}")
 
 
 def build_wheel(src_dir):
@@ -105,16 +105,23 @@ def build_wheel(src_dir):
     Caller is responsible for cleaning up the tempdir.
     """
     tmp = tempfile.mkdtemp()
-    if getattr(sys, '_is_gil_enabled', lambda: True)():
+    if getattr(sys, "_is_gil_enabled", lambda: True)():
         cmd = [
-            sys.executable, 'setup.py',
-            'bdist_wheel', '-d', tmp, '--py-limited-api=cp310',
+            sys.executable,
+            "setup.py",
+            "bdist_wheel",
+            "-d",
+            tmp,
+            "--py-limited-api=cp310",
         ]
     else:
         cmd = [
-            sys.executable, '-m', 'build',
-            '--wheel',
-            '--outdir', tmp,
+            sys.executable,
+            "-m",
+            "build",
+            "--wheel",
+            "--outdir",
+            tmp,
         ]
     try:
         subprocess.check_call(cmd, cwd=src_dir)
@@ -140,7 +147,7 @@ def repack_wheel(whl, so_suffix, out_whl=None, require_isal=False):
     tmp = tempfile.mkdtemp()
     try:
         # unpack wheel
-        zf = zipfile.ZipFile(whl, 'r')
+        zf = zipfile.ZipFile(whl, "r")
         zf.extractall(tmp)
 
         relocate_libs(tmp, so_suffix, require_isal)
@@ -159,11 +166,12 @@ def relocate_libs(tmp, so_suffix, require_isal=False):
                       liberasurecode; this should be used to avoid
                       interfering with system libraries
     """
-    lib_dir = 'pyeclib.libs'
-    all_libs = [os.path.join(tmp, lib)
-                for lib in os.listdir(tmp) if '.so' in lib]
+    lib_dir = "pyeclib.libs"
+    all_libs = [
+        os.path.join(tmp, lib) for lib in os.listdir(tmp) if ".so" in lib
+    ]
     for lib in all_libs:  # NB: pypy builds may create multiple .so's
-        update_rpath(lib, '/' + lib_dir)
+        update_rpath(lib, "/" + lib_dir)
 
     inject = functools.partial(
         inject_lib,
@@ -175,48 +183,52 @@ def relocate_libs(tmp, so_suffix, require_isal=False):
 
     # Be sure to move liberasurecode first, so we can fix its links to
     # the others
-    relocated_libec = inject(locate_library('erasurecode'))
+    relocated_libec = inject(locate_library("erasurecode"))
     # Since liberasurecode links against other included libraries,
     # need to update rpath
     update_rpath(relocated_libec)
 
     # These guys all stand on their own, so don't need the rpath update
-    inject(locate_library('nullcode'))
-    inject(locate_library('Xorcode'))
-    builtin_rs_vand = inject(locate_library('erasurecode_rs_vand'))
+    inject(locate_library("nullcode"))
+    inject(locate_library("Xorcode"))
+    builtin_rs_vand = inject(locate_library("erasurecode_rs_vand"))
     maybe_add_needed(relocated_libec, os.path.basename(builtin_rs_vand))
 
     # Nobody actually links against this, but we want it anyway if available
-    isal = locate_library('isal', missing_ok=not require_isal)
+    isal = locate_library("isal", missing_ok=not require_isal)
     if isal:
         relocated_isal = inject(isal)
         maybe_add_needed(relocated_libec, os.path.basename(relocated_isal))
 
 
-def update_rpath(lib, rpath_suffix=''):
-    if sys.platform == 'darwin':
-        subprocess.check_call([
-            'install_name_tool',
-            '-add_rpath', '@loader_path' + rpath_suffix,
-            lib,
-        ])
+def update_rpath(lib, rpath_suffix=""):
+    if sys.platform == "darwin":
+        subprocess.check_call(
+            [
+                "install_name_tool",
+                "-add_rpath",
+                "@loader_path" + rpath_suffix,
+                lib,
+            ]
+        )
     else:
-        subprocess.check_call([
-            'patchelf', '--set-rpath', '$ORIGIN' + rpath_suffix, lib])
+        subprocess.check_call(
+            ["patchelf", "--set-rpath", "$ORIGIN" + rpath_suffix, lib]
+        )
 
 
 def maybe_add_needed(lib, needed):
-    if sys.platform == 'linux' and platform.libc_ver()[0] != 'glibc':
+    if sys.platform == "linux" and platform.libc_ver()[0] != "glibc":
         # We need to do this for musl; it doesn't seem to respect RUNPATH
         # for dynamic loading, just dynamic linking
-        subprocess.check_call(['patchelf', '--add-needed', needed, lib])
+        subprocess.check_call(["patchelf", "--add-needed", needed, lib])
 
 
 def inject_lib(
     whl_dir,
     src_lib,
-    so_suffix='-pyeclib',
-    lib_dir='pyeclib.libs',
+    so_suffix="-pyeclib",
+    lib_dir="pyeclib.libs",
     all_libs=None,
 ):
     try:
@@ -225,40 +237,43 @@ def inject_lib(
         if e.errno != errno.EEXIST:
             raise
 
-    if sys.platform == 'darwin':
+    if sys.platform == "darwin":
         old_lib = src_lib
-        name = os.path.basename(old_lib).split('.', 1)[0]
-        new_lib = name + so_suffix + '.dylib'
+        name = os.path.basename(old_lib).split(".", 1)[0]
+        new_lib = name + so_suffix + ".dylib"
     else:
-        name, _, version = os.path.basename(src_lib).partition('.so')
-        major = '.'.join(version.split('.', 2)[:2])
-        old_lib = name + '.so' + major
-        new_lib = name + so_suffix + '.so' + major
+        name, _, version = os.path.basename(src_lib).partition(".so")
+        major = ".".join(version.split(".", 2)[:2])
+        old_lib = name + ".so" + major
+        new_lib = name + so_suffix + ".so" + major
 
-    print('Injecting ' + new_lib)
+    print("Injecting " + new_lib)
     relocated = os.path.join(whl_dir, lib_dir, new_lib)
     shutil.copy2(src_lib, relocated)
-    if sys.platform == 'darwin':
-        subprocess.check_call([
-            'install_name_tool', '-id', new_lib, relocated])
+    if sys.platform == "darwin":
+        subprocess.check_call(["install_name_tool", "-id", new_lib, relocated])
     else:
-        subprocess.check_call(['patchelf', '--set-soname', new_lib, relocated])
+        subprocess.check_call(["patchelf", "--set-soname", new_lib, relocated])
 
     if all_libs:
         # Fix linkage in the libs already moved -- this is mainly an issue for
         # liberasurecode.so. Jerasure *would* need it for GF-Complete, but it
         # seems unlikely we'd be able to include those any time soon
-        if sys.platform == 'darwin':
+        if sys.platform == "darwin":
             for lib in all_libs:
-                subprocess.check_call([
-                    'install_name_tool',
-                    '-change', old_lib,
-                    '@rpath/' + new_lib,
-                    lib,
-                ])
+                subprocess.check_call(
+                    [
+                        "install_name_tool",
+                        "-change",
+                        old_lib,
+                        "@rpath/" + new_lib,
+                        lib,
+                    ]
+                )
         else:
-            subprocess.check_call([
-                'patchelf', '--replace-needed', old_lib, new_lib] + all_libs)
+            subprocess.check_call(
+                ["patchelf", "--replace-needed", old_lib, new_lib] + all_libs
+            )
         all_libs.append(relocated)
 
     return relocated
@@ -274,70 +289,70 @@ def rebuild_dist_info_record(tmp):
     See https://packaging.python.org/en/latest/specifications/
     recording-installed-packages/#the-record-file for more info.
     """
-    tmp = tmp.rstrip('/') + '/'
-    dist_info_dir = [d for d in os.listdir(tmp) if d.endswith('.dist-info')]
+    tmp = tmp.rstrip("/") + "/"
+    dist_info_dir = [d for d in os.listdir(tmp) if d.endswith(".dist-info")]
     assert len(dist_info_dir) == 1, dist_info_dir
-    record_file = os.path.join(tmp, dist_info_dir[0], 'RECORD')
-    with open(record_file, 'w') as fp:
+    record_file = os.path.join(tmp, dist_info_dir[0], "RECORD")
+    with open(record_file, "w") as fp:
         for dir_path, _, files in os.walk(tmp):
             for file in files:
                 file = os.path.join(dir_path, file)
                 if file == record_file:
-                    fp.write(file[len(tmp):] + ',,\n')
+                    fp.write(file[len(tmp) :] + ",,\n")
                     continue
                 hsh, sz = sha256(file)
-                fp.write('%s,sha256=%s,%d\n' % (file[len(tmp):], hsh, sz))
+                fp.write("%s,sha256=%s,%d\n" % (file[len(tmp) :], hsh, sz))
 
 
 def sha256(file):
     hasher = hashlib.sha256()
     sz = 0
-    with open(file, 'rb') as fp:
-        for chunk in iter(lambda: fp.read(128 * 1024), b''):
+    with open(file, "rb") as fp:
+        for chunk in iter(lambda: fp.read(128 * 1024), b""):
             hasher.update(chunk)
             sz += len(chunk)
     hsh = base64.urlsafe_b64encode(hasher.digest())
-    return hsh.decode('ascii').strip('='), sz
+    return hsh.decode("ascii").strip("="), sz
 
 
 def build_zip(tmp, out_file):
     """
     Zip up all files in a tree, with archive names relative to the root.
     """
-    tmp = tmp.rstrip('/') + '/'
-    with zipfile.ZipFile(out_file, 'w') as zf:
+    tmp = tmp.rstrip("/") + "/"
+    with zipfile.ZipFile(out_file, "w") as zf:
         for dir_path, _, files in os.walk(tmp):
             for file in files:
                 file = os.path.join(dir_path, file)
-                zf.write(file, file[len(tmp):])
+                zf.write(file, file[len(tmp) :])
 
 
 def repair_wheel(whl):
     """
     Run ``auditwheel repair`` to ensure appropriate platform tags.
     """
-    if sys.platform == 'darwin':
+    if sys.platform == "darwin":
         return whl  # auditwheel only works on linux
     whl_dir = os.path.dirname(whl)
-    subprocess.check_call(['auditwheel', 'repair', whl, '-w', whl_dir])
+    subprocess.check_call(["auditwheel", "repair", whl, "-w", whl_dir])
     wheels = [f for f in os.listdir(whl_dir) if f != os.path.basename(whl)]
     assert len(wheels) == 1, wheels
     return os.path.join(whl_dir, wheels[0])
 
 
 def fix_ownership(whl):
-    uid = int(os.environ.get('UID', '1000'))
-    gid = int(os.environ.get('GID', uid))
+    uid = int(os.environ.get("UID", "1000"))
+    gid = int(os.environ.get("GID", uid))
     os.chown(whl, uid, gid)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('src_dir')
-    parser.add_argument('-w', '--wheel-dir', default='.')
-    parser.add_argument('-s', '--so-suffix', default='-pyeclib')
-    parser.add_argument('-r', '--repair', action='store_true')
-    parser.add_argument('--require-isal', action='store_true')
+    parser.add_argument("src_dir")
+    parser.add_argument("-w", "--wheel-dir", default=".")
+    parser.add_argument("-s", "--so-suffix", default="-pyeclib")
+    parser.add_argument("-r", "--repair", action="store_true")
+    parser.add_argument("--require-isal", action="store_true")
     args = parser.parse_args()
     whl = build_wheel(args.src_dir)
     whl_dir = os.path.dirname(whl)
@@ -345,8 +360,7 @@ def main():
         repack_wheel(whl, args.so_suffix, require_isal=args.require_isal)
         if args.repair:
             whl = repair_wheel(whl)
-        output_whl = os.path.join(
-            args.wheel_dir, os.path.basename(whl))
+        output_whl = os.path.join(args.wheel_dir, os.path.basename(whl))
         shutil.move(whl, output_whl)
         if os.geteuid() == 0:
             # high likelihood of running in a docker container or something
@@ -355,5 +369,5 @@ def main():
         shutil.rmtree(whl_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

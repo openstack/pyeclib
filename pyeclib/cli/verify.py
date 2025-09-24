@@ -44,13 +44,17 @@ def verify_command(args):
     total_corrupt = 0
     data = os.urandom(args.segment_size)
     width = max(len(ec_type) for ec_type in args.ec_type)
-    if 'isa_l_rs_lrc' in args.ec_type:
-        print(f"Using {args.n_data} data + {args.n_parity} parity (of which "
-              f"{args.local_parity} may be local) with {args.unavailable} "
-              f"unavailable frags")
+    if "isa_l_rs_lrc" in args.ec_type:
+        print(
+            f"Using {args.n_data} data + {args.n_parity} parity (of which "
+            f"{args.local_parity} may be local) with {args.unavailable} "
+            f"unavailable frags"
+        )
     else:
-        print(f"Using {args.n_data} data + {args.n_parity} parity with "
-              f"{args.unavailable} unavailable frags")
+        print(
+            f"Using {args.n_data} data + {args.n_parity} parity with "
+            f"{args.unavailable} unavailable frags"
+        )
 
     for ec_type in args.ec_type:
         if ec_type not in ec_iface.ALL_EC_TYPES:
@@ -71,13 +75,20 @@ def verify_command(args):
             continue
         frags = instance.encode(data)
         combinations, failures, corrupt = check_instance(
-            instance, args.reconstruct, frags, args.unavailable, data,
-            args.iterations)
+            instance,
+            args.reconstruct,
+            frags,
+            args.unavailable,
+            data,
+            args.iterations,
+        )
         total_failures += failures
         total_corrupt += corrupt
         if corrupt:
-            print(f"\x1b[91;40m{ec_type:<{width}} {combinations=}, "
-                  f"{failures=}, {corrupt=}\x1b[0m")
+            print(
+                f"\x1b[91;40m{ec_type:<{width}} {combinations=}, "
+                f"{failures=}, {corrupt=}\x1b[0m"
+            )
         elif failures:
             if args.reconstruct and failures < combinations:
                 # Some codes (xor, lrc) are expected to be able to reconstruct
@@ -85,8 +96,10 @@ def verify_command(args):
                 # unavailable frags
                 print(f"{ec_type:<{width}} {combinations=}, {failures=}")
             else:
-                print(f"\x1b[1;91m{ec_type:<{width}} {combinations=}, "
-                      f"{failures=}\x1b[0m")
+                print(
+                    f"\x1b[1;91m{ec_type:<{width}} {combinations=}, "
+                    f"{failures=}\x1b[0m"
+                )
         else:
             print(f"{ec_type:<{width}} {combinations=}")
 
@@ -97,14 +110,17 @@ def verify_command(args):
     return 0
 
 
-def check_instance(instance, reconstruct, frags, unavailable, data,
-                   iterations):
+def check_instance(
+    instance, reconstruct, frags, unavailable, data, iterations
+):
     combinations = corrupt = failures = 0
     if iterations is None:
         frags_iter = itertools.combinations(frags, len(frags) - unavailable)
     else:
-        frags_iter = (random.sample(frags, len(frags) - unavailable)
-                      for _ in range(iterations))
+        frags_iter = (
+            random.sample(frags, len(frags) - unavailable)
+            for _ in range(iterations)
+        )
     for to_decode in frags_iter:
         if reconstruct:
             for i, ref in enumerate(frags):
@@ -114,7 +130,7 @@ def check_instance(instance, reconstruct, frags, unavailable, data,
                     continue
                 combinations += 1
                 try:
-                    rebuilt, = instance.reconstruct(to_decode, [i])
+                    (rebuilt,) = instance.reconstruct(to_decode, [i])
                     if rebuilt != ref:
                         corrupt += 1
                 except ec_iface.ECDriverError:

@@ -29,7 +29,7 @@ test_cmd_prefix = ""
 log_filename_prefix = ""
 
 
-class CoreTests():
+class CoreTests:
 
     def __init__(self, *args):
         self.pyeclib_core_test = "test_pyeclib_c.py"
@@ -37,8 +37,8 @@ class CoreTests():
 
     def setUp(self):
         # Determine which directory we're in
-        dirs = os.getcwd().split('/')
-        if dirs[-1] == 'test':
+        dirs = os.getcwd().split("/")
+        if dirs[-1] == "test":
             self.pyeclib_test_dir = "."
         else:
             self.pyeclib_test_dir = "./test"
@@ -46,7 +46,7 @@ class CoreTests():
         # Create the array of tests to run
         self.py_test_dirs = [
             (self.pyeclib_test_dir, self.pyeclib_core_test),
-            (self.pyeclib_test_dir, self.pyeclib_iface_test)
+            (self.pyeclib_test_dir, self.pyeclib_iface_test),
         ]
 
     def tearDown(self):
@@ -55,32 +55,41 @@ class CoreTests():
     def invoke_core_tests(self):
         cur_dir = os.getcwd()
         print("\n")
-        for (dir, test) in self.py_test_dirs:
+        for dir, test in self.py_test_dirs:
             sys.stdout.write("Running test %s ... " % test)
             sys.stdout.flush()
             os.chdir(dir)
             if os.path.isfile(test):
-                pythonpath = "PYTHONPATH=%s:%s" % \
-                    (cur_dir, os.path.dirname(cur_dir))
+                pythonpath = "PYTHONPATH=%s:%s" % (
+                    cur_dir,
+                    os.path.dirname(cur_dir),
+                )
                 ret = os.system(
-                    "%s %s python %s >%s/%s.%s.out 2>&1" %
-                    (pythonpath, test_cmd_prefix, test, cur_dir,
-                     log_filename_prefix, test))
+                    "%s %s python %s >%s/%s.%s.out 2>&1"
+                    % (
+                        pythonpath,
+                        test_cmd_prefix,
+                        test,
+                        cur_dir,
+                        log_filename_prefix,
+                        test,
+                    )
+                )
 
-                assert (0 == ret)
+                assert 0 == ret
                 os.system("rm -f *.pyc")
                 os.chdir(cur_dir)
-                print('ok')
+                print("ok")
             else:
-                print('failed')
+                print("failed")
 
 
 # Invoke this script as "python test_core_valgrind.py"
 # for the "valgrind" variant
 # (test_core_valgrind.py is a symlink to test_core.py)
 if __name__ == "__main__":
-    if '_valgrind' in sys.argv[0]:
-        if (0 != os.system("which valgrind")):
+    if "_valgrind" in sys.argv[0]:
+        if 0 != os.system("which valgrind"):
             print("You don't appear to have 'valgrind' installed")
             sys.exit(-1)
         run_under_valgrind = True

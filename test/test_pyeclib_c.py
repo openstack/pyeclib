@@ -56,8 +56,9 @@ class Timer:
 
 
 def require_backend(backend):
-    return unittest.skipIf(backend not in VALID_EC_TYPES,
-                           "%s backend is not available" % backend)
+    return unittest.skipIf(
+        backend not in VALID_EC_TYPES, "%s backend is not available" % backend
+    )
 
 
 class TestPyECLib(unittest.TestCase):
@@ -69,18 +70,24 @@ class TestPyECLib(unittest.TestCase):
         cls.iterations = 100
 
         # EC algorithm and config parameters
-        cls.rs_types = [(PyECLib_EC_Types.jerasure_rs_vand),
-                        (PyECLib_EC_Types.jerasure_rs_cauchy),
-                        (PyECLib_EC_Types.isa_l_rs_vand),
-                        (PyECLib_EC_Types.liberasurecode_rs_vand),
-                        (PyECLib_EC_Types.isa_l_rs_cauchy)]
-        cls.xor_types = [(PyECLib_EC_Types.flat_xor_hd, 12, 6, 4),
-                         (PyECLib_EC_Types.flat_xor_hd, 10, 5, 4),
-                         (PyECLib_EC_Types.flat_xor_hd, 10, 5, 3)]
-        cls.shss = [(PyECLib_EC_Types.shss, 6, 3),
-                    (PyECLib_EC_Types.shss, 10, 4),
-                    (PyECLib_EC_Types.shss, 20, 4),
-                    (PyECLib_EC_Types.shss, 11, 7)]
+        cls.rs_types = [
+            (PyECLib_EC_Types.jerasure_rs_vand),
+            (PyECLib_EC_Types.jerasure_rs_cauchy),
+            (PyECLib_EC_Types.isa_l_rs_vand),
+            (PyECLib_EC_Types.liberasurecode_rs_vand),
+            (PyECLib_EC_Types.isa_l_rs_cauchy),
+        ]
+        cls.xor_types = [
+            (PyECLib_EC_Types.flat_xor_hd, 12, 6, 4),
+            (PyECLib_EC_Types.flat_xor_hd, 10, 5, 4),
+            (PyECLib_EC_Types.flat_xor_hd, 10, 5, 3),
+        ]
+        cls.shss = [
+            (PyECLib_EC_Types.shss, 6, 3),
+            (PyECLib_EC_Types.shss, 10, 4),
+            (PyECLib_EC_Types.shss, 20, 4),
+            (PyECLib_EC_Types.shss, 11, 7),
+        ]
         cls.libphazr = [(PyECLib_EC_Types.libphazr, 4, 4)]
 
         # Input temp files for testing
@@ -99,16 +106,16 @@ class TestPyECLib(unittest.TestCase):
             # Determine the size of the file to create
             size_desc = size_str.split("-")
             size = int(size_desc[0])
-            if size_desc[1] == 'M':
+            if size_desc[1] == "M":
                 size *= 1000000
-            elif size_desc[1] == 'K':
+            elif size_desc[1] == "K":
                 size *= 1000
 
             # Create the dictionary of files to test with
-            buf = ''.join(random.choice(ascii_letters) for i in range(size))
+            buf = "".join(random.choice(ascii_letters) for i in range(size))
             if sys.version_info >= (3,):
-                buf = buf.encode('ascii')
-            tmp_file = tempfile.NamedTemporaryFile('w+b')
+                buf = buf.encode("ascii")
+            tmp_file = tempfile.NamedTemporaryFile("w+b")
             tmp_file.write(buf)
             cls.files[size_str] = tmp_file
 
@@ -142,12 +149,14 @@ class TestPyECLib(unittest.TestCase):
             found_one = True
             yield ec_type
         if not found_one:
-            type_list = ', '.join(t.name for t in ec_types)
-            raise unittest.SkipTest('No backend available in types: %r' %
-                                    type_list)
+            type_list = ", ".join(t.name for t in ec_types)
+            raise unittest.SkipTest(
+                "No backend available in types: %r" % type_list
+            )
 
-    def time_encode(self, num_data, num_parity, ec_type, hd,
-                    file_size, iterations):
+    def time_encode(
+        self, num_data, num_parity, ec_type, hd, file_size, iterations
+    ):
         """
         :return average encode time
         """
@@ -162,9 +171,9 @@ class TestPyECLib(unittest.TestCase):
 
         return tsum / iterations
 
-    def time_decode(self,
-                    num_data, num_parity, ec_type, hd,
-                    file_size, iterations):
+    def time_decode(
+        self, num_data, num_parity, ec_type, hd, file_size, iterations
+    ):
         """
         :return 2-tuple, (success, average decode time)
         """
@@ -185,9 +194,9 @@ class TestPyECLib(unittest.TestCase):
                 fragments.pop(idx)
 
             timer.start()
-            decoded_file_bytes = pyeclib_c.decode(handle,
-                                                  fragments,
-                                                  len(fragments[0]))
+            decoded_file_bytes = pyeclib_c.decode(
+                handle, fragments, len(fragments[0])
+            )
             tsum += timer.stop_and_return()
 
             fragments = orig_fragments[:]
@@ -197,9 +206,9 @@ class TestPyECLib(unittest.TestCase):
 
         return success, tsum / iterations
 
-    def time_range_decode(self,
-                          num_data, num_parity, ec_type, hd,
-                          file_size, iterations):
+    def time_range_decode(
+        self, num_data, num_parity, ec_type, hd, file_size, iterations
+    ):
         """
         :return 2-tuple, (success, average decode time)
         """
@@ -209,10 +218,13 @@ class TestPyECLib(unittest.TestCase):
         whole_file_bytes = self.get_tmp_file(file_size).read()
         success = True
 
-        begins = [int(random.randint(0, len(whole_file_bytes) - 1))
-                  for i in range(3)]
-        ends = [int(random.randint(begins[i], len(whole_file_bytes) - 1))
-                for i in range(3)]
+        begins = [
+            int(random.randint(0, len(whole_file_bytes) - 1)) for i in range(3)
+        ]
+        ends = [
+            int(random.randint(begins[i], len(whole_file_bytes) - 1))
+            for i in range(3)
+        ]
 
         ranges = list(zip(begins, ends))
 
@@ -227,26 +239,27 @@ class TestPyECLib(unittest.TestCase):
                 fragments.pop(idx)
 
             timer.start()
-            decoded_file_ranges = pyeclib_c.decode(handle,
-                                                   fragments,
-                                                   len(fragments[0]),
-                                                   ranges)
+            decoded_file_ranges = pyeclib_c.decode(
+                handle, fragments, len(fragments[0]), ranges
+            )
             tsum += timer.stop_and_return()
 
             fragments = orig_fragments[:]
 
             range_offset = 0
             for r in ranges:
-                if whole_file_bytes[
-                        r[0]: r[1] + 1] != decoded_file_ranges[range_offset]:
+                if (
+                    whole_file_bytes[r[0] : r[1] + 1]
+                    != decoded_file_ranges[range_offset]
+                ):
                     success = False
                 range_offset += 1
 
         return success, tsum / iterations
 
-    def time_reconstruct(self,
-                         num_data, num_parity, ec_type, hd,
-                         file_size, iterations):
+    def time_reconstruct(
+        self, num_data, num_parity, ec_type, hd, file_size, iterations
+    ):
         """
         :return 2-tuple, (success, average reconstruct time)
         """
@@ -271,10 +284,9 @@ class TestPyECLib(unittest.TestCase):
                 fragments.pop(idx)
 
             timer.start()
-            reconstructed_fragment = pyeclib_c.reconstruct(handle,
-                                                           fragments,
-                                                           len(fragments[0]),
-                                                           missing_idxs[0])
+            reconstructed_fragment = pyeclib_c.reconstruct(
+                handle, fragments, len(fragments[0]), missing_idxs[0]
+            )
             tsum += timer.stop_and_return()
 
             if orig_fragments[missing_idxs[0]] != reconstructed_fragment:
@@ -294,102 +306,125 @@ class TestPyECLib(unittest.TestCase):
         size = float(size_desc[0])
 
         if avg_time == 0:
-            return '? (test finished too fast to calculate throughput)'
+            return "? (test finished too fast to calculate throughput)"
 
-        if size_desc[1] == 'M':
+        if size_desc[1] == "M":
             throughput = size / avg_time
-        elif size_desc[1] == 'K':
+        elif size_desc[1] == "K":
             throughput = (size / 1000.0) / avg_time
 
-        return format(throughput, '.10g')
+        return format(throughput, ".10g")
 
     @require_backend("flat_xor_hd_3")
     def test_xor_code(self):
-        for (ec_type, k, m, hd) in self.xor_types:
-            print("\nRunning tests for flat_xor_hd k=%d, m=%d, hd=%d" %
-                  (k, m, hd))
+        for ec_type, k, m, hd in self.xor_types:
+            print(
+                "\nRunning tests for flat_xor_hd k=%d, m=%d, hd=%d"
+                % (k, m, hd)
+            )
 
             for size_str in self.sizes:
-                avg_time = self.time_encode(k, m, ec_type.value, hd,
-                                            size_str,
-                                            self.iterations)
-                print("Encode (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                avg_time = self.time_encode(
+                    k, m, ec_type.value, hd, size_str, self.iterations
+                )
+                print(
+                    "Encode (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
             for size_str in self.sizes:
-                success, avg_time = self.time_decode(k, m, ec_type.value, hd,
-                                                     size_str,
-                                                     self.iterations)
+                success, avg_time = self.time_decode(
+                    k, m, ec_type.value, hd, size_str, self.iterations
+                )
                 self.assertTrue(success)
-                print("Decode (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                print(
+                    "Decode (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
             for size_str in self.sizes:
                 success, avg_time = self.time_reconstruct(
-                    k, m, ec_type.value, hd, size_str, self.iterations)
+                    k, m, ec_type.value, hd, size_str, self.iterations
+                )
                 self.assertTrue(success)
-                print("Reconstruct (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                print(
+                    "Reconstruct (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
     @require_backend("shss")
     def test_shss(self):
-        for (ec_type, k, m) in self.shss:
+        for ec_type, k, m in self.shss:
             print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
 
             success = self._test_get_required_fragments(k, m, ec_type)
             self.assertTrue(success)
 
             for size_str in self.sizes:
-                avg_time = self.time_encode(k, m, ec_type.value, 0,
-                                            size_str,
-                                            self.iterations)
-                print("Encode (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                avg_time = self.time_encode(
+                    k, m, ec_type.value, 0, size_str, self.iterations
+                )
+                print(
+                    "Encode (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
             for size_str in self.sizes:
-                success, avg_time = self.time_decode(k, m, ec_type.value, 0,
-                                                     size_str,
-                                                     self.iterations)
+                success, avg_time = self.time_decode(
+                    k, m, ec_type.value, 0, size_str, self.iterations
+                )
                 self.assertTrue(success)
-                print("Decode (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                print(
+                    "Decode (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
             for size_str in self.sizes:
                 success, avg_time = self.time_reconstruct(
-                    k, m, ec_type.value, 0, size_str, self.iterations)
+                    k, m, ec_type.value, 0, size_str, self.iterations
+                )
                 self.assertTrue(success)
-                print("Reconstruct (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                print(
+                    "Reconstruct (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
     @require_backend("libphazr")
     def test_libphazr(self):
-        for (ec_type, k, m) in self.libphazr:
+        for ec_type, k, m in self.libphazr:
             print(("\nRunning tests for %s k=%d, m=%d" % (ec_type, k, m)))
 
             success = self._test_get_required_fragments(k, m, ec_type)
             self.assertTrue(success)
 
             for size_str in self.sizes:
-                avg_time = self.time_encode(k, m, ec_type.value, 0,
-                                            size_str,
-                                            self.iterations)
-                print("Encode (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                avg_time = self.time_encode(
+                    k, m, ec_type.value, 0, size_str, self.iterations
+                )
+                print(
+                    "Encode (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
             for size_str in self.sizes:
-                success, avg_time = self.time_decode(k, m, ec_type.value, 0,
-                                                     size_str,
-                                                     self.iterations)
+                success, avg_time = self.time_decode(
+                    k, m, ec_type.value, 0, size_str, self.iterations
+                )
                 self.assertTrue(success)
-                print("Decode (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                print(
+                    "Decode (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
             for size_str in self.sizes:
                 success, avg_time = self.time_reconstruct(
-                    k, m, ec_type.value, 0, size_str, self.iterations)
+                    k, m, ec_type.value, 0, size_str, self.iterations
+                )
                 self.assertTrue(success)
-                print("Reconstruct (%s): %s" %
-                      (size_str, self.get_throughput(avg_time, size_str)))
+                print(
+                    "Reconstruct (%s): %s"
+                    % (size_str, self.get_throughput(avg_time, size_str))
+                )
 
     def _test_get_required_fragments(self, num_data, num_parity, ec_type):
         """
@@ -401,8 +436,11 @@ class TestPyECLib(unittest.TestCase):
         #
         # MDS codes need any k fragments
         #
-        if ec_type in ["jerasure_rs_vand", "jerasure_rs_cauchy",
-                       "liberasurecode_rs_vand"]:
+        if ec_type in [
+            "jerasure_rs_vand",
+            "jerasure_rs_cauchy",
+            "liberasurecode_rs_vand",
+        ]:
             expected_fragments = [i for i in range(num_data + num_parity)]
             missing_fragments = []
 
@@ -416,14 +454,16 @@ class TestPyECLib(unittest.TestCase):
 
             expected_fragments = expected_fragments[:num_data]
             required_fragments = pyeclib_c.get_required_fragments(
-                handle,
-                missing_fragments, [])
+                handle, missing_fragments, []
+            )
 
             if expected_fragments != required_fragments:
                 success = False
-                print("Unexpected required fragments list "
-                      "(exp != req): %s != %s" % (
-                          expected_fragments, required_fragments))
+                print(
+                    "Unexpected required fragments list "
+                    "(exp != req): %s != %s"
+                    % (expected_fragments, required_fragments)
+                )
 
         return success
 
@@ -431,51 +471,81 @@ class TestPyECLib(unittest.TestCase):
         for ec_type in self.iter_available_types(self.rs_types):
             for i in range(len(self.num_datas)):
                 success = self._test_get_required_fragments(
-                    self.num_datas[i], self.num_parities[i], ec_type)
+                    self.num_datas[i], self.num_parities[i], ec_type
+                )
                 self.assertTrue(success)
 
             for i in range(len(self.num_datas)):
                 for size_str in self.sizes:
                     avg_time = self.time_encode(
-                        self.num_datas[i], self.num_parities[i], ec_type.value,
-                        self.num_parities[i] + 1, size_str, self.iterations)
+                        self.num_datas[i],
+                        self.num_parities[i],
+                        ec_type.value,
+                        self.num_parities[i] + 1,
+                        size_str,
+                        self.iterations,
+                    )
 
-                    print("Encode (%s): %s" %
-                          (size_str, self.get_throughput(avg_time, size_str)))
+                    print(
+                        "Encode (%s): %s"
+                        % (size_str, self.get_throughput(avg_time, size_str))
+                    )
 
             for i in range(len(self.num_datas)):
                 for size_str in self.sizes:
                     success, avg_time = self.time_decode(
-                        self.num_datas[i], self.num_parities[i], ec_type.value,
-                        self.num_parities[i] + 1, size_str, self.iterations)
+                        self.num_datas[i],
+                        self.num_parities[i],
+                        ec_type.value,
+                        self.num_parities[i] + 1,
+                        size_str,
+                        self.iterations,
+                    )
 
                     self.assertTrue(success)
-                    print("Decode (%s): %s" %
-                          (size_str, self.get_throughput(avg_time, size_str)))
+                    print(
+                        "Decode (%s): %s"
+                        % (size_str, self.get_throughput(avg_time, size_str))
+                    )
 
             for i in range(len(self.num_datas)):
                 for size_str in self.sizes:
                     success, avg_time = self.time_range_decode(
-                        self.num_datas[i], self.num_parities[i], ec_type.value,
-                        self.num_parities[i] + 1, size_str, self.iterations)
+                        self.num_datas[i],
+                        self.num_parities[i],
+                        ec_type.value,
+                        self.num_parities[i] + 1,
+                        size_str,
+                        self.iterations,
+                    )
 
                     self.assertTrue(success)
-                    print("Range Decode (%s): %s" %
-                          (size_str, self.get_throughput(avg_time, size_str)))
+                    print(
+                        "Range Decode (%s): %s"
+                        % (size_str, self.get_throughput(avg_time, size_str))
+                    )
 
             for i in range(len(self.num_datas)):
                 for size_str in self.sizes:
                     success, avg_time = self.time_reconstruct(
-                        self.num_datas[i], self.num_parities[i], ec_type.value,
-                        self.num_parities[i] + 1, size_str, self.iterations)
+                        self.num_datas[i],
+                        self.num_parities[i],
+                        ec_type.value,
+                        self.num_parities[i] + 1,
+                        size_str,
+                        self.iterations,
+                    )
                     self.assertTrue(success)
-                    print("Reconstruct (%s): %s" %
-                          (size_str, self.get_throughput(avg_time, size_str)))
+                    print(
+                        "Reconstruct (%s): %s"
+                        % (size_str, self.get_throughput(avg_time, size_str))
+                    )
 
     def test_destroy(self):
         # liberasurecode_rs_vand should always be available
         handle = pyeclib_c.init(
-            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2)
+            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2
+        )
         whole_file_bytes = self.get_tmp_file("101-K").read()
         # sanity check that it works
         pyeclib_c.encode(handle, whole_file_bytes)
@@ -487,23 +557,27 @@ class TestPyECLib(unittest.TestCase):
                 pyeclib_c.destroy(handle)
             self.assertEqual(
                 str(caught.exception),
-                'pyeclib_c_destroy ERROR: Backend instance not found. Please '
-                'inspect syslog for liberasurecode error report.')
+                "pyeclib_c_destroy ERROR: Backend instance not found. Please "
+                "inspect syslog for liberasurecode error report.",
+            )
 
             with self.assertRaises(ECBackendInstanceNotAvailable) as caught:
                 # but now it's busted!
                 pyeclib_c.encode(handle, whole_file_bytes)
             self.assertEqual(
                 str(caught.exception),
-                'pyeclib_c_encode ERROR: Backend instance not found. Please '
-                'inspect syslog for liberasurecode error report.')
+                "pyeclib_c_encode ERROR: Backend instance not found. Please "
+                "inspect syslog for liberasurecode error report.",
+            )
 
     def test_destroy_one_leaves_other_usable(self):
         # liberasurecode_rs_vand should always be available
         handle1 = pyeclib_c.init(
-            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2)
+            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2
+        )
         handle2 = pyeclib_c.init(
-            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2)
+            4, 2, PyECLib_EC_Types.liberasurecode_rs_vand.value, 2
+        )
         whole_file_bytes = self.get_tmp_file("101-K").read()
         # sanity check that both work
         pyeclib_c.encode(handle1, whole_file_bytes)

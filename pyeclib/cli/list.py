@@ -29,10 +29,18 @@ from pyeclib import ec_iface
 
 
 def add_list_args(parser):
-    parser.add_argument("-a", "--available", action="store_true",
-                        help="display only available backends")
-    parser.add_argument("ec_type", nargs="*", type=str,
-                        help="display these backends (default: all)")
+    parser.add_argument(
+        "-a",
+        "--available",
+        action="store_true",
+        help="display only available backends",
+    )
+    parser.add_argument(
+        "ec_type",
+        nargs="*",
+        type=str,
+        help="display these backends (default: all)",
+    )
 
 
 def list_command(args):

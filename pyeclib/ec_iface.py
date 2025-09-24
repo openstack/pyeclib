@@ -34,8 +34,8 @@ from pyeclib_c import get_liberasurecode_version
 def check_backend_available(backend_name):
     from pyeclib_c import check_backend_available
 
-    if backend_name.startswith('flat_xor_hd'):
-        int_type = PyECLib_EC_Types['flat_xor_hd']
+    if backend_name.startswith("flat_xor_hd"):
+        int_type = PyECLib_EC_Types["flat_xor_hd"]
     else:
         int_type = PyECLib_EC_Types[backend_name]
     if not int_type:
@@ -44,15 +44,14 @@ def check_backend_available(backend_name):
 
 
 def PyECLibVersion(z, y, x):
-    return (((z) << 16) + ((y) << 8) + (x))
+    return ((z) << 16) + ((y) << 8) + (x)
 
 
 PYECLIB_MAJOR = 1
 PYECLIB_MINOR = 7
 PYECLIB_REV = 0
-PYECLIB_VERSION = PyECLibVersion(PYECLIB_MAJOR, PYECLIB_MINOR,
-                                 PYECLIB_REV)
-__version__ = '%d.%d.%d' % (PYECLIB_MAJOR, PYECLIB_MINOR, PYECLIB_REV)
+PYECLIB_VERSION = PyECLibVersion(PYECLIB_MAJOR, PYECLIB_MINOR, PYECLIB_REV)
+__version__ = "%d.%d.%d" % (PYECLIB_MAJOR, PYECLIB_MINOR, PYECLIB_REV)
 
 
 PYECLIB_MAX_DATA = 32
@@ -80,6 +79,7 @@ class PyECLib_EC_Types(Enum):
 # integrity checks are provided by a checksum embedded in a header (prepend)
 # for each fragment.
 
+
 # The following Enum defines the schemes supported for fragment checksums.
 # The checksum type is "none" unless specified.
 @unique
@@ -92,19 +92,20 @@ class PyECLib_FRAGHDRCHKSUM_Types(Enum):
 
 # Main ECDriver class
 class ECDriver(object):
-    '''A driver to encode, decode, and reconstruct erasure-coded data.'''
+    """A driver to encode, decode, and reconstruct erasure-coded data."""
 
     def __init__(
-        self, *,
+        self,
+        *,
         ec_type=None,
-        library_import_str='pyeclib.core.ECPyECLibDriver',
+        library_import_str="pyeclib.core.ECPyECLibDriver",
         k,
         m,
-        chksum_type='none',
+        chksum_type="none",
         validate=False,
         local_parity=0,
     ):
-        '''
+        """
         :param ec_type: the erasure coding type to use for this driver.
         :param k: number of data fragments to use. Required.
         :param m: number of parity fragments to use. Required.
@@ -116,7 +117,7 @@ class ECDriver(object):
         typically you just want to use ``ec_type``. See ALL_EC_TYPES for the
         list of all EC types supported by PyECLib, and VALID_EC_TYPES for the
         list of all EC types currently available on this system.
-        '''
+        """
         self.k = -1
         self.m = -1
         self.hd = -1
@@ -124,24 +125,23 @@ class ECDriver(object):
         self.chksum_type = None
 
         if (
-            ec_type is None and
-            library_import_str == 'pyeclib.core.ECPyECLibDriver'
+            ec_type is None
+            and library_import_str == "pyeclib.core.ECPyECLibDriver"
         ):
             raise ECDriverError(
                 "Invalid Argument: either ec_type or library_import_str "
-                "must be provided")
+                "must be provided"
+            )
 
         try:
             self.k = positive_int_value(k)
         except ValueError:
-            raise ECDriverError(
-                "Invalid number of data fragments (k)")
+            raise ECDriverError("Invalid number of data fragments (k)")
 
         try:
             self.m = positive_int_value(m)
         except ValueError:
-            raise ECDriverError(
-                "Invalid number of parity fragments (m)")
+            raise ECDriverError("Invalid number of parity fragments (m)")
 
         self.local_parity = int(local_parity)
 
@@ -157,23 +157,28 @@ class ECDriver(object):
 
             if ec_type in PyECLib_EC_Types.__members__:
                 self.ec_type = PyECLib_EC_Types[ec_type]
-                if self.ec_type in (PyECLib_EC_Types.jerasure_rs_vand,
-                                    PyECLib_EC_Types.jerasure_rs_cauchy):
-                    warnings.warn('Jerasure support is deprecated and '
-                                  'may be removed in a future release',
-                                  FutureWarning, stacklevel=2)
+                if self.ec_type in (
+                    PyECLib_EC_Types.jerasure_rs_vand,
+                    PyECLib_EC_Types.jerasure_rs_cauchy,
+                ):
+                    warnings.warn(
+                        "Jerasure support is deprecated and "
+                        "may be removed in a future release",
+                        FutureWarning,
+                        stacklevel=2,
+                    )
 
             else:
                 raise ECBackendNotSupported(
-                    "%s is not a valid EC type for PyECLib!" % ec_type)
+                    "%s is not a valid EC type for PyECLib!" % ec_type
+                )
 
         if chksum_type in PyECLib_FRAGHDRCHKSUM_Types.__members__:
-            self.chksum_type = \
-                PyECLib_FRAGHDRCHKSUM_Types[chksum_type]
+            self.chksum_type = PyECLib_FRAGHDRCHKSUM_Types[chksum_type]
         else:
             raise ECDriverError(
-                "%s is not a valid checksum type for PyECLib!"
-                % chksum_type)
+                "%s is not a valid checksum type for PyECLib!" % chksum_type
+            )
 
         self.validate = validate
 
@@ -199,35 +204,40 @@ class ECDriver(object):
         # Verify that the imported library implements the required functions
         #
         required_methods = [
-            'decode',
-            'encode',
-            'reconstruct',
-            'fragments_needed',
-            'min_parity_fragments_needed',
-            'get_metadata',
-            'verify_stripe_metadata',
-            'get_segment_info',
+            "decode",
+            "encode",
+            "reconstruct",
+            "fragments_needed",
+            "min_parity_fragments_needed",
+            "get_metadata",
+            "verify_stripe_metadata",
+            "get_segment_info",
         ]
 
-        missing_methods = ' '.join(
-            method for method in required_methods
-            if not callable(getattr(self.ec_lib_reference, method, None)))
+        missing_methods = " ".join(
+            method
+            for method in required_methods
+            if not callable(getattr(self.ec_lib_reference, method, None))
+        )
 
         if missing_methods:
             raise ECDriverError(
                 "The following required methods are not implemented "
-                "in %s: %s" % (self.library_import_str, missing_methods))
+                "in %s: %s" % (self.library_import_str, missing_methods)
+            )
 
     def __repr__(self):
         if self.ec_type is None:
-            ec_type = 'None'
-        elif self.ec_type.name == 'flat_xor_hd':
-            ec_type = f'flat_xor_hd_{self.hd}'
+            ec_type = "None"
+        elif self.ec_type.name == "flat_xor_hd":
+            ec_type = f"flat_xor_hd_{self.hd}"
         else:
             ec_type = self.ec_type.name
 
-        return (f'{type(self).__name__}('
-                f'ec_type={ec_type!r}, k={self.k}, m={self.m})')
+        return (
+            f"{type(self).__name__}("
+            f"ec_type={ec_type!r}, k={self.k}, m={self.m})"
+        )
 
     def close(self):
         self.ec_lib_reference.close()
@@ -242,8 +252,9 @@ class ECDriver(object):
         """
         return self.ec_lib_reference.encode(data_bytes)
 
-    def decode(self, fragment_payloads, ranges=None,
-               force_metadata_checks=False):
+    def decode(
+        self, fragment_payloads, ranges=None, force_metadata_checks=False
+    ):
         """
         Decode a set of fragments into a buffer that represents the original
         buffer passed into encode().
@@ -257,11 +268,13 @@ class ECDriver(object):
         :returns: a buffer
         :raises: ECDriverError if there is an error during decoding
         """
-        return self.ec_lib_reference.decode(fragment_payloads, ranges,
-                                            force_metadata_checks)
+        return self.ec_lib_reference.decode(
+            fragment_payloads, ranges, force_metadata_checks
+        )
 
-    def reconstruct(self, available_fragment_payloads,
-                    missing_fragment_indexes):
+    def reconstruct(
+        self, available_fragment_payloads, missing_fragment_indexes
+    ):
         """
         Reconstruct a missing fragment from a subset of available fragments.
 
@@ -278,10 +291,10 @@ class ECDriver(object):
                  are not sufficient fragments to decode
         """
         return self.ec_lib_reference.reconstruct(
-            available_fragment_payloads, missing_fragment_indexes)
+            available_fragment_payloads, missing_fragment_indexes
+        )
 
-    def fragments_needed(self, reconstruction_indexes,
-                         exclude_indexes=None):
+    def fragments_needed(self, reconstruction_indexes, exclude_indexes=None):
         """
         Determine which fragments are needed to reconstruct some subset of
         missing fragments.
@@ -300,8 +313,9 @@ class ECDriver(object):
         """
         if exclude_indexes is None:
             exclude_indexes = []
-        return self.ec_lib_reference.fragments_needed(reconstruction_indexes,
-                                                      exclude_indexes)
+        return self.ec_lib_reference.fragments_needed(
+            reconstruction_indexes, exclude_indexes
+        )
 
     def min_parity_fragments_needed(self):
         return self.ec_lib_reference.min_parity_fragments_needed()
@@ -333,7 +347,8 @@ class ECDriver(object):
 
         """
         return self.ec_lib_reference.verify_stripe_metadata(
-            fragment_metadata_list)
+            fragment_metadata_list
+        )
 
     def get_segment_info(self, data_len, segment_size):
         """
@@ -394,9 +409,10 @@ class ECDriver(object):
         """
 
         segment_info = self.ec_lib_reference.get_segment_info(
-            data_len, segment_size)
+            data_len, segment_size
+        )
 
-        segment_size = segment_info['segment_size']
+        segment_size = segment_info["segment_size"]
 
         sorted_ranges = ranges[:]
         sorted_ranges.sort(key=lambda obj: obj[0])
@@ -413,14 +429,18 @@ class ECDriver(object):
             if begin_segment == end_segment:
                 begin_relative_off = begin_off % segment_size
                 end_relative_off = end_off % segment_size
-                segment_map[begin_segment] = (begin_relative_off,
-                                              end_relative_off)
+                segment_map[begin_segment] = (
+                    begin_relative_off,
+                    end_relative_off,
+                )
             else:
                 begin_relative_off = begin_off % segment_size
                 end_relative_off = end_off % segment_size
 
-                segment_map[begin_segment] = (begin_relative_off,
-                                              segment_size - 1)
+                segment_map[begin_segment] = (
+                    begin_relative_off,
+                    segment_size - 1,
+                )
 
                 for middle_segment in range(begin_segment + 1, end_segment):
                     segment_map[middle_segment] = (0, segment_size - 1)
@@ -434,14 +454,17 @@ class ECDriver(object):
 
 # PyECLib Exceptions
 
+
 # Generic ECDriverException
 class ECDriverError(Exception):
     def __init__(self, error):
         try:
             self.error_str = str(error)
         except Exception:
-            self.error_str = 'Error retrieving the error message from %s' \
+            self.error_str = (
+                "Error retrieving the error message from %s"
                 % error.__class__.__name__
+            )
 
     def __str__(self):
         return self.error_str
@@ -457,6 +480,7 @@ class ECDriverErrorWithPosition(ECDriverError):
 
 
 # More specific exceptions, mapped to liberasurecode error codes
+
 
 # Specified EC backend is not supported by PyECLib/liberasurecode
 class ECBackendNotSupported(ECDriverError):
@@ -510,17 +534,17 @@ class ECOutOfMemory(ECDriverError):
 
 # PyECLib helper for "available" EC types
 ALL_EC_TYPES = [
-    'jerasure_rs_vand',
-    'jerasure_rs_cauchy',
-    'flat_xor_hd_3',
-    'flat_xor_hd_4',
-    'isa_l_rs_vand',
-    'shss',
-    'liberasurecode_rs_vand',
-    'isa_l_rs_cauchy',
-    'libphazr',
-    'isa_l_rs_vand_inv',
-    'isa_l_rs_lrc',
+    "jerasure_rs_vand",
+    "jerasure_rs_cauchy",
+    "flat_xor_hd_3",
+    "flat_xor_hd_4",
+    "isa_l_rs_vand",
+    "shss",
+    "liberasurecode_rs_vand",
+    "isa_l_rs_cauchy",
+    "libphazr",
+    "isa_l_rs_vand_inv",
+    "isa_l_rs_lrc",
 ]
 
 
@@ -537,10 +561,10 @@ VALID_EC_TYPES = _PyECLibValidECTypes()
 
 def _liberasurecode_version():
     version_int = get_liberasurecode_version()
-    major = (version_int >> 16) & 0xff
-    minor = (version_int >> 8) & 0xff
-    rev = (version_int >> 0) & 0xff
-    return '%d.%d.%d' % (major, minor, rev)
+    major = (version_int >> 16) & 0xFF
+    minor = (version_int >> 8) & 0xFF
+    rev = (version_int >> 0) & 0xFF
+    return "%d.%d.%d" % (major, minor, rev)
 
 
 LIBERASURECODE_VERSION = _liberasurecode_version()

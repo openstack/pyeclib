@@ -23,7 +23,6 @@
 
 from pyeclib import ec_iface
 
-
 _type_abbreviations = {
     # name -> prefix
     "all": "",

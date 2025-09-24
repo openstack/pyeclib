@@ -35,16 +35,16 @@ def add_check_args(parser):
 def check_command(args):
     if args.ec_type in ec_iface.VALID_EC_TYPES:
         if not args.quiet:
-            print(args.ec_type, 'is available')
+            print(args.ec_type, "is available")
         return 0
 
     if args.ec_type in ec_iface.ALL_EC_TYPES:
         if not args.quiet:
-            print(args.ec_type, 'is missing')
+            print(args.ec_type, "is missing")
         return 1
 
     if not args.quiet:
-        print(args.ec_type, 'is unknown')
+        print(args.ec_type, "is unknown")
     return 2
 
 

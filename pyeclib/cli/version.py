@@ -34,13 +34,13 @@ def version_command(args=None):
     print(f"pyeclib {ec_iface.__version__}")
     bundled = ""
     try:
-        files = importlib.metadata.files('pyeclib') or []
-        if any(f.name.startswith('liberasurecode-pyeclib.so') for f in files):
+        files = importlib.metadata.files("pyeclib") or []
+        if any(f.name.startswith("liberasurecode-pyeclib.so") for f in files):
             bundled = " (bundled)"
     except importlib.metadata.PackageNotFoundError:
         pass
     print(f"liberasurecode {ec_iface.LIBERASURECODE_VERSION}{bundled}")
-    version_str = sys.version.split(' (', 1)[0]
+    version_str = sys.version.split(" (", 1)[0]
     print(f"{platform.python_implementation()} {version_str}")
 
 

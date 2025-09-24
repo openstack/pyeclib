@@ -106,18 +106,42 @@ class ECScheme:
     def __str__(self):
         return "k=%d m=%d ec_type=%s" % (self.k, self.m, self.ec_type)
 
-valid_flat_xor_hd_3 = [(6, 6), (7, 6), (8, 6), (9, 6),
-                    (10, 6), (11, 6), (12, 6), (13, 6),
-                    (14, 6), (15, 6)]
 
-valid_flat_xor_hd_4 = [(6, 6), (7, 6), (8, 6), (9, 6),
-                    (10, 6), (11, 6), (12, 6), (13, 6),
-                    (14, 6), (15, 6), (16, 6), (17, 6),
-                    (18, 6), (19, 6), (20, 6)]
+valid_flat_xor_hd_3 = [
+    (6, 6),
+    (7, 6),
+    (8, 6),
+    (9, 6),
+    (10, 6),
+    (11, 6),
+    (12, 6),
+    (13, 6),
+    (14, 6),
+    (15, 6),
+]
+
+valid_flat_xor_hd_4 = [
+    (6, 6),
+    (7, 6),
+    (8, 6),
+    (9, 6),
+    (10, 6),
+    (11, 6),
+    (12, 6),
+    (13, 6),
+    (14, 6),
+    (15, 6),
+    (16, 6),
+    (17, 6),
+    (18, 6),
+    (19, 6),
+    (20, 6),
+]
 
 
 def get_viable_schemes(
-        max_num_frags, minimum_rate, avg_stripe_size, fault_tolerance):
+    max_num_frags, minimum_rate, avg_stripe_size, fault_tolerance
+):
 
     list_of_schemes = []
 
@@ -142,10 +166,12 @@ def get_viable_schemes(
     #
     for k in range(min_k, max_num_frags - min_m + 1):
         list_of_schemes.append(
-            ECScheme(k, max_num_frags - k, "jerasure_rs_vand"))
+            ECScheme(k, max_num_frags - k, "jerasure_rs_vand")
+        )
 
         list_of_schemes.append(
-            ECScheme(k, max_num_frags - k, "jerasure_rs_cauchy"))
+            ECScheme(k, max_num_frags - k, "jerasure_rs_cauchy")
+        )
 
         #
         # The XOR codes are a little tricker
@@ -165,36 +191,38 @@ def get_viable_schemes(
             max_k = nCr(max_num_frags - k, 2)
             if k <= max_k and (k, max_num_frags - k) in valid_flat_xor_hd_3:
                 list_of_schemes.append(
-                    ECScheme(k, max_num_frags - k, "flat_xor_hd_3"))
+                    ECScheme(k, max_num_frags - k, "flat_xor_hd_3")
+                )
 
         if fault_tolerance == 3:
             max_k = nCr(max_num_frags - k, 3)
             if k <= max_k and (k, max_num_frags - k) in valid_flat_xor_hd_4:
                 list_of_schemes.append(
-                    ECScheme(k, max_num_frags - k, "flat_xor_hd_4"))
+                    ECScheme(k, max_num_frags - k, "flat_xor_hd_4")
+                )
 
     return list_of_schemes
 
 
 parser = argparse.ArgumentParser(
-    description='PyECLib tool to evaluate viable EC options, benchmark them '
-                'and report results with the appropriate conf entries.')
+    description="PyECLib tool to evaluate viable EC options, benchmark them "
+    "and report results with the appropriate conf entries."
+)
 parser.add_argument(
-    '-n',
-    type=int,
-    help='max number of fragments',
-    required=True)
-parser.add_argument('-f', type=int, help='fault tolerance', required=True)
+    "-n", type=int, help="max number of fragments", required=True
+)
+parser.add_argument("-f", type=int, help="fault tolerance", required=True)
 parser.add_argument(
-    '-r',
+    "-r",
     type=float,
-    help='minimum coding rate (num_data / num_data+num_parity)',
-    required=True)
-parser.add_argument('-s', type=int, help='average stripe size', required=True)
+    help="minimum coding rate (num_data / num_data+num_parity)",
+    required=True,
+)
+parser.add_argument("-s", type=int, help="average stripe size", required=True)
 parser.add_argument(
-    '-l',
+    "-l",
     type=int,
-    help='set limit on number of entries returned (default = 10)',
+    help="set limit on number of entries returned (default = 10)",
     default=10,
 )
 
@@ -224,9 +252,10 @@ for scheme in schemes:
     print(scheme)
 
     # Generate a new string for each test
-    file_str = ''.join(
-        random.choice(
-            string.ascii_uppercase + string.digits) for x in range(args.s))
+    file_str = "".join(
+        random.choice(string.ascii_uppercase + string.digits)
+        for x in range(args.s)
+    )
 
     try:
         ec_driver = ECDriver(k=scheme.k, m=scheme.m, ec_type=scheme.ec_type)
@@ -253,14 +282,20 @@ for i in range(len(results)):
         break
 
     print("\n\nPerf Rank #%d:" % i)
-    print("  ======== To Use this Policy, Copy and Paste Text (not including "
-          "this header and footer) to Swift Conf ========")
+    print(
+        "  ======== To Use this Policy, Copy and Paste Text (not including "
+        "this header and footer) to Swift Conf ========"
+    )
     print("  type = erasure_coding")
-    print("  name = %s_%d_%d" % (results[i][0].ec_type,
-                                 results[i][0].k, results[i][0].m))
+    print(
+        "  name = %s_%d_%d"
+        % (results[i][0].ec_type, results[i][0].k, results[i][0].m)
+    )
     print("  ec_type = %s" % results[i][0].ec_type)
     print("  ec_k = %s" % results[i][0].k)
     print("  ec_m = %s" % results[i][0].m)
-    print("  ================================================================"
-          "==============================================")
+    print(
+        "  ================================================================"
+        "=============================================="
+    )
     results[i]
