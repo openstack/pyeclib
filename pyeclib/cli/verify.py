@@ -42,8 +42,13 @@ def verify_command(args):
     total_corrupt = 0
     data = os.urandom(args.segment_size)
     width = max(len(ec_type) for ec_type in args.ec_type)
-    print(f"Using {args.n_data} data + {args.n_parity} parity with "
-          f"{args.unavailable} unavailable frags")
+    if 'isa_l_rs_lrc' in args.ec_type:
+        print(f"Using {args.n_data} data + {args.n_parity} parity (of which "
+              f"{args.local_parity} may be local) with {args.unavailable} "
+              f"unavailable frags")
+    else:
+        print(f"Using {args.n_data} data + {args.n_parity} parity with "
+              f"{args.unavailable} unavailable frags")
 
     for ec_type in args.ec_type:
         if ec_type not in ec_iface.ALL_EC_TYPES:
@@ -57,6 +62,7 @@ def verify_command(args):
                 ec_type=ec_type,
                 k=args.n_data,
                 m=args.n_parity,
+                local_parity=args.local_parity,
             )
         except ec_iface.ECDriverError:
             print(f"{ec_type:<{width}} could not be instantiated")

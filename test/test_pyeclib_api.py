@@ -163,7 +163,13 @@ class TestPyECLibDriver(unittest.TestCase):
                 else:
                     _k = 10
                     _m = 5
-                ECDriver(k=_k, m=_m, ec_type=_type, validate=True)
+                ECDriver(
+                    k=_k,
+                    m=_m,
+                    ec_type=_type,
+                    local_parity=2,
+                    validate=True,
+                )
                 available_ec_types.append(_type)
             except Exception:
                 # ignore any errors, assume backend not available
@@ -176,10 +182,16 @@ class TestPyECLibDriver(unittest.TestCase):
 
         for backend in VALID_EC_TYPES:
             q = queue.Queue()
+            ec_params = {
+                'ec_type': backend,
+                'k': 10,
+                'm': 5,
+                'local_parity': 2,
+            }
             threads = [
                 threading.Thread(
                     target=create_backend,
-                    args=({'k': 10, 'm': 5, 'ec_type': backend}, q))
+                    args=(ec_params, q))
                 for _ in range(5)]
             for t in threads:
                 t.start()
@@ -202,6 +214,8 @@ class TestPyECLibDriver(unittest.TestCase):
                     ECDriver(k=10, m=4, ec_type=_type)
                 elif _type == 'libphazr':
                     ECDriver(k=4, m=4, ec_type=_type)
+                elif _type == 'isa_l_rs_lrc':
+                    ECDriver(k=10, m=5, ec_type=_type, local_parity=2)
                 else:
                     ECDriver(k=10, m=5, ec_type=_type)
             except ECDriverError:
@@ -293,6 +307,19 @@ class TestPyECLibDriver(unittest.TestCase):
                                    chksum_type=csum))
             pyeclib_drivers.append(ECDriver(k=11, m=7, ec_type=_type8,
                                    chksum_type=csum))
+
+        _type9 = 'isa_l_rs_lrc'
+        if _type9 in VALID_EC_TYPES:
+            pyeclib_drivers.append(ECDriver(k=12, m=4, local_parity=2,
+                                   ec_type=_type9, chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=11, m=4, local_parity=2,
+                                   ec_type=_type9, chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=10, m=5, local_parity=3,
+                                   ec_type=_type9, chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=8, m=5, local_parity=3,
+                                   ec_type=_type9, chksum_type=csum))
+            pyeclib_drivers.append(ECDriver(k=7, m=6, local_parity=3,
+                                   ec_type=_type9, chksum_type=csum))
         return pyeclib_drivers
 
     def test_use_after_close(self):
@@ -656,6 +683,9 @@ class TestPyECLibDriver(unittest.TestCase):
             if pyeclib_driver.ec_type == PyECLib_EC_Types.flat_xor_hd:
                 # flat_xord_hd is guaranteed to work with 2 or 3 failures
                 tolerable_failures = pyeclib_driver.hd - 1
+            elif pyeclib_driver.ec_type == PyECLib_EC_Types.isa_l_rs_lrc:
+                tolerable_failures = pyeclib_driver.m - \
+                    pyeclib_driver.local_parity + 1
             else:
                 # ... while others can tolerate more
                 tolerable_failures = pyeclib_driver.m
@@ -850,7 +880,8 @@ class BackendsEnabledMetaclass(type):
                 else:
                     k = 10
                     m = 5
-                ECDriver(k=k, m=m, ec_type=ec_type)
+                local_parity = 2 if ec_type == 'isa_l_rs_lrc' else 0
+                ECDriver(k=k, m=m, ec_type=ec_type, local_parity=local_parity)
             dummy.__name__ = 'test_%s_available' % ec_type
             cls_dict[dummy.__name__] = dummy
         return type.__new__(meta, cls_name, cls_bases, cls_dict)

@@ -215,6 +215,7 @@ static void restore_stderr(void)
  * @param use_inline_chksum type of inline fragment header checksum
  * @param use_algsig_chksum use algorithmic signature for fragment header checksum
  * @param validate only validate backend and params, close handle immediately
+ * @param local_parity number of local parity (included in total m).
  * @return pointer to PyObject or NULL on error
  */
 static PyObject *
@@ -222,14 +223,14 @@ pyeclib_c_init(PyObject *self, PyObject *args)
 {
   pyeclib_t *pyeclib_handle = NULL;
   PyObject *pyeclib_obj_handle = NULL;
-  int k, m, hd = 0, validate = 0;
+  int k, m, hd = 0, validate = 0, local_parity;
   int use_inline_chksum = 0, use_algsig_chksum = 0;
   const ec_backend_id_t backend_id;
 
   /* Obtain and validate the method parameters */
   if (!PyArg_ParseTuple(args, "iii|iiiii",
                         &k, &m, &backend_id, &hd, &use_inline_chksum,
-                        &use_algsig_chksum, &validate)) {
+                        &use_algsig_chksum, &validate, &local_parity)) {
     pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_init");
     return NULL;
   }
@@ -245,6 +246,12 @@ pyeclib_c_init(PyObject *self, PyObject *args)
   pyeclib_handle->ec_args.m = m;
   pyeclib_handle->ec_args.hd = hd;
   pyeclib_handle->ec_args.ct = use_inline_chksum ? CHKSUM_CRC32 : CHKSUM_NONE;
+  /**
+   * TODO: replace with
+   *    pyeclib_handle->ec_args.priv_args1.lrc_args.l
+   * when we start requiring liberasurecode>=1.8.0 to build pyeclib
+   */
+  pyeclib_handle->ec_args.priv_args1.reserved.x = local_parity;
 
   if (validate)
     redirect_stderr();
@@ -992,6 +999,9 @@ static const char* backend_id_to_str(uint8_t backend_id)
       break;
     case 9:
       backend_id_str = "isa_l_rs_vand_inv\0";
+      break;
+    case 10:
+      backend_id_str = "isa_l_rs_lrc\0";
       break;
     default:
       backend_id_str = "unknown\0";

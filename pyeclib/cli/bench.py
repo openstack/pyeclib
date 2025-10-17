@@ -56,6 +56,7 @@ def bench_command(args):
                 ec_type=ec_type,
                 k=args.n_data,
                 m=args.n_parity,
+                local_parity=args.local_parity,
             )
         except ec_iface.ECDriverError:
             print(f"{ec_type:<{width}} could not be instantiated")

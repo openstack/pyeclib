@@ -77,6 +77,13 @@ def add_instance_args(parser, default_segment_size=1024):
         default=5,
     )
     parser.add_argument(
+        "--local-parity",
+        "-l",
+        metavar="L",
+        type=int,
+        default=2,
+    )
+    parser.add_argument(
         "--unavailable",
         "-u",
         metavar="N",

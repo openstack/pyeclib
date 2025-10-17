@@ -132,7 +132,7 @@ class TestList(unittest.TestCase):
             sorted(backend for backend in ec_iface.ALL_EC_TYPES
                    if backend.startswith("isa_l_")))
         found_statuses = {status for backend, status in line_parts}
-        if ec_iface.get_liberasurecode_version() >= 0x1_07_00:
+        if ec_iface.get_liberasurecode_version() >= 0x1_08_00:
             self.assertEqual(len(found_statuses), 1, found_statuses)
         for status in found_statuses:
             self.assertIn(status, {"available", "missing"})

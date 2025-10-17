@@ -35,9 +35,10 @@ class ECPyECLibDriver(object):
 
     def __init__(self, k, m, hd, ec_type,
                  chksum_type=PyECLib_FRAGHDRCHKSUM_Types.none,
-                 validate=False):
+                 validate=False, local_parity=0):
         self.k = k
         self.m = m
+        self.local_parity = local_parity
         self.hd = hd
         self.ec_type = ec_type
         self.chksum_type = chksum_type
@@ -55,7 +56,8 @@ class ECPyECLibDriver(object):
             self.hd,
             self.inline_chksum,
             self.algsig_chksum,
-            validate)
+            validate,
+            self.local_parity)
 
     def __repr__(self):
         return '%s(k=%r, m=%r, hd=%r, ec_type=%r, chksum_type=%r)' % (
@@ -157,7 +159,7 @@ class ECPyECLibDriver(object):
 class ECNullDriver(object):
 
     def __init__(self, k, m, hd, ec_type=None, chksum_type=None,
-                 validate=False):
+                 validate=False, local_parity=0):
         self.k = k
         self.m = m
         self.hd = hd

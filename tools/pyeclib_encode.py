@@ -26,7 +26,9 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Encoder for PyECLib.')
 parser.add_argument('k', type=int, help='number of data elements')
-parser.add_argument('m', type=int, help='number of parity elements')
+parser.add_argument('m', type=int, help='number of total parity elements')
+parser.add_argument('l', type=int, help='number of local parity elements', default=-1)
+
 parser.add_argument('ec_type', help='EC algorithm used')
 parser.add_argument('file_dir', help='directory with the file')
 parser.add_argument('filename', help='file to encode')
@@ -38,7 +40,7 @@ print("k = %d, m = %d" % (args.k, args.m))
 print("ec_type = %s" % args.ec_type)
 print("filename = %s" % args.filename)
 
-ec_driver = ECDriver(k=args.k, m=args.m, ec_type=args.ec_type)
+ec_driver = ECDriver(k=args.k, m=args.m, ec_type=args.ec_type, local_parity=args.l)
 
 # read
 with open(("%s/%s" % (args.file_dir, args.filename)), "rb") as fp:

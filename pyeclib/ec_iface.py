@@ -73,6 +73,7 @@ class PyECLib_EC_Types(Enum):
     isa_l_rs_cauchy = 7
     libphazr = 8
     isa_l_rs_vand_inv = 9
+    isa_l_rs_lrc = 10
 
 
 # Output of Erasure (en)Coding process are data "fragments".  Fragment data
@@ -101,6 +102,7 @@ class ECDriver(object):
         m,
         chksum_type='none',
         validate=False,
+        local_parity=0,
     ):
         '''
         :param ec_type: the erasure coding type to use for this driver.
@@ -140,6 +142,8 @@ class ECDriver(object):
         except ValueError:
             raise ECDriverError(
                 "Invalid number of parity fragments (m)")
+
+        self.local_parity = int(local_parity)
 
         if ec_type:
             if ec_type in ["flat_xor_hd", "flat_xor_hd_3", "flat_xor_hd_4"]:
@@ -187,7 +191,8 @@ class ECDriver(object):
             hd=self.hd,
             ec_type=self.ec_type,
             chksum_type=self.chksum_type,
-            validate=int(self.validate)
+            validate=int(self.validate),
+            local_parity=self.local_parity,
         )
 
         #
@@ -515,6 +520,7 @@ ALL_EC_TYPES = [
     'isa_l_rs_cauchy',
     'libphazr',
     'isa_l_rs_vand_inv',
+    'isa_l_rs_lrc',
 ]
 
 
