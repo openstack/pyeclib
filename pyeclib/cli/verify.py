@@ -32,6 +32,7 @@ from pyeclib import ec_iface
 
 def add_verify_args(parser):
     parser.add_argument("-q", "--quiet", action="store_true")
+    parser.add_argument("--reconstruct", "-r", action="store_true")
     cli.add_instance_args(parser)
 
 
@@ -62,15 +63,21 @@ def verify_command(args):
             continue
         frags = instance.encode(data)
         combinations, failures, corrupt = check_instance(
-            instance, frags, args.unavailable, data)
+            instance, args.reconstruct, frags, args.unavailable, data)
         total_failures += failures
         total_corrupt += corrupt
         if corrupt:
             print(f"\x1b[91;40m{ec_type:<{width}} {combinations=}, "
                   f"{failures=}, {corrupt=}\x1b[0m")
         elif failures:
-            print(f"\x1b[1;91m{ec_type:<{width}} {combinations=}, "
-                  f"{failures=}, {corrupt=}\x1b[0m")
+            if args.reconstruct and failures < combinations:
+                # Some codes (xor, lrc) are expected to be able to reconstruct
+                # some times but not all the time given a high number of
+                # unavailable frags
+                print(f"{ec_type:<{width}} {combinations=}, {failures=}")
+            else:
+                print(f"\x1b[1;91m{ec_type:<{width}} {combinations=}, "
+                      f"{failures=}\x1b[0m")
         else:
             print(f"{ec_type:<{width}} {combinations=}")
 
@@ -81,17 +88,32 @@ def verify_command(args):
     return 0
 
 
-def check_instance(instance, frags, unavailable, data):
+def check_instance(instance, reconstruct, frags, unavailable, data):
     combinations = corrupt = failures = 0
     for to_decode in itertools.combinations(frags, len(frags) - unavailable):
-        combinations += 1
-        try:
-            rebuilt = instance.decode(to_decode)
-            if rebuilt != data:
-                corrupt += 1
-        except ec_iface.ECDriverError:
-            failures += 1
-            # Might want to log?
+        if reconstruct:
+            for i, ref in enumerate(frags):
+                if ref in to_decode:
+                    # Not interesting when the frag to rebuild was
+                    # already provided
+                    continue
+                combinations += 1
+                try:
+                    rebuilt, = instance.reconstruct(to_decode, [i])
+                    if rebuilt != ref:
+                        corrupt += 1
+                except ec_iface.ECDriverError:
+                    failures += 1
+                    # Might want to log?
+        else:
+            combinations += 1
+            try:
+                rebuilt = instance.decode(to_decode)
+                if rebuilt != data:
+                    corrupt += 1
+            except ec_iface.ECDriverError:
+                failures += 1
+                # Might want to log?
     return combinations, failures, corrupt
 
 
