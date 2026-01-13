@@ -8,6 +8,7 @@
         - pyeclib-build-wheels
         - pyeclib-build-wheels-arm64
         - test-release-openstack: &release_overrides
+            nodeset: ubuntu-noble
             dependencies:
               - pyeclib-build-wheels
               - pyeclib-build-wheels-arm64
