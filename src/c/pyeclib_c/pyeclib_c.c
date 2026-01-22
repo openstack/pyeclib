@@ -1233,11 +1233,11 @@ MOD_INIT(pyeclib_c)
         return MOD_ERROR_VAL;
 
     #ifdef Py_GIL_DISABLED
-        /**
-         * Change this to Py_MOD_GIL_NOT_USED when we're convinced that we
-         * (and by extension, liberasurecode) won't segfault on free-threaded
-         * Python */
-        PyUnstable_Module_SetGIL(m, Py_MOD_GIL_USED);
+        if (liberasurecode_get_version() > 0x010701) {
+            PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+        } else {
+            PyUnstable_Module_SetGIL(m, Py_MOD_GIL_USED);
+        }
     #endif
 
     return MOD_SUCCESS_VAL(m);
