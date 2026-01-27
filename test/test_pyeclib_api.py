@@ -388,7 +388,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 with self.assertRaises(ECDriverError) as exc_mgr:
                     pyeclib_driver.decode(frag_iter)
                 self.assertEqual(
-                    'Invalid fragment payload in ECPyECLibDriver.decode',
+                    "No fragments payload in ECPyECLibDriver.decode",
                     str(exc_mgr.exception))
 
                 frag_iter = iter(available_fragments)
@@ -403,7 +403,7 @@ class TestPyECLibDriver(unittest.TestCase):
                 with self.assertRaises(ECDriverError) as exc_mgr:
                     pyeclib_driver.reconstruct(frag_iter, idxs_to_remove)
                 self.assertEqual(
-                    'Invalid fragment payload in ECPyECLibDriver.reconstruct',
+                    'No fragments payload in ECPyECLibDriver.reconstruct',
                     str(exc_mgr.exception))
 
     def check_metadata_formatted(self, k, m, ec_type, chksum_type):

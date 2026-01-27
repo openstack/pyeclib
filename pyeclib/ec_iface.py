@@ -442,6 +442,15 @@ class ECDriverError(Exception):
         return self.error_str
 
 
+class ECDriverErrorWithPosition(ECDriverError):
+    def __init__(self, error, idx):
+        super().__init__(error)
+        self.position = idx
+
+    def __str__(self):
+        return f"{self.error_str} (position {self.position})"
+
+
 # More specific exceptions, mapped to liberasurecode error codes
 
 # Specified EC backend is not supported by PyECLib/liberasurecode

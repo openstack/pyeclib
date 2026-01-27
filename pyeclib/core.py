@@ -23,6 +23,7 @@
 
 from .ec_iface import ECBackendInstanceNotAvailable
 from .ec_iface import ECDriverError
+from .ec_iface import ECDriverErrorWithPosition
 from .ec_iface import ECInsufficientFragments
 from .ec_iface import PyECLib_FRAGHDRCHKSUM_Types
 
@@ -76,23 +77,29 @@ class ECPyECLibDriver(object):
     def encode(self, data_bytes):
         return pyeclib_c.encode(self.handle, data_bytes)
 
-    def _validate_and_return_fragment_size(self, fragments):
-        if len(fragments) == 0 or len(fragments[0]) == 0:
-            return -1
+    def _validate_and_return_fragment_size(self, method, fragments):
+        if len(fragments) == 0:
+            raise ECDriverError(
+                f"No fragments payload in ECPyECLibDriver.{method}")
+
+        if len(fragments[0]) == 0:
+            raise ECDriverErrorWithPosition(
+                f"Invalid fragment payload in ECPyECLibDriver.{method}",
+                0)
+
         fragment_len = len(fragments[0])
-        for fragment in fragments[1:]:
+        for idx, fragment in enumerate(fragments[1:], start=1):
             if len(fragment) != fragment_len:
-                return -1
+                raise ECDriverErrorWithPosition(
+                    f"Invalid fragment payload in ECPyECLibDriver.{method}",
+                    idx + 1)
         return fragment_len
 
     def decode(self, fragment_payloads, ranges=None,
                force_metadata_checks=False):
         _fragment_payloads = list(fragment_payloads)
         fragment_len = self._validate_and_return_fragment_size(
-            _fragment_payloads)
-        if fragment_len < 0:
-            raise ECDriverError(
-                "Invalid fragment payload in ECPyECLibDriver.decode")
+            "decode", _fragment_payloads)
 
         if len(_fragment_payloads) < self.k:
             raise ECInsufficientFragments(
@@ -104,10 +111,7 @@ class ECPyECLibDriver(object):
     def reconstruct(self, fragment_payloads, indexes_to_reconstruct):
         _fragment_payloads = list(fragment_payloads)
         fragment_len = self._validate_and_return_fragment_size(
-            _fragment_payloads)
-        if fragment_len < 0:
-            raise ECDriverError(
-                "Invalid fragment payload in ECPyECLibDriver.reconstruct")
+            "reconstruct", _fragment_payloads)
 
         reconstructed_data = []
 
