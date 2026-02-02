@@ -2,9 +2,9 @@
 
 ARG TARGET="x86_64"
 
-FROM quay.io/pypa/manylinux2010_x86_64:latest AS x86_64
+FROM quay.io/pypa/manylinux2014_x86_64:latest AS x86_64
 FROM quay.io/pypa/manylinux2014_aarch64:latest AS aarch64
-FROM quay.io/pypa/musllinux_1_1_x86_64:latest AS musl_x86_64
+FROM quay.io/pypa/musllinux_1_2_x86_64:latest AS musl_x86_64
 FROM quay.io/pypa/musllinux_1_2_aarch64:latest AS musl_aarch64
 FROM ${TARGET}
 
