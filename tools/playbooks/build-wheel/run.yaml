@@ -5,4 +5,10 @@
     - role: build-pyeclib-wheel
 
     - role: build-pyeclib-wheel
+      wheel_python_version: cp313-cp313t
+
+    - role: build-pyeclib-wheel
+      wheel_python_version: cp314-cp314t
+
+    - role: build-pyeclib-wheel
       musl: True

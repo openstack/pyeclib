@@ -105,11 +105,19 @@ def build_wheel(src_dir):
     Caller is responsible for cleaning up the tempdir.
     """
     tmp = tempfile.mkdtemp()
-    try:
-        subprocess.check_call([
+    if getattr(sys, '_is_gil_enabled', lambda: True)():
+        cmd = [
             sys.executable, 'setup.py',
             'bdist_wheel', '-d', tmp, '--py-limited-api=cp310',
-        ], cwd=src_dir)
+        ]
+    else:
+        cmd = [
+            sys.executable, '-m', 'build',
+            '--wheel',
+            '--outdir', tmp,
+        ]
+    try:
+        subprocess.check_call(cmd, cwd=src_dir)
         files = os.listdir(tmp)
         assert len(files) == 1, files
         return os.path.join(tmp, files[0])
