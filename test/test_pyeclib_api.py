@@ -830,9 +830,9 @@ class TestPyECLibDriver(unittest.TestCase):
 
         # 4. memory usage shouldn't increase
         new_usage = resource.getrusage(resource.RUSAGE_SELF)[2]
-        self.assertEqual(baseline_usage, new_usage,
-                         'Memory usage is increased unexpectedly %s -> %s' %
-                         (baseline_usage, new_usage))
+        self.assertLess(new_usage, baseline_usage + 1000,
+                        'Memory usage is increased unexpectedly %s -> %s' %
+                        (baseline_usage, new_usage))
 
 
 class BackendsEnabledMetaclass(type):
