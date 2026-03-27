@@ -24,6 +24,7 @@
 import argparse
 import itertools
 import os
+import random
 import sys
 
 from pyeclib import cli
@@ -33,6 +34,7 @@ from pyeclib import ec_iface
 def add_verify_args(parser):
     parser.add_argument("-q", "--quiet", action="store_true")
     parser.add_argument("--reconstruct", "-r", action="store_true")
+    parser.add_argument("-i", "--iterations", type=int, default=None)
     cli.add_instance_args(parser)
 
 
@@ -69,7 +71,8 @@ def verify_command(args):
             continue
         frags = instance.encode(data)
         combinations, failures, corrupt = check_instance(
-            instance, args.reconstruct, frags, args.unavailable, data)
+            instance, args.reconstruct, frags, args.unavailable, data,
+            args.iterations)
         total_failures += failures
         total_corrupt += corrupt
         if corrupt:
@@ -94,9 +97,15 @@ def verify_command(args):
     return 0
 
 
-def check_instance(instance, reconstruct, frags, unavailable, data):
+def check_instance(instance, reconstruct, frags, unavailable, data,
+                   iterations):
     combinations = corrupt = failures = 0
-    for to_decode in itertools.combinations(frags, len(frags) - unavailable):
+    if iterations is None:
+        frags_iter = itertools.combinations(frags, len(frags) - unavailable)
+    else:
+        frags_iter = (random.sample(frags, len(frags) - unavailable)
+                      for _ in range(iterations))
+    for to_decode in frags_iter:
         if reconstruct:
             for i, ref in enumerate(frags):
                 if ref in to_decode:
