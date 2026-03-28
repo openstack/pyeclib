@@ -21,6 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import importlib.metadata
 import platform
 import sys
 
@@ -31,7 +32,14 @@ version_description = "print pyeclib and liberasurecode versions"
 
 def version_command(args=None):
     print(f"pyeclib {ec_iface.__version__}")
-    print(f"liberasurecode {ec_iface.LIBERASURECODE_VERSION}")
+    bundled = ""
+    try:
+        files = importlib.metadata.files('pyeclib') or []
+        if any(f.name.startswith('liberasurecode-pyeclib.so') for f in files):
+            bundled = " (bundled)"
+    except importlib.metadata.PackageNotFoundError:
+        pass
+    print(f"liberasurecode {ec_iface.LIBERASURECODE_VERSION}{bundled}")
     version_str = sys.version.split(' (', 1)[0]
     print(f"{platform.python_implementation()} {version_str}")
 
