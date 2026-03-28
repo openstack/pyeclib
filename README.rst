@@ -18,8 +18,18 @@ reconstruction (think XOR-based LRC code).
 
 -----
 
-Installation
-============
+Installation (PyPI)
+===================
+
+.. code::
+
+    $ pip install pyeclib
+
+Binary wheels on PyPI are provided for x86_64 and aarch64, with vendored
+versions of liberasurecode and ISA-L included.
+
+Installation (System Libraries)
+===============================
 
 Install pre-requisites:
 
