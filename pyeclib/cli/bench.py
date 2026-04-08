@@ -81,6 +81,11 @@ def bench_command(args):
                 if ec_type.startswith('flat_xor'):
                     # The math is actually more complicated than this, but ...
                     parity_frags = frags[args.n_data:]
+                elif ec_type == 'isa_l_rs_lrc':
+                    parity_frags = random.sample(
+                        frags[args.n_data:],
+                        args.unavailable + args.local_parity - 1,
+                    )
                 else:
                     parity_frags = random.sample(
                         frags[args.n_data:],
