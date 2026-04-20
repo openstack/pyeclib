@@ -53,7 +53,7 @@ def PyECLibVersion(z: int, y: int, x: int) -> int:
 
 
 PYECLIB_MAJOR = 1
-PYECLIB_MINOR = 7
+PYECLIB_MINOR = 8
 PYECLIB_REV = 0
 PYECLIB_VERSION = PyECLibVersion(PYECLIB_MAJOR, PYECLIB_MINOR, PYECLIB_REV)
 __version__ = "%d.%d.%d" % (PYECLIB_MAJOR, PYECLIB_MINOR, PYECLIB_REV)

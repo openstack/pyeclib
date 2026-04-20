@@ -1,3 +1,27 @@
+New in 1.8.0
+------------
+
+ * Added support for a new isa_l_rs_lrc backend. This provides support for LRC
+   (locally-recoverable code) schemes, where local fragments reconstruction is
+   possible with fewer than k other fragments.
+ * The version subcommand of pyeclib-backend now indicates whether
+   liberasurecode has been bundled and whether python is free-threaded.
+ * The verify subcommand now takes a --reconstruct option to test
+   reconstruction rather than decoding.
+ * The verify subcommand now takes an --iterations option to test a number
+   of random combinations rather than all possible combinations. This is
+   useful when verifying schemes with large numbers of fragments.
+ * Added type hints.
+ * Test against Python 3.14.
+ * When running with liberasurecode 1.8.0 or later and free-threaded Python,
+   the GIL is disabled.
+ * Binary wheel updates:
+   * Bundle liberasurecode==1.8.0 and ISA-L==2.32.0
+   * Target manylinux2014 and musllinux_1_2 rather than manylinux1 and
+     musllinux_1_1
+   * Publish wheels for free-threaded builds of Python 3.13 and 3.14
+ * Various other minor bugs fixes and improvements
+
 New in 1.7.0
 ------------
 
