@@ -23,13 +23,27 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
-from enum import Enum
-from enum import unique
-from typing import Any
 from typing import Collection
 from typing import Sequence
 import warnings
 
+from .enums import PyECLib_EC_Types
+from .enums import PyECLib_FRAGHDRCHKSUM_Types
+
+# Note that several of these exceptions are referenced externally; import them
+# here even if *we* don't use them so we don't break applications
+from .exceptions import ECBackendInitializationError  # noqa: F401
+from .exceptions import ECBackendInstanceInUse  # noqa: F401
+from .exceptions import ECBackendInstanceNotAvailable  # noqa: F401
+from .exceptions import ECBackendNotSupported
+from .exceptions import ECBadFragmentChecksum  # noqa: F401
+from .exceptions import ECDriverError
+from .exceptions import ECDriverErrorWithPosition  # noqa: F401
+from .exceptions import ECInsufficientFragments  # noqa: F401
+from .exceptions import ECInvalidFragmentMetadata  # noqa: F401
+from .exceptions import ECInvalidParameter  # noqa: F401
+from .exceptions import ECMethodNotImplemented  # noqa: F401
+from .exceptions import ECOutOfMemory  # noqa: F401
 from .utils import create_instance
 from .utils import positive_int_value
 import pyeclib_c
@@ -61,38 +75,6 @@ __version__ = "%d.%d.%d" % (PYECLIB_MAJOR, PYECLIB_MINOR, PYECLIB_REV)
 
 PYECLIB_MAX_DATA = 32
 PYECLIB_MAX_PARITY = 32
-
-
-# Erasure Code backends supported as of this PyECLib API rev
-@unique
-class PyECLib_EC_Types(Enum):
-    # Note: the Enum start value defaults to 1 as the starting value and not 0
-    # 0 is False in the boolean sense but enum members evaluate to True
-    jerasure_rs_vand = 1
-    jerasure_rs_cauchy = 2
-    flat_xor_hd = 3
-    isa_l_rs_vand = 4
-    shss = 5
-    liberasurecode_rs_vand = 6
-    isa_l_rs_cauchy = 7
-    libphazr = 8
-    isa_l_rs_vand_inv = 9
-    isa_l_rs_lrc = 10
-
-
-# Output of Erasure (en)Coding process are data "fragments".  Fragment data
-# integrity checks are provided by a checksum embedded in a header (prepend)
-# for each fragment.
-
-
-# The following Enum defines the schemes supported for fragment checksums.
-# The checksum type is "none" unless specified.
-@unique
-class PyECLib_FRAGHDRCHKSUM_Types(Enum):
-    # Note: the Enum start value defaults to 1 as the starting value and not 0
-    # 0 is False in the boolean sense but enum members evaluate to True
-    none = 1
-    inline_crc32 = 2
 
 
 # Main ECDriver class
@@ -480,86 +462,6 @@ class ECDriver(object):
             recipe[r] = segment_map
 
         return recipe
-
-
-# PyECLib Exceptions
-
-
-# Generic ECDriverException
-class ECDriverError(Exception):
-    def __init__(self, error: Any):
-        try:
-            self.error_str = str(error)
-        except Exception:
-            self.error_str = (
-                "Error retrieving the error message from %s"
-                % error.__class__.__name__
-            )
-
-    def __str__(self) -> str:
-        return self.error_str
-
-
-class ECDriverErrorWithPosition(ECDriverError):
-    def __init__(self, error: str, idx: int):
-        super().__init__(error)
-        self.position = idx
-
-    def __str__(self) -> str:
-        return f"{self.error_str} (position {self.position})"
-
-
-# More specific exceptions, mapped to liberasurecode error codes
-
-
-# Specified EC backend is not supported by PyECLib/liberasurecode
-class ECBackendNotSupported(ECDriverError):
-    pass
-
-
-# Unsupported EC method
-class ECMethodNotImplemented(ECDriverError):
-    pass
-
-
-# liberasurecode backend init error
-class ECBackendInitializationError(ECDriverError):
-    pass
-
-
-# Specified backend instance is invalid/unavailable
-class ECBackendInstanceNotAvailable(ECDriverError):
-    pass
-
-
-# Specified backend instance is busy
-class ECBackendInstanceInUse(ECDriverError):
-    pass
-
-
-# Invalid parameter passed to a method
-class ECInvalidParameter(ECDriverError):
-    pass
-
-
-# Invalid or incompatible fragment metadata
-class ECInvalidFragmentMetadata(ECDriverError):
-    pass
-
-
-# Fragment checksum verification failed
-class ECBadFragmentChecksum(ECDriverError):
-    pass
-
-
-# Insufficient fragments specified for decode or reconstruct operation
-class ECInsufficientFragments(ECDriverError):
-    pass
-
-
-# Out of memory
-class ECOutOfMemory(ECDriverError):
-    pass
 
 
 # PyECLib helper for "available" EC types

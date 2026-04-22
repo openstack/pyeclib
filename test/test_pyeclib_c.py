@@ -30,9 +30,9 @@ import unittest
 
 import pyeclib_c
 
-from pyeclib.ec_iface import ECBackendInstanceNotAvailable
-from pyeclib.ec_iface import PyECLib_EC_Types
 from pyeclib.ec_iface import VALID_EC_TYPES
+from pyeclib.enums import PyECLib_EC_Types
+from pyeclib.exceptions import ECBackendInstanceNotAvailable
 
 
 class Timer:

@@ -22,12 +22,12 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
-from .ec_iface import ECBackendInstanceNotAvailable
-from .ec_iface import ECDriverError
-from .ec_iface import ECDriverErrorWithPosition
-from .ec_iface import ECInsufficientFragments
-from .ec_iface import PyECLib_EC_Types
-from .ec_iface import PyECLib_FRAGHDRCHKSUM_Types
+from .enums import PyECLib_EC_Types
+from .enums import PyECLib_FRAGHDRCHKSUM_Types
+from .exceptions import ECBackendInstanceNotAvailable
+from .exceptions import ECDriverError
+from .exceptions import ECDriverErrorWithPosition
+from .exceptions import ECInsufficientFragments
 
 import math
 import pyeclib_c

@@ -173,7 +173,7 @@ void pyeclib_c_seterr(int ret, const char * prefix) {
             err_msg = "Unknown error";
             break;
     }
-    PyObject *eo = import_class("pyeclib.ec_iface", err_class);
+    PyObject *eo = import_class("pyeclib.exceptions", err_class);
     if (eo != NULL) {
         snprintf(err, 255,
                 "%s ERROR: %s. Please inspect syslog for liberasurecode error report.",

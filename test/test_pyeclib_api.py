@@ -32,15 +32,15 @@ import unittest
 
 from itertools import combinations
 
-import pyeclib.ec_iface
-from pyeclib.ec_iface import ECBackendInstanceNotAvailable
-from pyeclib.ec_iface import ECBackendNotSupported
 from pyeclib.ec_iface import ECDriver
-from pyeclib.ec_iface import ECDriverError
-from pyeclib.ec_iface import ECInsufficientFragments
-from pyeclib.ec_iface import ECInvalidFragmentMetadata
-from pyeclib.ec_iface import ECInvalidParameter
-from pyeclib.ec_iface import PyECLib_EC_Types
+from pyeclib.enums import PyECLib_EC_Types
+import pyeclib.exceptions
+from pyeclib.exceptions import ECBackendInstanceNotAvailable
+from pyeclib.exceptions import ECBackendNotSupported
+from pyeclib.exceptions import ECDriverError
+from pyeclib.exceptions import ECInsufficientFragments
+from pyeclib.exceptions import ECInvalidFragmentMetadata
+from pyeclib.exceptions import ECInvalidParameter
 
 from pyeclib.ec_iface import ALL_EC_TYPES
 from pyeclib.ec_iface import VALID_EC_TYPES
@@ -433,12 +433,12 @@ class TestPyECLibDriver(unittest.TestCase):
         self.assertGreater(len(pyeclib_drivers), 0)
         pyeclib_driver = pyeclib_drivers[0]
 
-        del pyeclib.ec_iface.ECInvalidParameter
+        del pyeclib.exceptions.ECInvalidParameter
         try:
             with self.assertRaises(AttributeError):  # !!
                 pyeclib_driver.encode(3)
         finally:
-            pyeclib.ec_iface.ECInvalidParameter = ECInvalidParameter
+            pyeclib.exceptions.ECInvalidParameter = ECInvalidParameter
 
     def test_import_error_in_the_error_handling(self):
         pyeclib_drivers = self.get_pyeclib_testspec()
