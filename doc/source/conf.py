@@ -33,9 +33,9 @@ extensions = ["openstackdocstheme"]
 source_suffix = ".rst"
 
 # openstackdocstheme options
-openstack_repository_name = "openstack/pyeclib"
-openstack_bug_project = "pyeclib"
-openstack_bug_tag = ""
+openstackdocs_repo_name = "openstack/pyeclib"
+openstackdocs_bug_project = "pyeclib"
+openstackdocs_bug_tag = ""
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
