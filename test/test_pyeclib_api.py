@@ -1037,5 +1037,43 @@ class TestBackendsEnabled(
     """
 
 
+class TestThreadedEC(unittest.TestCase):
+    """
+    encode/decode/reconstruct release the GIL -- check a shared driver
+    still returns correct data when driven from several threads.
+    """
+
+    EC_TYPE = "liberasurecode_rs_vand"  # bundled and reentrant
+
+    def setUp(self):
+        if self.EC_TYPE not in VALID_EC_TYPES:
+            self.skipTest("%s backend not available" % self.EC_TYPE)
+        self.driver = ECDriver(k=4, m=2, ec_type=self.EC_TYPE)
+
+    def test_threaded_roundtrip_returns_correct_data(self):
+        # distinct payload per thread, so a mix-up fails the round trip
+        errors = []
+
+        def work():
+            try:
+                data = os.urandom(256 * 1024)
+                for _ in range(50):
+                    frags = self.driver.encode(data)
+                    self.assertEqual(self.driver.decode(frags[2:]), data)
+                    self.assertEqual(
+                        self.driver.reconstruct(frags[2:], [0, 1]),
+                        [frags[0], frags[1]],
+                    )
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=work) for _ in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        self.assertEqual(errors, [])
+
+
 if __name__ == "__main__":
     unittest.main()

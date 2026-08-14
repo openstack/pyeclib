@@ -534,7 +534,15 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  ret = liberasurecode_encode(pyeclib_handle->ec_desc, data, data_len, &encoded_data, &encoded_parity, &fragment_len);
+  /* liberasurecode only locks its instance list from 1.8.0 on; before that,
+   * dropping the GIL could race an ECDriver being created or destroyed */
+  if (liberasurecode_get_version() >= 0x010800) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = liberasurecode_encode(pyeclib_handle->ec_desc, data, data_len, &encoded_data, &encoded_parity, &fragment_len);
+    Py_END_ALLOW_THREADS
+  } else {
+    ret = liberasurecode_encode(pyeclib_handle->ec_desc, data, data_len, &encoded_data, &encoded_parity, &fragment_len);
+  }
   if (ret < 0) {
     pyeclib_c_seterr(ret, "pyeclib_c_encode");
     return NULL;
@@ -732,12 +740,23 @@ pyeclib_c_reconstruct(PyObject *self, PyObject *args)
     PyBytes_AsStringAndSize(tmp_data, &(c_fragments[i]), &len);
   }
 
-  ret = liberasurecode_reconstruct_fragment(pyeclib_handle->ec_desc,
-                                            c_fragments,
-                                            num_fragments,
-                                            fragment_len,
-                                            destination_idx,
-                                            c_reconstructed);
+  if (liberasurecode_get_version() >= 0x010800) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = liberasurecode_reconstruct_fragment(pyeclib_handle->ec_desc,
+                                              c_fragments,
+                                              num_fragments,
+                                              fragment_len,
+                                              destination_idx,
+                                              c_reconstructed);
+    Py_END_ALLOW_THREADS
+  } else {
+    ret = liberasurecode_reconstruct_fragment(pyeclib_handle->ec_desc,
+                                              c_fragments,
+                                              num_fragments,
+                                              fragment_len,
+                                              destination_idx,
+                                              c_reconstructed);
+  }
   if (ret < 0) {
     pyeclib_c_seterr(ret, "pyeclib_c_reconstruct");
     reconstructed = NULL;
@@ -875,13 +894,25 @@ pyeclib_c_decode(PyObject *self, PyObject *args)
     PyBytes_AsStringAndSize(tmp_data, &(c_fragments[i]), &len);
   }
 
-  ret = liberasurecode_decode(pyeclib_handle->ec_desc,
-                            c_fragments,
-                            num_fragments,
-                            fragment_len,
-                            force_metadata_checks,
-                            &c_orig_payload,
-                            &orig_data_size);
+  if (liberasurecode_get_version() >= 0x010800) {
+    Py_BEGIN_ALLOW_THREADS
+    ret = liberasurecode_decode(pyeclib_handle->ec_desc,
+                              c_fragments,
+                              num_fragments,
+                              fragment_len,
+                              force_metadata_checks,
+                              &c_orig_payload,
+                              &orig_data_size);
+    Py_END_ALLOW_THREADS
+  } else {
+    ret = liberasurecode_decode(pyeclib_handle->ec_desc,
+                              c_fragments,
+                              num_fragments,
+                              fragment_len,
+                              force_metadata_checks,
+                              &c_orig_payload,
+                              &orig_data_size);
+  }
 
   if (ret < 0) {
     pyeclib_c_seterr(ret, "pyeclib_c_decode");
@@ -1243,7 +1274,7 @@ MOD_INIT(pyeclib_c)
         return MOD_ERROR_VAL;
 
     #ifdef Py_GIL_DISABLED
-        if (liberasurecode_get_version() > 0x010701) {
+        if (liberasurecode_get_version() >= 0x010800) {
             PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
         } else {
             PyUnstable_Module_SetGIL(m, Py_MOD_GIL_USED);
