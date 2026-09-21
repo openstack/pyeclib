@@ -84,17 +84,20 @@ class ECPyECLibDriver(object):
         )
 
     def close(self) -> None:
-        if self._handle is not None:
-            pyeclib_c.destroy(self._handle)
-        self._handle = None
+        handle, self._handle = self._handle, None
+        if handle is None:
+            return
+
+        pyeclib_c.destroy(handle)
 
     @property
     def handle(self) -> pyeclib_c.PyECLibHandle:
-        if self._handle is None:
+        handle = self._handle
+        if handle is None:
             raise ECBackendInstanceNotAvailable(
                 "erasure coding handle is closed"
             )
-        return self._handle
+        return handle
 
     def encode(self, data_bytes: bytes) -> list[bytes]:
         return pyeclib_c.encode(self.handle, data_bytes)

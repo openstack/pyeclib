@@ -21,6 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 import os
 import queue
 import random
@@ -31,6 +32,7 @@ import threading
 import unittest
 
 from itertools import combinations
+from unittest import mock
 
 from pyeclib.ec_iface import ECDriver
 from pyeclib.enums import PyECLib_EC_Types
@@ -1073,6 +1075,42 @@ class TestThreadedEC(unittest.TestCase):
         for t in threads:
             t.join()
         self.assertEqual(errors, [])
+
+    def test_threaded_close_destroys_handle_once(self):
+        destroy_entered = threading.Event()
+        close_resume = threading.Event()
+
+        def destroy_gated(handle):
+            if destroy_entered.is_set():
+                return
+
+            destroy_entered.set()
+            self.assertTrue(close_resume.wait(timeout=5))
+
+        exc = None
+
+        def work():
+            nonlocal exc
+            try:
+                self.driver.close()
+            except Exception as e:
+                exc = e
+
+        with mock.patch(
+            "pyeclib_c.destroy", side_effect=destroy_gated
+        ) as destroy_mock:
+            thread = threading.Thread(target=work)
+            thread.start()
+
+            try:
+                self.assertTrue(destroy_entered.wait(timeout=5))
+                self.driver.close()
+            finally:
+                close_resume.set()
+                thread.join(timeout=5)
+
+            destroy_mock.assert_called_once()
+            self.assertIsNone(exc)
 
 
 if __name__ == "__main__":
