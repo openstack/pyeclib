@@ -51,12 +51,13 @@ class TestVersion(unittest.TestCase):
             ],
         )
         re_version = re.compile(
-            r"^\d+\.\d+\.\d+(?:rc\d*)?"
+            r"^\d+\.\d+\.\d+(?:rc\d*(?:\+dev)?)?"
             r"(?:(?: experimental)? free-threading build)?$"
         )
         self.assertEqual(
             [bool(re_version.match(vers)) for prog, vers in line_parts],
             [True] * 3,
+            line_parts,
         )
         self.assertEqual(caught.exception.code, None)
 
