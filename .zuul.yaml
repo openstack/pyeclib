@@ -19,7 +19,8 @@
         - openstack-tox-py311
         - openstack-tox-py312
         - openstack-tox-py313
-        - openstack-tox-py314:
+        - openstack-tox-py314
+        - openstack-tox-py315:
             voting: true
         - pyeclib-tox-py311-centos-9-stream
         - libec-pyeclib-unit
@@ -34,6 +35,7 @@
         - openstack-tox-py312
         - openstack-tox-py313
         - openstack-tox-py314
+        - openstack-tox-py315
         - pyeclib-tox-py311-centos-9-stream
         - libec-pyeclib-unit
         - libec-pyeclib-unit-centos-9-stream
