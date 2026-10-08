@@ -24,11 +24,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <paths.h>
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
 #include <math.h>
 #include <bytesobject.h>
 #include <liberasurecode/erasurecode.h>
