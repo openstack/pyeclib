@@ -35,19 +35,8 @@
 
 #include <pyeclib_c.h>
 
-#define MOD_ERROR_VAL NULL
-#define MOD_SUCCESS_VAL(val) val
-#define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
-#define MOD_DEF(ob, name, doc, methods) \
-      static struct PyModuleDef moduledef = { \
-          PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
-      ob = PyModule_Create(&moduledef);
 #define PY_BUILDVALUE_OBJ_LEN(obj, objlen) \
       Py_BuildValue("y#", obj, (Py_ssize_t)objlen)
-#define PyInt_FromLong PyLong_FromLong
-#define PyString_FromString PyUnicode_FromString
-#define ENCODE_ARGS "Oy#"
-#define GET_METADATA_ARGS "Oy#i"
 
 
 typedef struct pyeclib_byte_range {
@@ -524,7 +513,7 @@ pyeclib_c_encode(PyObject *self, PyObject *args)
   int ret = 0;
 
   /* Assume binary data (force "byte array" input) */
-  if (!PyArg_ParseTuple(args, ENCODE_ARGS, &pyeclib_obj_handle, &data, &data_len)) {
+  if (!PyArg_ParseTuple(args, "Oy#", &pyeclib_obj_handle, &data, &data_len)) {
     pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_encode");
     return NULL;
   }
@@ -1103,7 +1092,7 @@ pyeclib_c_get_metadata(PyObject *self, PyObject *args)
   int ret;
 
   /* Obtain and validate the method parameters */
-  if (!PyArg_ParseTuple(args, GET_METADATA_ARGS, &pyeclib_obj_handle, &fragment, &fragment_len, &formatted)) {
+  if (!PyArg_ParseTuple(args, "Oy#i", &pyeclib_obj_handle, &fragment, &fragment_len, &formatted)) {
     pyeclib_c_seterr(-EINVALIDPARAMS, "pyeclib_c_get_metadata");
     return NULL;
   }
@@ -1208,7 +1197,7 @@ pyeclib_c_check_metadata(PyObject *self, PyObject *args)
       goto error;
     }
     PyDict_SetItemString(ret_obj, "status", PyLong_FromLong((long)ret));
-    PyDict_SetItemString(ret_obj, "reason", PyString_FromString("Bad checksum"));
+    PyDict_SetItemString(ret_obj, "reason", PyUnicode_FromString("Bad checksum"));
     PyObject *bad_chksums = PyList_New(0);
     for (i = 0; i < num_fragments; i++) {
       c_fragment_metadata = (fragment_metadata_t*)c_fragment_metadata_list[i];
@@ -1264,14 +1253,19 @@ static PyMethodDef PyECLibMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-MOD_INIT(pyeclib_c)
+PyMODINIT_FUNC PyInit_pyeclib_c(void)
 {
-    PyObject *m;
-
-    MOD_DEF(m, "pyeclib_c", NULL, PyECLibMethods);
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        .m_name = "pyeclib_c",
+        .m_doc = NULL,
+        .m_size = -1,
+        .m_methods = PyECLibMethods,
+    };
+    PyObject *m = PyModule_Create(&moduledef);
 
     if (m == NULL)
-        return MOD_ERROR_VAL;
+        return NULL;
 
     #ifdef Py_GIL_DISABLED
         if (liberasurecode_get_version() >= 0x010800) {
@@ -1281,5 +1275,5 @@ MOD_INIT(pyeclib_c)
         }
     #endif
 
-    return MOD_SUCCESS_VAL(m);
+    return m;
 }
