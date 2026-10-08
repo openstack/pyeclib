@@ -26,11 +26,6 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <paths.h>
-#include <math.h>
-#include <bytesobject.h>
 #include <liberasurecode/erasurecode.h>
 
 #include <pyeclib_c.h>
