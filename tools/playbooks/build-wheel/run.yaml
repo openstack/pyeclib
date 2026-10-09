@@ -12,3 +12,11 @@
 
     - role: build-pyeclib-wheel
       musl: True
+
+    - role: build-pyeclib-wheel
+      wheel_python_version: cp314-cp314t
+      musl: True
+
+    - role: build-pyeclib-wheel
+      wheel_python_version: cp315-cp315t
+      musl: True
