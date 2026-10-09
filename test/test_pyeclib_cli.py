@@ -50,15 +50,16 @@ class TestVersion(unittest.TestCase):
                 platform.python_implementation(),
             ],
         )
-        re_version = re.compile(
-            r"^\d+\.\d+\.\d+(?:rc\d*(?:\+dev)?)?"
-            r"(?:(?: experimental)? free-threading build)?$"
-        )
-        self.assertEqual(
-            [bool(re_version.match(vers)) for prog, vers in line_parts],
-            [True] * 3,
-            line_parts,
-        )
+        version_res = [
+            re.compile(r"^\d+\.\d+\.\d+(?:rc\d+)?"),
+            re.compile(r"^\d+\.\d+\.\d+(?: \(bundled\))?"),
+            re.compile(
+                r"^\d+\.\d+\.\d+(?:rc\d*)?(?:\+dev)?"
+                r"(?:(?: experimental)? free-threading build)?$"
+            ),
+        ]
+        for (prog, version), version_re in zip(line_parts, version_res):
+            self.assertRegex(version, version_re, f"Bad {prog} version")
         self.assertEqual(caught.exception.code, None)
 
     def test_subcommand(self):
