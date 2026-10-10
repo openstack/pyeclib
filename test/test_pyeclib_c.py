@@ -113,8 +113,7 @@ class TestPyECLib(unittest.TestCase):
 
             # Create the dictionary of files to test with
             buf = "".join(random.choice(ascii_letters) for i in range(size))
-            if sys.version_info >= (3,):
-                buf = buf.encode("ascii")
+            buf = buf.encode("ascii")
             tmp_file = tempfile.NamedTemporaryFile("w+b")
             tmp_file.write(buf)
             cls.files[size_str] = tmp_file
